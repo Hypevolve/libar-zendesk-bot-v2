@@ -188,6 +188,19 @@ async function resolveAutomatedOutcome(session, userMessage, opts = {}) {
     }
   }
 
+  // Attachment escalation: if user uploaded images/files, we cannot analyze them,
+  // so immediately hand off to a human agent with a reassuring message.
+  if (opts.hasAttachments) {
+    return {
+      knowledge: null,
+      outcome: {
+        type: "escalate_no_answer",
+        customerMessage: "Hvala na upitu i privitcima! Vaša poruka je zaprimljena i razgovor će biti preusmjeren na našeg agenta koji će se ubrzo javiti.",
+        stateTag: "awaiting_human", reason: "user_uploaded_attachments", links: [], extraTags: ["attachment_uploaded"]
+      }
+    };
+  }
+
   const knowledge = await knowledgeService.searchKnowledgeDetailed(rewrittenQuery || maskedMsg, {
     taskIntent: session.entryIntent,
     conversationTerms: conversationService.extractConversationTerms(session.messages)
