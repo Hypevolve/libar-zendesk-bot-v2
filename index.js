@@ -25,6 +25,8 @@ const { middleware: inputSanitizer } = require("./middleware/inputSanitizer");
 
 const aiService = require("./services/aiService");
 const knowledgeService = require("./services/knowledgeService");
+const vectorKnowledgeService = require("./services/vectorKnowledgeService");
+const embeddingService = require("./services/embeddingService");
 const zendeskService = require("./services/zendeskService");
 const piiService = require("./services/piiService");
 const tracingService = require("./services/tracingService");
@@ -33,6 +35,8 @@ const outputValidator = require("./services/outputValidator");
 const spamFilterService = require("./services/spamFilterService");
 const conversationService = require("./services/conversationService");
 const runtimeStore = require("./services/runtimeStore");
+const responseCacheService = require("./services/responseCacheService");
+const tokenBudget = require("./services/tokenBudgetService");
 const { normalizeForComparison } = require("./services/textUtils");
 const { buildDirectWebsiteLinks } = require("./services/siteLinkService");
 
@@ -60,7 +64,8 @@ function scheduleRuntimePersist() {
     persistTimeout = null;
     runtimeStore.saveRuntimeState({
       ...runtimeState,
-      sessions: [...chatSessions.values()].map(serializeSession)
+      sessions: [...chatSessions.values()].map(serializeSession),
+      rateLimits: rateLimiter.getState()
     });
   }, 3000);
 }
@@ -116,22 +121,6 @@ function isClosedTicketStatus(status) {
   return ["closed", "solved"].includes(String(status).toLowerCase());
 }
 
-const REFERENTNE_CINJENICE = [
-  "Antikvarijat Libar, Županijska 17, 31000 Osijek.",
-  "Radno vrijeme: pon-pet 08:00-20:00, sub 08:00-13:00.",
-  "Otkup udžbenika za srednju školu. Ne otkupljujemo knjige za osnovnu školu, romane, beletristiku, radne bilježnice.",
-  "Online otkup: knjige šaljete kurirskom službom. Dostavljač donosi gotovu naljepnicu. Vi ništa ne pišete na paket.",
-  "Fizički otkup: donosite knjige osobno u poslovnicu, isplata odmah u gotovini.",
-  "4+ knjige — dostava besplatna. 3 ili manje — 2,70 EUR dostava.",
-  "Isplata kod online otkupa: isti dan po primitku paketa ili sljedeći radni dan.",
-  "Kontakt: 031/201-230, info@antikvarijat-libar.com",
-  "Povrat i zamjena: unutar 14 dana od primitka robe, trošak povrata snosi kupac.",
-  "Načini plaćanja: kartica, gotovina, pouzeće, rate (2-6 rata PBZ/ZABA).",
-  "R1 račun: nije automatski, pošaljite podatke tvrtke na email.",
-  "Aircash isplata: nije dostupna.",
-  "Program vjernosti 'Sjedi 5': 5 udžb. → bespl. dostava, 8 udžb. → 5% popusta, 11 udžb. → 10% popusta."
-].join("\n");
-
 // ─── AI Outcome Resolution ───────────────────────────────────
 
 async function resolveAutomatedOutcome(session, userMessage, opts = {}) {
@@ -155,8 +144,50 @@ async function resolveAutomatedOutcome(session, userMessage, opts = {}) {
     return { knowledge: null, outcome: refResult };
   }
 
-  // Knowledge search
-  const rewrittenQuery = await aiService.rewriteStandaloneQuery(maskedMsg, conversationSummary);
+  // Response cache check (simple queries only, no conversation history)
+  const messageWordCount = maskedMsg.trim().split(/\s+/).filter(Boolean).length;
+  const hasHistory = (session.messages || []).length > 2;
+  let cacheKey = null;
+  if (!hasHistory && messageWordCount <= 12) {
+    cacheKey = `${maskedMsg}:${session.entryIntent || ""}`;
+    const cached = responseCacheService.get(cacheKey);
+    if (cached) {
+      metricsService.recordLatency(Date.now() - start);
+      return {
+        knowledge: null,
+        outcome: {
+          type: "safe_answer", customerMessage: cached, stateTag: "ai_active",
+          reason: "cache_hit", source: "cache",
+          links: buildDirectWebsiteLinks(userMessage, { knowledge: null }), extraTags: []
+        }
+      };
+    }
+  }
+
+  // Global token budget gate: if estimated total pipeline cost exceeds 80% of input budget,
+  // skip non-essential LLM calls (rewrite, relevance grading).
+  const estimatedRewrite = hasHistory || messageWordCount > 6 ? 250 : 0;
+  const estimatedGrade = 180;
+  const estimatedGenerate = tokenBudget.estimateTokens(maskedMsg) + 900;
+  const estimatedFallback = tokenBudget.estimateTokens(maskedMsg) + 700;
+  const totalEstimate = estimatedRewrite + estimatedGrade + estimatedGenerate + estimatedFallback;
+  const skipNonEssential = totalEstimate > Math.floor(tokenBudget.MAX_INPUT * 0.8);
+  if (skipNonEssential) {
+    log.warn("token_budget_gate_skipping_nonessential", { estimated: totalEstimate, limit: tokenBudget.MAX_INPUT });
+  }
+
+  // Knowledge search with optional query rewrite
+  let rewrittenQuery = maskedMsg;
+  if (!skipNonEssential && (hasHistory || messageWordCount > 6)) {
+    try {
+      const recentMessages = conversationService.getRecentMessagesForAI(session.messages || []);
+      rewrittenQuery = await aiService.rewriteStandaloneQuery(maskedMsg, recentMessages) || maskedMsg;
+    } catch (err) {
+      log.warn("query_rewrite_failed", { message: err.message });
+      rewrittenQuery = maskedMsg;
+    }
+  }
+
   const knowledge = await knowledgeService.searchKnowledgeDetailed(rewrittenQuery || maskedMsg, {
     taskIntent: session.entryIntent,
     conversationTerms: conversationService.extractConversationTerms(session.messages)
@@ -165,10 +196,18 @@ async function resolveAutomatedOutcome(session, userMessage, opts = {}) {
   let customerMessage = null;
 
   if (knowledge?.context) {
-    const relevance = await aiService.gradeContextRelevance(maskedMsg, knowledge.context);
+    // Skip relevance grading if hybrid confidence is already high
+    let relevance = { relevant: true, reason: "high_confidence" };
+    const topConfidence = knowledge.topConfidence || 0;
+    if (!skipNonEssential && topConfidence < 0.72) {
+      relevance = await aiService.gradeContextRelevance(maskedMsg, knowledge.context);
+    }
 
     if (relevance.relevant) {
-      customerMessage = await aiService.generateGroundedAnswer(maskedMsg, knowledge.context, groundedOpts);
+      // Enrich vector chunks with canonical reference facts so the LLM always
+      // has access to core business rules even when chunks are incomplete.
+      const enrichedContext = `${aiService.REFERENTNE_CINJENICE}\n\n--- RELEVANTNI DOKUMENTI ---\n\n${knowledge.context}`;
+      customerMessage = await aiService.generateGroundedAnswer(maskedMsg, enrichedContext, groundedOpts);
 
       if (customerMessage) {
         const norm = normalizeForComparison(customerMessage);
@@ -195,13 +234,18 @@ async function resolveAutomatedOutcome(session, userMessage, opts = {}) {
 
   // Fallback: reference facts grounded answer
   if (!customerMessage) {
-    const fallbackAnswer = await aiService.generateGroundedAnswer(maskedMsg, REFERENTNE_CINJENICE, groundedOpts);
+    const fallbackAnswer = await aiService.generateGroundedAnswer(maskedMsg, aiService.REFERENTNE_CINJENICE, groundedOpts);
     if (fallbackAnswer) {
       const norm = normalizeForComparison(fallbackAnswer);
       if (!/(ne mogu|nisam siguran|nemam informacij|pouzdano potvrditi)/.test(norm)) {
         customerMessage = fallbackAnswer;
       }
     }
+  }
+
+  // Cache the successful answer for future identical queries
+  if (customerMessage && cacheKey) {
+    responseCacheService.set(cacheKey, customerMessage);
   }
 
   const links = buildDirectWebsiteLinks(userMessage, { knowledge });
@@ -234,10 +278,10 @@ async function resolveAutomatedOutcome(session, userMessage, opts = {}) {
 }
 
 function tryReferenceFacts(normMsg, maskedMsg, groundedOpts) {
-  if (/^(hvala|pozdrav|dobar dan|bok)[.!?\s]*$/.test(normMsg)) {
+  if (/^(hvala|pozdrav|dobar dan|dobro jutro|dobro vece|zdravo|bok|cao|halo)[.!?\s]*$/.test(normMsg)) {
     return {
       type: "safe_answer",
-      customerMessage: "Pozdrav! 👋 Dobrodošli u Antikvarijat Libar. Kako vam mogu pomoći?",
+      customerMessage: "Pozdrav! Dobrodošli u Antikvarijat Libar. Kako vam mogu pomoći?",
       stateTag: "ai_active", reason: "greeting", extraTags: []
     };
   }
@@ -312,7 +356,8 @@ app.post("/api/chat/start", rateLimiter, inputSanitizer, chatUpload.array("attac
       session: serializeSession(session),
       messages: session.messages,
       conversationState: session.conversationState,
-      links: outcome.links || []
+      links: outcome.links || [],
+      retrieval: knowledge ? { topScore: knowledge.topScore, source: knowledge.primarySource, articleCount: knowledge.totalMatches } : null
     });
   } catch (error) {
     log.error("chat_start_failed", { message: error.message, stack: error.stack });
@@ -509,7 +554,7 @@ app.post("/api/zendesk/webhook", async (req, res) => {
       }
 
       if (!answer) {
-        answer = await aiService.generateGroundedAnswer(latestMessage, REFERENTNE_CINJENICE, { channelType: normalizedChannel });
+        answer = await aiService.generateGroundedAnswer(latestMessage, aiService.REFERENTNE_CINJENICE, { channelType: normalizedChannel });
         if (answer) {
           const norm = normalizeForComparison(answer);
           if (/(ne mogu|nisam siguran|nemam informacij)/.test(norm)) answer = null;
@@ -541,18 +586,36 @@ app.post("/api/zendesk/webhook", async (req, res) => {
 // ─── GET /health ──────────────────────────────────────────────
 
 app.get("/health", async (req, res) => {
-  const vectorConfig = knowledgeService.getVectorConfigSummary?.();
-  const checks = { zendesk: false };
+  const checks = { zendesk: false, vector: false, embedding: false };
+  const details = {};
 
   try {
-    const summary = zendeskService.getZendeskConfigSummary();
-    checks.zendesk = Boolean(summary.email);
-  } catch { /* pass */ }
+    const zendeskPing = await zendeskService.ping();
+    checks.zendesk = zendeskPing.ok;
+    details.zendesk = zendeskPing.ok ? "reachable" : (zendeskPing.error || "unreachable");
+  } catch (err) { details.zendesk = err.message; }
 
-  const healthy = checks.zendesk !== false;
-  res.status(healthy ? 200 : 503).json({
-    success: healthy, status: healthy ? "ok" : "degraded",
-    checks, vectorConfig,
+  try {
+    const vectorPing = await vectorKnowledgeService.ping();
+    checks.vector = vectorPing.ok;
+    details.vector = vectorPing.ok ? "reachable" : (vectorPing.error || "unreachable");
+  } catch (err) { details.vector = err.message; }
+
+  try {
+    const embedPing = embeddingService.ping();
+    checks.embedding = embedPing.ok;
+    details.embedding = embedPing.ok ? "configured" : "not_configured";
+  } catch (err) { details.embedding = err.message; }
+
+  const allOk = checks.zendesk && checks.vector && checks.embedding;
+  const anyOk = checks.zendesk || checks.vector || checks.embedding;
+  const status = allOk ? "ok" : (anyOk ? "degraded" : "down");
+  const code = allOk ? 200 : (anyOk ? 503 : 503);
+
+  res.status(code).json({
+    success: allOk, status,
+    checks, details,
+    vectorConfig: vectorKnowledgeService.getVectorConfigSummary?.() || {},
     activeSessions: chatSessions.size,
     uptime: Math.floor(process.uptime())
   });
@@ -611,7 +674,7 @@ app.use("/widget", express.static("public"));
 
 const PORT = env.PORT;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   log.info("server_started", { port: PORT });
 
   // Restore persisted sessions
@@ -620,9 +683,34 @@ app.listen(PORT, () => {
   }
   log.info("sessions_restored", { count: chatSessions.size });
 
+  // Restore rate limit state
+  if (runtimeState.rateLimits) {
+    rateLimiter.load(runtimeState.rateLimits);
+  }
+
   // Schedule vector sync
   setTimeout(runVectorSync, 10000);
   setInterval(runVectorSync, VECTOR_SYNC_INTERVAL_MS);
 });
+
+function gracefulShutdown(signal) {
+  log.info("graceful_shutdown", { signal });
+  runtimeStore.saveRuntimeState({
+    ...runtimeState,
+    sessions: [...chatSessions.values()].map(serializeSession),
+    rateLimits: rateLimiter.getState()
+  });
+  server.close(() => {
+    log.info("server_closed");
+    process.exit(0);
+  });
+  setTimeout(() => {
+    log.error("forced_shutdown");
+    process.exit(1);
+  }, 10000);
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
 module.exports = app;

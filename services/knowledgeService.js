@@ -1,86 +1,157 @@
 /**
  * Knowledge Service (Skill §8 — Hybrid Search Orchestrator)
  *
- * Merges results from three knowledge sources:
- * 1. Vector (Supabase pgvector) — semantic
- * 2. OneDrive — lexical
- * 3. Zendesk Help Center — lexical
+ * Canonical model: OneDrive documents are synced into a single vector/FTS
+ * table. Vector search is PRIMARY; live OneDrive and Zendesk HC are FALLBACK.
  *
- * Deduplicates, re-ranks, and formats the context block for LLM.
+ * Why: All three sources serve the same corpus. Three scales → noise.
+ * One canonical corpus + hybrid (semantic + FTS) inside that corpus → accuracy.
  */
 const oneDriveService = require("./oneDriveService");
 const vectorKnowledgeService = require("./vectorKnowledgeService");
 const zendeskService = require("./zendeskService");
+const { scoreSearchText } = require("./searchUtils");
 const env = require("../config/env");
+const log = require("../config/logger");
 
 const CONTEXT_ITEMS = env.KNOWLEDGE_CONTEXT_ITEMS;
+const MIN_CONFIDENCE = 0.50; // 0–1 confidence gate; below this → try fallback
 
 function normalizeKnowledgeArticles(result) {
   return Array.isArray(result?.articles) ? result.articles : [];
 }
 
-function normalizeSourceArticles(result, source) {
-  return normalizeKnowledgeArticles(result).map((entry) => ({
-    ...entry,
-    source: entry?.source || source
-  }));
-}
-
 function deduplicateArticles(articles = []) {
   const seen = new Map();
   for (const article of articles) {
-    const key = `${(article.title || "").toLowerCase().trim()}::${article.source || ""}`;
+    const key = `${(article.title || "").toLowerCase().trim()}::${(article.body || "").slice(0, 80)}`;
     const existing = seen.get(key);
-    if (!existing || (article.score || 0) > (existing.score || 0)) {
+    if (!existing || (article.confidence || 0) > (existing.confidence || 0)) {
       seen.set(key, article);
     }
   }
   return [...seen.values()];
 }
 
-function mergeKnowledgeResults(results = []) {
-  const all = results.flatMap(({ result, source }) => normalizeSourceArticles(result, source));
-  const deduped = deduplicateArticles(all);
-  const candidates = deduped
-    .sort((a, b) => {
-      const diff = (b.score || 0) - (a.score || 0);
-      if (diff !== 0) return diff;
-      return a.source === "onedrive" ? -1 : 1;
-    })
-    .slice(0, CONTEXT_ITEMS);
+function computeRRF(rank, k = 60) {
+  return 1 / (k + rank);
+}
 
-  if (!candidates.length) return null;
+function rankBasedMerge(vectorArticles = [], fallbackArticles = [], k = 60) {
+  // RRF merge: rank each list independently, then fuse.
+  const rrfScores = new Map();
 
-  const context = candidates.map((entry, i) => [
-    `Izvor ${i + 1} (${entry.source === "zendesk" ? "Zendesk Help Center" : "OneDrive"}):`,
+  vectorArticles.forEach((a, rank) => {
+    const key = `${(a.title || "").toLowerCase().trim()}::${(a.body || "").slice(0, 80)}`;
+    if (!rrfScores.has(key)) rrfScores.set(key, { entry: a, score: 0 });
+    rrfScores.get(key).score += computeRRF(rank + 1, k);
+  });
+
+  fallbackArticles.forEach((a, rank) => {
+    const key = `${(a.title || "").toLowerCase().trim()}::${(a.body || "").slice(0, 80)}`;
+    if (!rrfScores.has(key)) rrfScores.set(key, { entry: a, score: 0 });
+    rrfScores.get(key).score += computeRRF(rank + 1, k);
+  });
+
+  return [...rrfScores.values()]
+    .map(({ entry, score }) => ({ ...entry, rrfScore: score }))
+    .sort((a, b) => b.rrfScore - a.rrfScore);
+}
+
+function lightRerank(candidates, query = "") {
+  if (!query || !candidates.length) return candidates;
+  return candidates
+    .map((c) => ({
+      ...c,
+      _score: (c.rrfScore || c.confidence || 0.5)
+        + (scoreSearchText(`${c.title || ""} ${c.body || ""}`, query) / 2000)
+    }))
+    .sort((a, b) => b._score - a._score);
+}
+
+function buildContext(candidates) {
+  return candidates.map((entry, i) => [
+    `Izvor ${i + 1} (${entry.source === "zendesk" ? "Zendesk Help Center" : entry.source === "vector" ? "Vektorska baza" : "OneDrive"}):`,
     `Naslov: ${entry.title}`,
     `Sadržaj: ${entry.body}`
   ].filter(Boolean).join("\n")).join("\n\n");
+}
 
+function finalizeResult(candidates) {
+  if (!candidates.length) return null;
+  const primary = candidates[0];
   return {
-    context,
+    context: buildContext(candidates),
     articles: candidates,
-    topScore: candidates[0]?.score || 0,
+    topScore: primary.score || 0,          // 0–100 (backward compat for tracing)
+    topConfidence: primary.confidence || 0, // 0–1 (for gating decisions)
     totalMatches: candidates.length,
-    primarySource: candidates[0]?.source || null
+    primarySource: primary.source || null
   };
 }
 
 /**
- * Main entry point — parallel search across all sources.
+ * Main entry point — vector-first, fallback on lexical sources.
  */
 async function searchKnowledgeDetailed(query, options = {}) {
-  const [vectorKnowledge, oneDriveKnowledge, zendeskKnowledge] = await Promise.all([
-    vectorKnowledgeService.searchVectorKnowledgeDetailed(query, options),
-    oneDriveService.searchOneDriveDetailed(query, options),
-    zendeskService.searchHelpCenterDetailed(query, options)
-  ]);
+  // ── 1. PRIMARY: canonical vector + FTS hybrid search ──────────
+  let result = await vectorKnowledgeService.searchVectorKnowledgeDetailed(query, options);
+  let candidates = normalizeKnowledgeArticles(result);
 
-  return mergeKnowledgeResults([
-    { result: vectorKnowledge, source: "onedrive" },
-    { result: oneDriveKnowledge, source: "onedrive" },
-    { result: zendeskKnowledge, source: "zendesk" }
-  ]);
+  const topConfidence = candidates.length ? Math.max(...candidates.map((c) => c.confidence || 0)) : 0;
+  const hasStrongVector = candidates.length >= 2 && topConfidence >= MIN_CONFIDENCE;
+
+  // ── 2. FALLBACK: only if vector is empty, unconfident, or fails ─
+  if (!hasStrongVector) {
+    let fallback = [];
+    try {
+      // Try OneDrive live lexical (same corpus, different retrieval path)
+      const od = await oneDriveService.searchOneDriveDetailed(query, options);
+      if (od?.articles?.length) fallback.push(...od.articles.map((a) => ({
+        ...a,
+        confidence: Math.min(1, ((a.score || 0) + 20) / 150), // normalize 0–1
+        source: a.source || "onedrive"
+      })));
+    } catch (e) { /* fallback soft-fail */ }
+
+    if (!fallback.length) {
+      try {
+        const zd = await zendeskService.searchHelpCenterDetailed(query, options);
+        if (zd?.articles?.length) fallback.push(...zd.articles.map((a) => ({
+          ...a,
+          confidence: Math.min(1, ((a.score || 0) + 20) / 150),
+          source: a.source || "zendesk"
+        })));
+      } catch (e) { /* fallback soft-fail */ }
+    }
+
+    if (candidates.length && fallback.length) {
+      // RRF-merge vector hits with lexical fallback
+      candidates = rankBasedMerge(candidates, fallback).slice(0, CONTEXT_ITEMS);
+    } else if (fallback.length) {
+      candidates = deduplicateArticles(fallback)
+        .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
+        .slice(0, CONTEXT_ITEMS);
+    }
+
+    if (candidates.length) {
+      candidates = lightRerank(candidates, query).slice(0, CONTEXT_ITEMS);
+    }
+  }
+
+  if (!candidates.length) return null;
+
+  // Logging for observability
+  const primarySource = candidates[0]?.source;
+  log.info("knowledge_retrieval", {
+    primarySource,
+    topConfidence: candidates[0]?.confidence || 0,
+    topScore: candidates[0]?.score || 0,
+    totalMatches: candidates.length,
+    hybridRpcUsed: true
+  });
+
+  return finalizeResult(candidates);
 }
 
 async function searchKnowledge(query, options = {}) {

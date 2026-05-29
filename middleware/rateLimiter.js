@@ -8,7 +8,7 @@ const env = require("../config/env");
 
 const WINDOW_MS = 60 * 1000;
 const MAX = env.RATE_LIMIT_MAX;
-const store = new Map();
+let store = new Map();
 
 function rateLimiter(req, res, next) {
   const ip = req.ip || req.connection?.remoteAddress || "unknown";
@@ -41,6 +41,27 @@ const cleanup = setInterval(() => {
 }, WINDOW_MS * 2);
 cleanup.unref?.();
 
+// Persist / restore helpers (for single-instance file-based state)
+function load(data = {}) {
+  store.clear();
+  const now = Date.now();
+  for (const [ip, entry] of Object.entries(data)) {
+    if (now - entry.windowStart <= WINDOW_MS * 2) {
+      store.set(ip, entry);
+    }
+  }
+}
+
+function getState() {
+  const state = {};
+  for (const [ip, entry] of store) {
+    state[ip] = entry;
+  }
+  return state;
+}
+
 rateLimiter.reset = () => store.clear();
+rateLimiter.load = load;
+rateLimiter.getState = getState;
 
 module.exports = rateLimiter;

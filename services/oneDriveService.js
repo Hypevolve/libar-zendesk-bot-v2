@@ -17,8 +17,8 @@ const oneDriveCache = { documents: null, expiresAt: 0 };
 
 function isConfigured() {
   const creds = [env.ONEDRIVE_TENANT_ID, env.ONEDRIVE_CLIENT_ID, env.ONEDRIVE_CLIENT_SECRET].every(Boolean);
-  const target = (env.ONEDRIVE_DRIVE_ID && env.ONEDRIVE_FOLDER_ID) || Boolean(env.ONEDRIVE_FOLDER_URL);
-  return creds && target;
+  const target = Boolean((env.ONEDRIVE_DRIVE_ID && env.ONEDRIVE_FOLDER_ID) || env.ONEDRIVE_FOLDER_URL);
+  return !!(creds && target);
 }
 
 function maskSecret(v = "") {

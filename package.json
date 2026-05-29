@@ -8,6 +8,9 @@
     "start": "node index.js",
     "dev": "node --watch index.js",
     "test": "NODE_ENV=test node --no-deprecation --test",
+    "test:unit": "NODE_ENV=test node --no-deprecation --test tests/*.test.js '!' tests/e2e.test.js '!' tests/integration.*.test.js",
+    "test:integration": "NODE_ENV=test node --no-deprecation --test tests/integration.*.test.js",
+    "test:e2e": "NODE_ENV=test node --no-deprecation --test tests/e2e.test.js",
     "test:coverage": "NODE_ENV=test node --no-deprecation --test --experimental-test-coverage",
     "sync:vector": "node scripts/sync-vector-knowledge.js"
   },

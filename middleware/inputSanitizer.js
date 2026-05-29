@@ -55,20 +55,26 @@ function clean(text) {
  */
 function middleware(req, res, next) {
   const message = req.body?.message;
-  if (!message) return next();
-
-  const result = check(message);
-  if (!result.safe) {
-    log.warn("input_blocked", {
-      reason: result.reason,
-      ip: req.ip,
-      messagePreview: String(message).slice(0, 100)
-    });
-    return res.status(400).json({
-      success: false,
-      error: "Poruka sadrži nedozvoljeni sadržaj."
-    });
+  if (message) {
+    const result = check(message);
+    if (!result.safe) {
+      log.warn("input_blocked", {
+        reason: result.reason,
+        ip: req.ip,
+        messagePreview: String(message).slice(0, 100)
+      });
+      return res.status(400).json({
+        success: false,
+        error: "Poruka sadrži nedozvoljeni sadržaj."
+      });
+    }
+    req.body.message = clean(message);
   }
+
+  // Clean other text fields that may reach the LLM
+  if (req.body?.subject) req.body.subject = clean(req.body.subject);
+  if (req.body?.name) req.body.name = clean(req.body.name);
+  if (req.body?.entryIntent) req.body.entryIntent = clean(req.body.entryIntent);
 
   return next();
 }

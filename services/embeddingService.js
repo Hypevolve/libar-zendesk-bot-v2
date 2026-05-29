@@ -97,4 +97,8 @@ function getEmbeddingConfigSummary() {
   };
 }
 
-module.exports = { embedText, embedTexts, getEmbeddingConfigSummary, isConfigured, normalizeEmbeddingInput };
+function ping() {
+  return { ok: isConfigured(), provider: PROVIDER, model: MODEL };
+}
+
+module.exports = { embedText, embedTexts, getEmbeddingConfigSummary, isConfigured, normalizeEmbeddingInput, ping };

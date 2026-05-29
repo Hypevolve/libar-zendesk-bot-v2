@@ -102,7 +102,8 @@ function validateAnswerQuality(answer, { knowledgeContext = "", userMessage = ""
 
   // 6. Token overlap with knowledge (Skill §7.5 — Hallucination fix)
   if (knowledgeContext) {
-    const answerTokens = new Set(normalised.split(/\s+/).filter((t) => t.length > 3));
+    const answerWords = normalised.split(/\s+/).filter((t) => t.length > 3);
+    const answerTokens = new Set(answerWords);
     const knowledgeTokens = new Set(knowledgeContext.toLowerCase().split(/\s+/).filter((t) => t.length > 3));
 
     if (answerTokens.size > 0 && knowledgeTokens.size > 0) {
@@ -111,8 +112,10 @@ function validateAnswerQuality(answer, { knowledgeContext = "", userMessage = ""
         if (knowledgeTokens.has(token)) overlap++;
       }
       const ratio = overlap / answerTokens.size;
+      // Short answers paraphrase more; use lower threshold.
+      const threshold = answerWords.length < 15 ? 0.04 : 0.08;
 
-      if (ratio < 0.15) {
+      if (ratio < threshold) {
         return { valid: false, reason: "low_knowledge_overlap" };
       }
     }

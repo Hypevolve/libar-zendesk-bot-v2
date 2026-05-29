@@ -408,11 +408,20 @@ function resetHelpCenterCache() {
   helpCenterCache.expiresAt = 0;
 }
 
+async function ping() {
+  try {
+    const res = await zendeskClient.get("/api/v2/users/me.json");
+    return { ok: true, user: res.data?.user?.name || "unknown" };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+}
+
 module.exports = {
   addInternalNote, addTagAndNote, addBotReplyToTicket, addCustomerMessageToTicket,
   createChatTicket, fetchAllHelpCenterArticles, getZendeskConfigSummary,
   getPublicTicketComments, getRequesterProfile, getTicketAudits, getTicketSummary,
-  replyToTicket, resetHelpCenterCache, searchHelpCenter, searchHelpCenterDetailed,
+  ping, replyToTicket, resetHelpCenterCache, searchHelpCenter, searchHelpCenterDetailed,
   setTicketTags, solveTicket, testZendeskTicketAccess, updateConversationState,
   uploadAttachments, verifyWebhookToken
 };

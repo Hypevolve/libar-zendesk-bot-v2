@@ -16,7 +16,7 @@ const SUPABASE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
 const MATCH_COUNT = env.VECTOR_MATCH_COUNT;
 const MIN_SCORE = env.VECTOR_MIN_SCORE;
 const DOMAIN_MIN_SCORE = parseFloat(process.env.VECTOR_DOMAIN_AWARE_MIN_SCORE || "0.58");
-const FALLBACK_MIN_SCORE = parseFloat(process.env.VECTOR_FALLBACK_MIN_SCORE || "0.55");
+const FALLBACK_MIN_SCORE = parseFloat(process.env.VECTOR_FALLBACK_MIN_SCORE || "0.40");
 const CONTEXT_ITEMS = env.VECTOR_CONTEXT_ITEMS;
 const CHUNK_MAX = env.VECTOR_CHUNK_MAX_CHARS;
 const CHUNK_OVERLAP = env.VECTOR_CHUNK_OVERLAP_CHARS;
@@ -78,7 +78,7 @@ function chunkText(value = "", max = CHUNK_MAX) {
   if (!normalised) return [];
 
   const paragraphs = normalised
-    .split(/\n{2,}|\n(?=\s*(?:ČLANAK|CLANAK|\d+[.)]|[-*]\s))/i)
+    .split(/\n{2,}|\n(?=\s*(?:ČLANAK|CLANAK|UVJETI|PRAVILA|NAČIN|DOSTAVA|OTKUP|KUPNJA|PLAĆANJE|REKLAMACIJA|POVRAT|ZAMJENA|LOJALNOST|POPUST|\d+[.)]|[-*]\s))/i)
     .map(normalizeWhitespace).filter(Boolean);
   const chunks = [];
   let cur = "";
@@ -103,12 +103,32 @@ function chunkText(value = "", max = CHUNK_MAX) {
 // ─── Domain Inference ─────────────────────────────────────────
 
 function inferDomain(doc = {}, chunkBody = "") {
-  const text = normalizeForComparison(`${doc.title || ""} ${chunkBody || doc.body || ""}`);
-  if (/(otkup|prodaj|isplata|aircash|dostavljac|kurir|naljepnic|online otkup)/.test(text)) return "buyback";
-  if (/(dostava|isporuk|gls|boxnow|paketomat|tracking|pouzec)/.test(text)) return "delivery";
-  if (/(narudzb|racun|reklamacij|povrat|zamjen)/.test(text)) return "order";
-  if (/(radno vrijeme|kontakt|telefon|email|adresa|placanj)/.test(text)) return "support_info";
-  return "general";
+  const bodyText = normalizeForComparison(chunkBody || doc.body || "");
+  const titleText = normalizeForComparison(doc.title || "");
+
+  const scores = { buyback: 0, delivery: 0, order: 0, support_info: 0 };
+
+  // Body matches are weighted higher (2 pts) — chunk content is more specific than title
+  if (/(otkup|prodaj|isplata|aircash|dostavljac|kurir|naljepnic|online otkup)/.test(bodyText)) scores.buyback += 2;
+  if (/(dostava|isporuk|gls|boxnow|paketomat|tracking|pouzec)/.test(bodyText)) scores.delivery += 2;
+  if (/(narudzb|racun|reklamacij|povrat|zamjen)/.test(bodyText)) scores.order += 2;
+  if (/(radno vrijeme|kontakt|telefon|email|adresa|placanj)/.test(bodyText)) scores.support_info += 2;
+
+  // Title matches add smaller weight (1 pt)
+  if (/(otkup|prodaj|isplata|aircash|dostavljac|kurir|naljepnic|online otkup)/.test(titleText)) scores.buyback += 1;
+  if (/(dostava|isporuk|gls|boxnow|paketomat|tracking|pouzec)/.test(titleText)) scores.delivery += 1;
+  if (/(narudzb|racun|reklamacij|povrat|zamjen)/.test(titleText)) scores.order += 1;
+  if (/(radno vrijeme|kontakt|telefon|email|adresa|placanj)/.test(titleText)) scores.support_info += 1;
+
+  let best = "general";
+  let bestScore = 0;
+  for (const [domain, score] of Object.entries(scores)) {
+    if (score > bestScore) {
+      bestScore = score;
+      best = domain;
+    }
+  }
+  return best;
 }
 
 function buildDocumentChunks(doc = {}) {
@@ -176,7 +196,15 @@ async function indexDocument(doc, { force = false, existing = null } = {}) {
   await deleteChunksForDocument(row.id);
   if (!chunks.length) return { status: "indexed", documentId: row.id, chunks: 0 };
 
-  const embeddings = await embeddingService.embedTexts(chunks.map((c) => `${c.title}\n\n${c.body}`));
+  const embeddings = await embeddingService.embedTexts(chunks.map((c) => {
+    const domainLabel = {
+      buyback: "otkupu i prodaji udžbenika",
+      delivery: "dostavi i isporuci",
+      order: "narudžbama i reklamacijama",
+      support_info: "kontakt informacijama i radnom vremenu"
+    }[c.domain] || "općim informacijama";
+    return `Dokument: "${c.title}". Odlomak govori o: ${domainLabel}. Sadržaj: ${c.body}`;
+  }));
   if (embeddings.length !== chunks.length) throw new Error(`Embedding count mismatch for ${doc.title}.`);
 
   await insertChunkRows(chunks.map((c, i) => ({
@@ -237,11 +265,53 @@ function buildVectorMatchAttempts(options = {}) {
   if (domain && DOMAIN_MIN_SCORE < MIN_SCORE) attempts.push({ threshold: DOMAIN_MIN_SCORE, domainFilter: domain, reason: "domain_aware_lower" });
   if (domain) attempts.push({ threshold: MIN_SCORE, domainFilter: null, reason: "no_domain_filter" });
   if (fb < MIN_SCORE) attempts.push({ threshold: fb, domainFilter: null, reason: "lower_threshold" });
+  // Last resort: catch weakly related chunks that reranking / LLM can filter
+  attempts.push({ threshold: 0.30, domainFilter: null, reason: "last_resort" });
   return attempts;
 }
 
-async function matchKnowledgeChunks(embedding, attempt) {
-  const res = await getSupabaseClient().post("/rest/v1/rpc/match_knowledge_chunks", {
+// Hybrid RPC availability flag — flips to false if the function is missing
+// (e.g. migration not yet applied), so we gracefully fall back to vector-only.
+let hybridRpcAvailable = true;
+
+function isMissingFunctionError(err) {
+  const status = err?.response?.status;
+  const payload = JSON.stringify(err?.response?.data || "");
+  return status === 404 || /PGRST202|could not find the function|does not exist/i.test(payload);
+}
+
+async function matchKnowledgeChunks(embedding, queryText, attempt) {
+  const client = getSupabaseClient();
+
+  if (hybridRpcAvailable) {
+    try {
+      const res = await client.post("/rest/v1/rpc/hybrid_match_knowledge_chunks", {
+        query_embedding: embedding, query_text: queryText || "",
+        match_count: MATCH_COUNT, match_threshold: attempt.threshold,
+        filter_source: "onedrive", filter_domain: attempt.domainFilter
+      });
+      const rows = Array.isArray(res.data) ? res.data : [];
+      // If hybrid returns empty but the function exists, also try pure vector RPC
+      // (hybrid lexical CTE can be too strict with Croatian inflection)
+      if (!rows.length) {
+        const vres = await client.post("/rest/v1/rpc/match_knowledge_chunks", {
+          query_embedding: embedding, match_count: MATCH_COUNT,
+          match_threshold: attempt.threshold, filter_source: "onedrive", filter_domain: attempt.domainFilter
+        });
+        return Array.isArray(vres.data) ? vres.data : [];
+      }
+      return rows;
+    } catch (err) {
+      if (isMissingFunctionError(err)) {
+        hybridRpcAvailable = false;
+        log.warn("hybrid_rpc_unavailable_fallback_to_vector", { message: err.message });
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  const res = await client.post("/rest/v1/rpc/match_knowledge_chunks", {
     query_embedding: embedding, match_count: MATCH_COUNT,
     match_threshold: attempt.threshold, filter_source: "onedrive", filter_domain: attempt.domainFilter
   });
@@ -259,32 +329,49 @@ async function searchVectorKnowledgeDetailed(query, options = {}) {
     let rows = [];
     let matched = null;
     for (const attempt of buildVectorMatchAttempts(options)) {
-      rows = await matchKnowledgeChunks(embedding, attempt);
+      rows = await matchKnowledgeChunks(embedding, vq, attempt);
       if (rows.length) { matched = attempt; break; }
     }
     if (!rows.length) return null;
 
-    const articles = rows.slice(0, CONTEXT_ITEMS).map((r) => ({
-      id: r.chunk_id || r.id || null, title: r.title || "OneDrive dokument",
-      body: r.body || "", score: Math.round(Number(r.similarity || 0) * 100),
-      source: "onedrive", url: r.url || null, retrieval: "vector",
-      retrievalTier: matched?.reason || "default", domain: r.domain || null, documentId: r.document_id || null
-    }));
+    const articles = rows.slice(0, CONTEXT_ITEMS).map((r) => {
+      const similarity = Number(r.similarity || 0);
+      const lexical = Number(r.lexical_rank || 0);
+      // Normalized 0–1 confidence: semantic similarity is primary; a strong
+      // lexical match (exact tokens) can lift a lexical-only hit.
+      const confidence = Math.max(similarity, Math.min(1, lexical * 4));
+      return {
+        id: r.chunk_id || r.id || null, title: r.title || "OneDrive dokument",
+        body: r.body || "", score: Math.round(confidence * 100), confidence,
+        similarity, lexicalRank: lexical, rrfScore: Number(r.rrf_score || 0),
+        source: "vector", url: r.url || null, retrieval: "vector",
+        retrievalTier: matched?.reason || "default", domain: r.domain || null, documentId: r.document_id || null
+      };
+    });
 
     const context = articles.map((a, i) => [
       `Dokument ${i + 1}:`, "Izvor: OneDrive vector",
       `Naslov: ${a.title}`, `Relevantnost: ${a.score}`, `Sadržaj: ${a.body}`
     ].join("\n")).join("\n\n");
 
-    return { context, articles, topScore: articles[0]?.score || 0, totalMatches: articles.length, primarySource: "onedrive", retrievalTier: matched?.reason || "default" };
+    return { context, articles, topScore: articles[0]?.score || 0, totalMatches: articles.length, primarySource: "vector", retrievalTier: matched?.reason || "default" };
   } catch (error) {
     log.error("vector_search_failed", { message: error.message, status: error.response?.status });
     return null;
   }
 }
 
+async function ping() {
+  try {
+    await getSupabaseClient().get("/rest/v1/kb_documents?select=id&limit=1");
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+}
+
 module.exports = {
   buildDocumentChunks, getVectorConfigSummary, isConfigured,
-  searchVectorKnowledgeDetailed, syncOneDriveKnowledge,
+  searchVectorKnowledgeDetailed, syncOneDriveKnowledge, ping,
   __internal: { chunkText, inferDomain, buildVectorQuery, buildVectorMatchAttempts, normalizeDomainFilter, hashText }
 };

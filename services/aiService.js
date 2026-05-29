@@ -174,10 +174,17 @@ const REFERENTNE_CINJENICE = [
   "- Telefon: 031/201-230",
   "- Online plaćanje: pouzeće putem GLS-a ili CorvusPay",
   "- Plaćanje u poslovnici: gotovina, MasterCard, Maestro, Visa",
-  "- Plaćanje na rate u poslovnici: Zaba i PBZ kartice do 6 rata",
+  "- Plaćanje na rate (obročno/rate): Zaba i PBZ kartice do 6 rata u poslovnici",
   "- SJEDI 5 program vjernosti: 5 prodanih udžbenika = besplatna dostava za taj nalog otkupa, 8 = 5% popust na kupnju, 11 = 10% popust na cijelu kupnju",
-  "- Otkup dostava: 5 ili više udžbenika besplatno, manje od 5 = 3,00 EUR (odbija se od iznosa otkupa)",
+  "- Otkup dostava: 4 ili više udžbenika besplatno, manje od 4 = 3,00 EUR (odbija se od iznosa otkupa)",
+  "- Online otkup: zapakirajte knjige u kutiju ili vrećicu, GLS kurir dolazi po paket na kućnu adresu",
   "- Otkup putem GLS dostavne službe; korisnik upisuje OIB i IBAN za isplatu",
+  "- Fizički otkup u poslovnici: donijeti udžbenike za srednju školu i osobnu iskaznicu",
+  "- Naručivanje udžbenika: putem webshop tražilice na antikvarijat-libar.com ili emailom na info@antikvarijat-libar.com",
+  "- Provjera dostupnosti knjiga: webshop tražilica i pretraživanje po naslovu, autoru ili ISBN, dostupnost na stranici artikla",
+  "- Povrat knjige u poslovnici: 14 dana od kupnje, donijeti račun i knjigu, zamjena ili povrat novca odmah",
+  "- Reklamacije oštećene knjige: podnijeti reklamaciju s fotografijom oštećenja i računom na email info@antikvarijat-libar.com ili donijeti u poslovnicu",
+  "- Isplata putem Aircash nije dostupna",
   "- Jednostrani raskid online kupnje: 14 dana od primitka robe, trošak povrata snosi kupac",
   "- Odgovor na upite: najkasnije 24 sata / 1 radni dan",
   "- Trgovac: Dante d.o.o., OIB: 20816309823"
@@ -407,10 +414,9 @@ async function rewriteStandaloneQuery(message, recentMessages = []) {
  */
 async function generateGroundedAnswer(message, context, options = {}) {
   try {
-    const trimmedContext = tokenBudget.trimContextToBudget(
-      context,
-      tokenBudget.estimateTokens(message) + 500
-    );
+    // Reserve tokens for: large system prompt (~1800 tok) + message + output margin (~200 tok)
+    const reservedTokens = tokenBudget.estimateTokens(message) + 2000;
+    const trimmedContext = tokenBudget.trimContextToBudget(context, reservedTokens);
 
     return await llmCall(
       buildGroundedAnswerPrompt(trimmedContext, options),
