@@ -1,0 +1,24 @@
+{
+  "name": "libar-zendesk-bot-v2",
+  "version": "2.0.0",
+  "description": "Enterprise-grade AI chatbot for Antikvarijat Libar – Zendesk + RAG + OpenRouter.",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "test": "NODE_ENV=test node --no-deprecation --test",
+    "test:coverage": "NODE_ENV=test node --no-deprecation --test --experimental-test-coverage",
+    "sync:vector": "node scripts/sync-vector-knowledge.js"
+  },
+  "keywords": ["zendesk", "openrouter", "express", "customer-support", "chatbot", "rag"],
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.8.4",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mammoth": "^1.12.0",
+    "multer": "^1.4.5-lts.1",
+    "openai": "^4.91.1"
+  }
+}

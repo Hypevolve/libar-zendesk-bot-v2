@@ -1,0 +1,1546 @@
+{
+  "sessions": [
+    {
+      "sessionId": "db88cb11-b419-46dd-96c8-e1924acedf34",
+      "ticketId": 89021,
+      "requesterId": 386186859511,
+      "requesterName": "Test",
+      "requesterEmail": "test@test.com",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Pozdrav, koliko traje dostava?",
+          "ts": "2026-05-28T12:53:01.921Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Dostava u Antikvarijatu Libar traje **1–2 radna dana (do 48 sati)**.  \nAko želite, mogu Vas uputiti na izbor dostave (GLS na adresu, GLS ili BoxNow paketomat) i sljedeće korake za narudžbu.",
+          "ts": "2026-05-28T12:53:01.921Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T12:52:49.967Z",
+      "updatedAt": "2026-05-28T12:53:01.921Z"
+    },
+    {
+      "sessionId": "5fc91871-fcd8-4b30-843a-39598ad0b934",
+      "ticketId": 89022,
+      "requesterId": 386186859511,
+      "requesterName": "Test",
+      "requesterEmail": "test@test.com",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Pozdrav, koliko traje dostava?",
+          "ts": "2026-05-28T12:53:25.635Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Rok dostave kod Antikvarijata Libar je 1–2 radna dana (do **48 sati**).\n\nAko trebate pomoć oko odabira načina dostave ili imate dodatna pitanja, javite nam se na 031/201-230 ili info@antikvarijat-libar.com.",
+          "ts": "2026-05-28T12:53:25.635Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T12:53:12.039Z",
+      "updatedAt": "2026-05-28T12:53:25.635Z"
+    },
+    {
+      "sessionId": "8f42f0ec-9c3c-4a96-b16e-7c5d8d54db76",
+      "ticketId": 89023,
+      "requesterId": 27770581727516,
+      "requesterName": "Test2",
+      "requesterEmail": "test2@test.com",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko traje dostava?",
+          "ts": "2026-05-28T12:54:16.078Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Dostava iz Antikvarijata Libar traje 1–2 radna dana (do 48 sati).\n\nAko trebate i opcije: GLS na adresu 5,97 EUR, GLS paketomat 3,75 EUR, BoxNow 3,25 EUR, a osobno preuzimanje u Osijeku je besplatno. Želite da preporučim opciju?",
+          "ts": "2026-05-28T12:54:16.078Z"
+        },
+        {
+          "role": "user",
+          "content": "Hvala!",
+          "ts": "2026-05-28T12:54:41.461Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Pozdrav! 👋 Dobrodošli u Antikvarijat Libar. Kako vam mogu pomoći?",
+          "ts": "2026-05-28T12:54:46.031Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T12:53:54.124Z",
+      "updatedAt": "2026-05-28T12:54:46.031Z"
+    },
+    {
+      "sessionId": "dc6f33be-9181-41bd-9546-eae900719191",
+      "ticketId": 89024,
+      "requesterId": 27770935224860,
+      "requesterName": "Test-A1",
+      "requesterEmail": "test-A1@libar.local",
+      "messages": [],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:05:21.182Z",
+      "updatedAt": "2026-05-28T13:05:21.182Z"
+    },
+    {
+      "sessionId": "3f797861-5129-445f-811d-78106e1a1dee",
+      "ticketId": 89025,
+      "requesterId": 27770935224860,
+      "requesterName": "Test-A1",
+      "requesterEmail": "test-A1@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koje knjige otkupljujete?",
+          "ts": "2026-05-28T13:07:50.630Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Antikvarijat Libar otkupljuje isključivo **udžbenike za srednju školu**. Ne otkupljujemo **knjige za osnovnu školu, romane, beletristiku ni radne bilježnice**.\n\nAko želite provjeru svojih naslova ili dogovoriti otkup, javite se na info@antikvarijat-libar.com ili 031/201-230, ili nas posjetite u Županijskoj 17, Osijek.",
+          "ts": "2026-05-28T13:07:50.630Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:07:31.470Z",
+      "updatedAt": "2026-05-28T13:07:50.630Z"
+    },
+    {
+      "sessionId": "363f5d76-0ea8-4e66-aca0-206b9b36a3fd",
+      "ticketId": 89026,
+      "requesterId": 27771019062940,
+      "requesterName": "Test-A2",
+      "requesterEmail": "test-A2@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Kako funkcionira online otkup?",
+          "ts": "2026-05-28T13:08:20.439Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Online otkup u Antikvarijatu Libar funkcionira ovako:\n1. Otvorite link: https://antikvarijat-libar.com/otkup-udzbenika/\n2. Skenirajte barkod svake knjige kamerom mobitela ili ručno upišite ISBN (13 znamenki).\n3. Sustav automatski prikaže otkupnu cijenu za svaku knjigu.\n4. Potvrdite košaricu i unesite podatke za dostavu i isplatu (OIB i IBAN).\n5. Odaberite datum kada GLS dolazi po paket.\n6. Zapakirajte knjige u kutiju/vrećicu i dobro zalijepite.\n7. Predajte paket GLS dostavljaču — on donosi naljepnicu, ne trebate ništa pisati.\n8. Nakon pregleda, isplatu izvršavamo isti dan.\n\n- Trošak slanja za otkup: za 5 ili više udžbenika je besplatno; za manje od 5 iznosi 3,00 EUR (oduzima se od iznosa otkupa).\n- Potvrda naloga stiže na email s detaljima; ako ne stigne u 15 minuta, provjerite spam ili pišite na info@antikvarijat-libar.com. Ako barkod ne radi ili je oštećen, pošaljite fotografiju knjige na isti email pa ćemo mi unijeti nalog.\n\nSljedeći korak: pokrenite otkup preko navedenog linka. Ako trebate pomoć, Antikvarijat Libar Vam je na raspolaganju.",
+          "ts": "2026-05-28T13:08:20.439Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:07:53.715Z",
+      "updatedAt": "2026-05-28T13:08:20.439Z"
+    },
+    {
+      "sessionId": "9f7c5444-fae1-4370-be53-3f84ec377d65",
+      "ticketId": 89027,
+      "requesterId": 27771021727132,
+      "requesterName": "Test-A3",
+      "requesterEmail": "test-A3@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Od koliko knjiga je besplatna dostava kod otkupa?",
+          "ts": "2026-05-28T13:08:45.726Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Besplatna dostava kod otkupa u Antikvarijatu Libar vrijedi za **4 ili više knjiga**.  \nZa **3 ili manje** knjige dostava je **2,70 EUR**.\n\nŽelite li, mogu Vas ukratko provesti kroz korake online otkupa.",
+          "ts": "2026-05-28T13:08:45.726Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:08:24.019Z",
+      "updatedAt": "2026-05-28T13:08:45.726Z"
+    },
+    {
+      "sessionId": "83704825-9805-40fd-8bfb-fae4336497da",
+      "ticketId": 89028,
+      "requesterId": 27771036951580,
+      "requesterName": "Test-A4",
+      "requesterEmail": "test-A4@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Kada dobivam novac za online otkup?",
+          "ts": "2026-05-28T13:09:09.389Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Isplatu za online otkup dobivate **isti dan po primitku Vašeg paketa** ili najkasnije **sljedeći radni dan**. \n\nAko već niste, upišite OIB i IBAN za isplatu; za dodatna pitanja Antikvarijat Libar stoji Vam na raspolaganju na 031/201-230 ili info@antikvarijat-libar.com.",
+          "ts": "2026-05-28T13:09:09.389Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:08:48.873Z",
+      "updatedAt": "2026-05-28T13:09:09.389Z"
+    },
+    {
+      "sessionId": "8197dcb7-430c-4be1-8a8f-fa4831d871b0",
+      "ticketId": 89029,
+      "requesterId": 27771039080988,
+      "requesterName": "Test-A5",
+      "requesterEmail": "test-A5@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Što trebam ponijeti za fizički otkup?",
+          "ts": "2026-05-28T13:09:31.766Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Za fizički otkup dovoljno je donijeti **udžbenike za srednju školu** koje otkupljujemo. Napomena: **ne otkupljujemo** knjige za osnovnu školu, romane, beletristiku ni radne bilježnice. Isplata je odmah **u gotovini** u Antikvarijatu Libar.\n\nSljedeći korak: donesite knjige u poslovnicu, Županijska ulica 17, Osijek (pon–pet 08:00–20:00, sub 08:00–13:00). Za provjeru naslova stojimo na raspolaganju na 031/201-230 ili info@antikvarijat-libar.com.",
+          "ts": "2026-05-28T13:09:31.766Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:09:12.622Z",
+      "updatedAt": "2026-05-28T13:09:31.766Z"
+    },
+    {
+      "sessionId": "36ef1850-a030-4127-9927-2bf6e693e366",
+      "ticketId": 89030,
+      "requesterId": 27771031909532,
+      "requesterName": "Test-A6",
+      "requesterEmail": "test-A6@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko dobivam za otkup udžbenika matematike?",
+          "ts": "2026-05-28T13:10:08.819Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Hvala na pitanju! Nažalost, nemam dovoljno informacija da vam odgovorim. Proslijedit ću vaš upit našem timu koji će vam se javiti.",
+          "ts": "2026-05-28T13:10:08.819Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:09:34.914Z",
+      "updatedAt": "2026-05-28T13:10:08.819Z"
+    },
+    {
+      "sessionId": "722525bb-bc3f-49ec-a75a-5be7af9d8a53",
+      "ticketId": 89031,
+      "requesterId": 27771084862492,
+      "requesterName": "Test-B1",
+      "requesterEmail": "test-B1@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko traje dostava?",
+          "ts": "2026-05-28T13:10:26.163Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Dostava traje 1–2 radna dana (do 48 sati).\n\nAko Vam treba brže, u Antikvarijat Libar možete besplatno preuzeti osobno u Osijeku (Županijska 17). Za dodatna pitanja javite se na 031/201-230 ili info@antikvarijat-libar.com.",
+          "ts": "2026-05-28T13:10:26.163Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:10:12.068Z",
+      "updatedAt": "2026-05-28T13:10:26.163Z"
+    },
+    {
+      "sessionId": "388916cb-43bc-45a0-b67c-86b1a14c1fe3",
+      "ticketId": 89032,
+      "requesterId": 27770935224860,
+      "requesterName": "Test-A1",
+      "requesterEmail": "test-A1@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koje knjige otkupljujete?",
+          "ts": "2026-05-28T13:11:00.822Z"
+        },
+        {
+          "role": "assistant",
+          "content": "U Antikvarijatu Libar otkupljujemo isključivo udžbenike za srednju školu. Ne otkupljujemo knjige za osnovnu školu, romane, beletristiku ni radne bilježnice.\n\nKako prodati:\n1. Online otkup: šaljete knjige kurirskom službom; dostavljač donosi gotovu naljepnicu (Vi ništa ne pišete). Isplata isti dan po primitku paketa ili sljedeći radni dan.\n2. U poslovnici: donesete knjige na Županijsku 17, Osijek; isplata odmah u gotovini.\n\nAko trebate pomoć, javite se na 031/201-230 ili info@antikvarijat-libar.com.",
+          "ts": "2026-05-28T13:11:00.822Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:10:36.476Z",
+      "updatedAt": "2026-05-28T13:11:00.822Z"
+    },
+    {
+      "sessionId": "64d381c5-a916-4b6d-8940-28bfd5497737",
+      "ticketId": 89033,
+      "requesterId": 27771019062940,
+      "requesterName": "Test-A2",
+      "requesterEmail": "test-A2@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Kako funkcionira online otkup?",
+          "ts": "2026-05-28T13:11:25.552Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Evo kako funkcionira online otkup u Antikvarijat Libar:\n1. Otvorite link: https://antikvarijat-libar.com/otkup-udzbenika/\n2. Skenirajte barkod svake knjige ili ručno upišite **ISBN** (13 znamenki, 978/979).\n3. Sustav prikazuje otkupnu cijenu za svaku knjigu.\n4. Potvrdite košaricu i unesite podatke za dostavu i isplatu (**OIB i IBAN**).\n5. Odaberite datum dolaska dostavljača (**GLS**).\n6. Zapakirajte knjige i dobro zalijepite.\n7. Predajte paket dostavljaču — on donosi naljepnicu, ništa ne pišete na paket.\n\nNakon što primimo paket, pregledamo knjige i isplaćujemo isti dan. Dostava za otkup je besplatna za **5 ili više udžbenika**; za manje od 5 naplaćuje se **3,00 EUR** (oduzima se od iznosa otkupa). Ako skeniranje ne radi, pošaljite fotografije knjiga na info@antikvarijat-libar.com i mi ćemo kreirati nalog umjesto Vas.",
+          "ts": "2026-05-28T13:11:25.552Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:11:03.969Z",
+      "updatedAt": "2026-05-28T13:11:25.552Z"
+    },
+    {
+      "sessionId": "43b75858-52be-483d-8b04-318f5e54c766",
+      "ticketId": 89034,
+      "requesterId": 27771021727132,
+      "requesterName": "Test-A3",
+      "requesterEmail": "test-A3@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Od koliko knjiga je besplatna dostava kod otkupa?",
+          "ts": "2026-05-28T13:11:44.743Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Besplatna dostava kod otkupa je od **4 ili više knjiga**.\n\nZa **3 ili manje knjige** dostava iznosi **2,70 EUR**. Ako želite, Antikvarijat Libar može organizirati online otkup preko kurirske službe—dostavljač donosi gotovu naljepnicu, a Vi ništa ne pišete na paket.",
+          "ts": "2026-05-28T13:11:44.743Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:11:28.518Z",
+      "updatedAt": "2026-05-28T13:11:44.743Z"
+    },
+    {
+      "sessionId": "ef081ef0-eb2b-4b75-b151-b4254e3a9298",
+      "ticketId": 89035,
+      "requesterId": 27771036951580,
+      "requesterName": "Test-A4",
+      "requesterEmail": "test-A4@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Kada dobivam novac za online otkup?",
+          "ts": "2026-05-28T13:12:11.216Z"
+        },
+        {
+          "role": "assistant",
+          "content": "U Antikvarijatu Libar isplata za **online otkup** ide **isti dan po primitku paketa** ili najkasnije **sljedeći radni dan**.\n\nČim zaprimimo Vaš paket, obradimo otkup i isplata se izvrši. Ako trebate dodatne informacije, stojimo na raspolaganju na 031/201-230 ili info@antikvarijat-libar.com.",
+          "ts": "2026-05-28T13:12:11.216Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:11:47.870Z",
+      "updatedAt": "2026-05-28T13:12:11.216Z"
+    },
+    {
+      "sessionId": "46edc08c-b71b-434d-a7ee-7cc293403d67",
+      "ticketId": 89036,
+      "requesterId": 27771039080988,
+      "requesterName": "Test-A5",
+      "requesterEmail": "test-A5@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Što trebam ponijeti za fizički otkup?",
+          "ts": "2026-05-28T13:12:34.110Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Za fizički otkup u Antikvarijat Libar dovoljno je donijeti **udžbenike za srednju školu** u našu poslovnicu. **Ne otkupljujemo** knjige za osnovnu školu, romane, beletristiku ni radne bilježnice, a **isplata je odmah u gotovini**.\n\nSlobodno dođite u Županijsku 17, Osijek (pon–pet 08:00–20:00, sub 08:00–13:00). Ako trebate dodatne informacije, javite nam se na 031/201-230 ili info@antikvarijat-libar.com.",
+          "ts": "2026-05-28T13:12:34.111Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:12:14.300Z",
+      "updatedAt": "2026-05-28T13:12:34.111Z"
+    },
+    {
+      "sessionId": "1b82e59f-3f0c-4332-a2c7-12adaf94fbae",
+      "ticketId": 89037,
+      "requesterId": 27771031909532,
+      "requesterName": "Test-A6",
+      "requesterEmail": "test-A6@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko dobivam za otkup udžbenika matematike?",
+          "ts": "2026-05-28T13:13:11.796Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Hvala na pitanju! Nažalost, nemam dovoljno informacija da vam odgovorim. Proslijedit ću vaš upit našem timu koji će vam se javiti.",
+          "ts": "2026-05-28T13:13:11.796Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:12:37.287Z",
+      "updatedAt": "2026-05-28T13:13:11.796Z"
+    },
+    {
+      "sessionId": "dd135130-c42a-47ec-8636-3e4b8ead74ec",
+      "ticketId": 89038,
+      "requesterId": 27771084862492,
+      "requesterName": "Test-B1",
+      "requesterEmail": "test-B1@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko traje dostava?",
+          "ts": "2026-05-28T13:13:31.272Z"
+        },
+        {
+          "role": "assistant",
+          "content": "U Antikvarijatu Libar dostava traje **1–2 radna dana (do 48 sati)**. \n\nAko trebate provjeru statusa narudžbe, slobodno nas kontaktirajte na 031/201-230 ili info@antikvarijat-libar.com.",
+          "ts": "2026-05-28T13:13:31.272Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:13:14.769Z",
+      "updatedAt": "2026-05-28T13:13:31.272Z"
+    },
+    {
+      "sessionId": "dfcf43e0-5a48-4ac1-b7b5-1a06fed26825",
+      "ticketId": 89039,
+      "requesterId": 27771168649244,
+      "requesterName": "Test-B2",
+      "requesterEmail": "test-B2@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko košta dostava?",
+          "ts": "2026-05-28T13:14:04.631Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Za webshop narudžbe u Antikvarijatu Libar dostava iznosi:\n- GLS na kućnu adresu: 5,97 EUR\n- GLS paketomat: 3,75 EUR\n- BoxNow paketomat: 3,25 EUR\n- Osobno preuzimanje u Osijeku (Županijska 17): besplatno\n\nRok dostave je 1–2 radna dana. Trebate li pomoć oko odabira opcije dostave ili imate pitanje za slanje udžbenika na otkup, slobodno javite.",
+          "ts": "2026-05-28T13:14:04.631Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:13:34.631Z",
+      "updatedAt": "2026-05-28T13:14:04.631Z"
+    },
+    {
+      "sessionId": "ebd237bf-bca4-4bd2-ab3d-ad90530d205e",
+      "ticketId": 89040,
+      "requesterId": 27771202595612,
+      "requesterName": "Test-B3",
+      "requesterEmail": "test-B3@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koje opcije dostave imate?",
+          "ts": "2026-05-28T13:15:06.689Z"
+        },
+        {
+          "role": "assistant",
+          "content": "U Antikvarijatu Libar dostupne su ove opcije dostave:\n- GLS na kućnu adresu — 5,97 EUR\n- GLS paketomat — 3,75 EUR\n- BoxNow paketomat — 3,25 EUR\n- Osobno preuzimanje u Osijeku (Županijska 17) — besplatno\n\nRok dostave je 1–2 radna dana. Javite koja Vam opcija najviše odgovara pa ćemo Vas dalje uputiti.",
+          "ts": "2026-05-28T13:15:06.689Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:14:07.755Z",
+      "updatedAt": "2026-05-28T13:15:06.689Z"
+    },
+    {
+      "sessionId": "7a67ad7e-b5e7-4041-bb67-1133f1686262",
+      "ticketId": 89041,
+      "requesterId": 27771209200156,
+      "requesterName": "Test-C1",
+      "requesterEmail": "test-C1@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Kako naručiti udžbenike?",
+          "ts": "2026-05-28T13:15:28.213Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Evo kako najbrže naručiti udžbenike u Antikvarijat Libar:\n1. Posjetite https://antikvarijat-libar.com/kupi-udzbenike/\n2. Pretražite po **šifri (ISBN)**, naslovu ili autoru.\n3. Odaberite naslove i dodajte u **košaricu**.\n4. U košarici provjerite stavke i odaberite **način dostave**.\n5. Unesite podatke za dostavu i odaberite **način plaćanja**.\n6. Potvrdite narudžbu — primit ćete **email potvrdu**.\n\nZa brzu isporuku: dostava je u roku **1–2 radna dana**. Opcije i cijene dostave: GLS adresa 5,97 EUR, GLS paketomat 3,75 EUR, BoxNow 3,25 EUR, osobno preuzimanje u Osijeku besplatno. Plaćanje: pouzeće putem GLS-a ili online preko CorvusPay. Ako trebate pomoć, javite nam se na info@antikvarijat-libar.com ili 031/201-230.",
+          "ts": "2026-05-28T13:15:28.213Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:15:09.965Z",
+      "updatedAt": "2026-05-28T13:15:28.213Z"
+    },
+    {
+      "sessionId": "66a7c821-b5e4-4458-9dce-de2f1b1be34a",
+      "ticketId": 89042,
+      "requesterId": 27771238150812,
+      "requesterName": "Test-C2",
+      "requesterEmail": "test-C2@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Kako provjeriti je li knjiga na stanju?",
+          "ts": "2026-05-28T13:16:02.765Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Najbrže je provjeriti preko našeg **webshopa Antikvarijata Libar** pretragom po nazivu ili autoru. Ako ne možete pronaći naslov ili trebate potvrdu dostupnosti, javite nam se — rado ćemo provjeriti.\n\nKako dalje:\n1. Pretražite naš webshop po nazivu/autor–u.\n2. Ako trebate provjeru, pišite na info@antikvarijat-libar.com ili nazovite 031/201-230 (pon–pet 08:00–20:00, sub 08:00–13:00). Odgovaramo najkasnije u roku 1 radnog dana.",
+          "ts": "2026-05-28T13:16:02.765Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:15:31.794Z",
+      "updatedAt": "2026-05-28T13:16:02.765Z"
+    },
+    {
+      "sessionId": "04cf0a73-41c5-4dbd-b925-817f1ea68bdd",
+      "ticketId": 89043,
+      "requesterId": 27771213842588,
+      "requesterName": "Test-D1",
+      "requesterEmail": "test-D1@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Kako vratiti knjigu?",
+          "ts": "2026-05-28T13:16:33.641Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Možete vratiti knjigu u poslovnici ili online — Antikvarijat Libar rješava zamjene i povrate brzo i jasno.\n\n- Kupnja u poslovnici: Dođite na Županijska ulica 17, Osijek, ponesite račun i knjigu. Odmah rješavamo zamjenu ili povrat novca.\n- Online kupnja:\n  1. Pošaljite email na info@antikvarijat-libar.com.\n  2. Priložite fotografiju računa i fotografiju knjige te kratko opišite razlog povrata/zamjene.\n  3. Nakon pregleda organiziramo preuzimanje knjige na Vašoj adresi; po zaprimanju šaljemo ispravan udžbenik ili vraćamo novac na bankovni račun.\n\n- Naša greška (poslana kriva ili oštećena knjiga): Pošaljite email ili napišite u chatu uz fotografije knjiga i računa te kontakt broj; troškove preuzimanja i ponovne dostave snosi Antikvarijat Libar.\n- Jednostrani raskid online kupnje: Moguće u roku 14 dana od primitka robe; trošak povrata snosi kupac.\n- Ako je prošlo više od 2 tjedna: Javite nam se svejedno — u slučaju jasne greške s naše strane tražimo rješenje neovisno o roku.\n- Ako zamjena nije dostupna: Ponudit ćemo povrat novca.\n\nSljedeći korak: Recite jeste li kupnju napravili online ili u poslovnici te je li riječ o pogrešnom/oštećenom naslovu, pa ću Vas odmah uputiti na točan postupak. Odgovaramo najkasnije u roku 1 radnog dana.",
+          "ts": "2026-05-28T13:16:33.641Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:16:06.403Z",
+      "updatedAt": "2026-05-28T13:16:33.641Z"
+    },
+    {
+      "sessionId": "96e60fce-3dd9-4839-8097-95de66309d14",
+      "ticketId": 89044,
+      "requesterId": 27771263540380,
+      "requesterName": "Test-D2",
+      "requesterEmail": "test-D2@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Primio sam oštećenu knjigu",
+          "ts": "2026-05-28T13:17:26.056Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Žao nam je zbog oštećene knjige. Molimo da se javite podršci Antikvarijata Libar kako bismo to odmah riješili.\n\n- Kontakt: info@antikvarijat-libar.com ili 031/201-230  \n- Navedite **broj narudžbe** i **kratak opis oštećenja**  \n- Odgovaramo u roku **24 sata** (radno vrijeme: pon–pet 08:00–20:00, sub 08:00–13:00)",
+          "ts": "2026-05-28T13:17:26.056Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:16:36.787Z",
+      "updatedAt": "2026-05-28T13:17:26.056Z"
+    },
+    {
+      "sessionId": "6edd64fe-811d-4838-90f2-a27b2c8ec3a3",
+      "ticketId": 89045,
+      "requesterId": 27771287074460,
+      "requesterName": "Test-E1",
+      "requesterEmail": "test-E1@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koje je radno vrijeme?",
+          "ts": "2026-05-28T13:17:44.697Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Radno vrijeme Antikvarijata Libar: pon–pet 08:00–20:00, sub 08:00–13:00; nedjeljom i blagdanima ne radimo. Webshop radi 0–24.\n\nAko trebate dodatne informacije, slobodno nas kontaktirajte na info@antikvarijat-libar.com ili 031/201-230.",
+          "ts": "2026-05-28T13:17:44.697Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:17:29.267Z",
+      "updatedAt": "2026-05-28T13:17:44.697Z"
+    },
+    {
+      "sessionId": "b4956ad4-f0e6-4429-a156-86158c1541b4",
+      "ticketId": 89046,
+      "requesterId": 27771288390684,
+      "requesterName": "Test-E2",
+      "requesterEmail": "test-E2@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Gdje se nalazite?",
+          "ts": "2026-05-28T13:18:06.858Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Antikvarijat Libar nalazi se na adresi: **Županijska ulica 17, 31000 Osijek**.\n\nRadimo **pon–pet 08:00–20:00**, **sub 08:00–13:00**. Ako trebate dodatne upute ili provjeru dostupnosti, slobodno nas kontaktirajte na **031/201-230** ili **info@antikvarijat-libar.com**.",
+          "ts": "2026-05-28T13:18:06.858Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:17:47.948Z",
+      "updatedAt": "2026-05-28T13:18:06.858Z"
+    },
+    {
+      "sessionId": "c51083c0-1db3-4079-bc66-318ee803822c",
+      "ticketId": 89047,
+      "requesterId": 27771321040668,
+      "requesterName": "Test-E3",
+      "requesterEmail": "test-E3@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koji je kontakt telefon?",
+          "ts": "2026-05-28T13:18:20.921Z"
+        },
+        {
+          "role": "assistant",
+          "content": "**Telefon:** 031/201-230\n\nSlobodno nas nazovite u radnom vremenu Antikvarijata Libar: pon–pet 08:00–20:00, sub 08:00–13:00.",
+          "ts": "2026-05-28T13:18:20.921Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:18:10.398Z",
+      "updatedAt": "2026-05-28T13:18:20.921Z"
+    },
+    {
+      "sessionId": "b63728f8-c883-44c7-83ba-005f4842023a",
+      "ticketId": 89048,
+      "requesterId": 27771305744796,
+      "requesterName": "Test-F1",
+      "requesterEmail": "test-F1@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koje načine plaćanja prihvaćate?",
+          "ts": "2026-05-28T13:19:03.264Z"
+        },
+        {
+          "role": "assistant",
+          "content": "U Antikvarijatu Libar prihvaćamo: online plaćanje putem CorvusPay-a ili pouzećem preko GLS-a; u poslovnici gotovinu te kartice MasterCard, Maestro i Visa; plaćanje na rate karticama Zaba i PBZ do 6 rata. Aircash nije dostupan.\n\nAko trebate pomoć pri odabiru načina plaćanja, slobodno nam se javite na 031/201-230 ili info@antikvarijat-libar.com.",
+          "ts": "2026-05-28T13:19:03.264Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:18:24.379Z",
+      "updatedAt": "2026-05-28T13:19:03.264Z"
+    },
+    {
+      "sessionId": "b856b478-412f-49ac-9929-6da09e439c2a",
+      "ticketId": 89049,
+      "requesterId": 27771338614556,
+      "requesterName": "Test-F2",
+      "requesterEmail": "test-F2@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Kako funkcionira Sjedi 5?",
+          "ts": "2026-05-28T13:19:24.299Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Program vjernosti Sjedi 5 u Antikvarijatu Libar nagrađuje broj prodanih srednjoškolskih udžbenika u otkupu:\n- 5 prodanih udžbenika: **besplatna dostava za taj nalog otkupa**\n- 8 udžbenika: **5% popusta na kupnju**\n- 11 udžbenika: **10% popusta na cijelu kupnju**\n\nKako dalje: Sudjelujete tako da prodate srednjoškolske udžbenike kroz otkup (online ili u poslovnici). Za detalje ili provjeru naslova, javite nam se na 031/201-230 ili info@antikvarijat-libar.com.",
+          "ts": "2026-05-28T13:19:24.299Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:19:06.565Z",
+      "updatedAt": "2026-05-28T13:19:24.299Z"
+    },
+    {
+      "sessionId": "b8721980-d273-4421-9d75-0e5375d626c2",
+      "ticketId": 89050,
+      "requesterId": 27771315743004,
+      "requesterName": "Test-F3",
+      "requesterEmail": "test-F3@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Može li R1 račun?",
+          "ts": "2026-05-28T13:19:40.226Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Da, Antikvarijat Libar može izdati **R1 račun**. Nije automatski — pošaljite podatke tvrtke na info@antikvarijat-libar.com i izdat ćemo R1 uz Vašu narudžbu.",
+          "ts": "2026-05-28T13:19:40.226Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:19:27.332Z",
+      "updatedAt": "2026-05-28T13:19:40.226Z"
+    },
+    {
+      "sessionId": "8547aaa7-1502-4fde-80d2-1634405ce12e",
+      "ticketId": 89051,
+      "requesterId": 27771317121820,
+      "requesterName": "Test-F4",
+      "requesterEmail": "test-F4@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Može li isplata na Aircash?",
+          "ts": "2026-05-28T13:20:00.963Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Nažalost, isplata na **Aircash** nije dostupna u Antikvarijatu Libar. Za online otkup isplata ide na **IBAN** (isti dan po primitku paketa ili sljedeći radni dan), a u poslovnici isplaćujemo odmah u **gotovini**.\n\nAko želite pokrenuti otkup ili trebate pomoć, javite nam se na 031/201-230 ili info@antikvarijat-libar.com.",
+          "ts": "2026-05-28T13:20:00.963Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:19:43.289Z",
+      "updatedAt": "2026-05-28T13:20:00.963Z"
+    },
+    {
+      "sessionId": "49734b02-6a12-4cb6-9e9e-233cf9dd600a",
+      "ticketId": 89052,
+      "requesterId": 27771369290524,
+      "requesterName": "Test-G1",
+      "requesterEmail": "test-G1@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Pozdrav!",
+          "ts": "2026-05-28T13:20:05.311Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Pozdrav! 👋 Dobrodošli u Antikvarijat Libar. Kako vam mogu pomoći?",
+          "ts": "2026-05-28T13:20:05.311Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:20:04.254Z",
+      "updatedAt": "2026-05-28T13:20:05.311Z"
+    },
+    {
+      "sessionId": "3f4bdf50-36f4-41aa-a79b-cc3aeadedb8f",
+      "ticketId": 89053,
+      "requesterId": 27771358597916,
+      "requesterName": "Test-G2",
+      "requesterEmail": "test-G2@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko košta otkup matematike za 1. razred?",
+          "ts": "2026-05-28T13:20:35.095Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Hvala na pitanju! Nažalost, nemam dovoljno informacija da vam odgovorim. Proslijedit ću vaš upit našem timu koji će vam se javiti.",
+          "ts": "2026-05-28T13:20:35.095Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:20:08.413Z",
+      "updatedAt": "2026-05-28T13:20:35.095Z"
+    },
+    {
+      "sessionId": "971b3555-7ff1-4aee-9530-02b651863fcc",
+      "ticketId": 89054,
+      "requesterId": 27771401273884,
+      "requesterName": "Test-G3",
+      "requesterEmail": "test-G3@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koja je cijena udžbenika za 3. razred gimnazije?",
+          "ts": "2026-05-28T13:20:56.338Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Hvala na pitanju! Nažalost, nemam dovoljno informacija da vam odgovorim. Proslijedit ću vaš upit našem timu koji će vam se javiti.",
+          "ts": "2026-05-28T13:20:56.338Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:20:38.468Z",
+      "updatedAt": "2026-05-28T13:20:56.338Z"
+    },
+    {
+      "sessionId": "6873b4e0-d616-4a4d-87d1-ffbffe05f625",
+      "ticketId": 89055,
+      "requesterId": 27770935224860,
+      "requesterName": "Test-A1",
+      "requesterEmail": "test-A1@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koje knjige otkupljujete?",
+          "ts": "2026-05-28T13:22:51.949Z"
+        },
+        {
+          "role": "assistant",
+          "content": "U Antikvarijatu Libar otkupljujemo isključivo **udžbenike za srednju školu**. Ne otkupljujemo **knjige za osnovnu školu**, **romane i beletristiku** ni **radne bilježnice**.\n\nAko imate srednjoškolske udžbenike, možete ih donijeti u poslovnicu ili poslati kurirskom službom; isplata je odmah u gotovini (u poslovnici) ili isti/sljedeći radni dan po primitku paketa. Pošaljite nam popis naslova pa ćemo Vas dalje uputiti.",
+          "ts": "2026-05-28T13:22:51.949Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:22:29.367Z",
+      "updatedAt": "2026-05-28T13:22:51.949Z"
+    },
+    {
+      "sessionId": "52f5d986-3c1f-4da4-9861-7fd316846937",
+      "ticketId": 89056,
+      "requesterId": 27771019062940,
+      "requesterName": "Test-A2",
+      "requesterEmail": "test-A2@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Kako funkcionira online otkup?",
+          "ts": "2026-05-28T13:23:17.192Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Online otkup u Antikvarijatu Libar je brz i jednostavan — sve obavite od kuće, a paket preuzima GLS na Vašoj adresi.\n\n1. Otvorite https://antikvarijat-libar.com/otkup-udzbenika/\n2. Skenirajte barkod svake knjige mobitelom ili ručno upišite **ISBN** (13 znamenki, počinje s 978/979).\n3. Sustav odmah prikazuje otkupne cijene; potvrdite košaricu.\n4. Unesite podatke za dostavu i isplatu (upisujete **OIB** i **IBAN**).\n5. Odaberite datum dolaska dostavljača.\n6. Zapakirajte knjige i dobro zalijepite paket; naljepnicu donosi dostavljač (ne pišete ništa na paket).\n7. Nakon pregleda knjiga izvršimo isplatu na Vaš račun.\n\nDostava za otkup: za **5 ili više udžbenika besplatno**, za manje od 5 iznos je **3,00 EUR** (oduzima se od isplate). Nakon kreiranja naloga stiže Vam potvrda e‑poštom u roku ~15 minuta — ako ne stigne, provjerite spam ili nam pišite na info@antikvarijat-libar.com. Želite li odmah započeti, posjetite gornji link; za bilo kakva pitanja stojimo na raspolaganju.",
+          "ts": "2026-05-28T13:23:17.192Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:22:55.017Z",
+      "updatedAt": "2026-05-28T13:23:17.192Z"
+    },
+    {
+      "sessionId": "d37f60f6-5110-419e-a76b-0a76036c4d57",
+      "ticketId": 89057,
+      "requesterId": 27771021727132,
+      "requesterName": "Test-A3",
+      "requesterEmail": "test-A3@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Od koliko knjiga je besplatna dostava kod otkupa?",
+          "ts": "2026-05-28T13:23:36.123Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Hvala na pitanju! Nažalost, nemam dovoljno informacija da vam odgovorim. Proslijedit ću vaš upit našem timu koji će vam se javiti.",
+          "ts": "2026-05-28T13:23:36.123Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:23:20.157Z",
+      "updatedAt": "2026-05-28T13:23:36.123Z"
+    },
+    {
+      "sessionId": "b56835d9-6ea9-455a-972f-62fba6e1b8aa",
+      "ticketId": 89058,
+      "requesterId": 27771036951580,
+      "requesterName": "Test-A4",
+      "requesterEmail": "test-A4@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Kada dobivam novac za online otkup?",
+          "ts": "2026-05-28T13:23:53.548Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Isplatu za online otkup dobivate isti dan po primitku paketa ili najkasnije sljedeći radni dan u Antikvarijatu Libar.\n\nZa isplatu je potrebno navesti OIB i IBAN prilikom prijave otkupa. Ako trebate provjeru statusa, javite nam se na 031/201-230 ili info@antikvarijat-libar.com.",
+          "ts": "2026-05-28T13:23:53.548Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:23:39.253Z",
+      "updatedAt": "2026-05-28T13:23:53.548Z"
+    },
+    {
+      "sessionId": "a31c16a6-0821-403c-b19e-528d5566d6f5",
+      "ticketId": 89059,
+      "requesterId": 27771039080988,
+      "requesterName": "Test-A5",
+      "requesterEmail": "test-A5@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Što trebam ponijeti za fizički otkup?",
+          "ts": "2026-05-28T13:24:13.306Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Za **fizički otkup** dovoljno je donijeti **udžbenike za srednju školu** koje želite prodati. Ne otkupljujemo knjige za osnovnu školu, romane/beletristiku ni radne bilježnice. Isplata je odmah u **gotovini**.\n\nSljedeći korak: Posjetite Antikvarijat Libar, Županijska 17, Osijek (pon–pet 08:00–20:00, sub 08:00–13:00). Za dodatna pitanja: 031/201-230 ili info@antikvarijat-libar.com.",
+          "ts": "2026-05-28T13:24:13.306Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:23:56.714Z",
+      "updatedAt": "2026-05-28T13:24:13.306Z"
+    },
+    {
+      "sessionId": "f4fa7b12-b61e-408f-b410-e61a0d1509c8",
+      "ticketId": 89060,
+      "requesterId": 27771031909532,
+      "requesterName": "Test-A6",
+      "requesterEmail": "test-A6@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko dobivam za otkup udžbenika matematike?",
+          "ts": "2026-05-28T13:24:39.520Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Hvala na pitanju! Nažalost, nemam dovoljno informacija da vam odgovorim. Proslijedit ću vaš upit našem timu koji će vam se javiti.",
+          "ts": "2026-05-28T13:24:39.520Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:24:16.373Z",
+      "updatedAt": "2026-05-28T13:24:39.520Z"
+    },
+    {
+      "sessionId": "86e13f05-77c3-4701-82e8-77777526f5fa",
+      "ticketId": 89061,
+      "requesterId": 27771084862492,
+      "requesterName": "Test-B1",
+      "requesterEmail": "test-B1@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko traje dostava?",
+          "ts": "2026-05-28T13:26:54.691Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Rok dostave je 1–2 radna dana (do 48 sati).\n\nAko trebate dodatne informacije o opcijama dostave ili preuzimanju, javite nam se — Antikvarijat Libar rado pomaže.",
+          "ts": "2026-05-28T13:26:54.691Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:24:42.600Z",
+      "updatedAt": "2026-05-28T13:26:54.691Z"
+    },
+    {
+      "sessionId": "f41a6d2c-4093-4f22-8ade-481e2eaad9e4",
+      "ticketId": 89062,
+      "requesterId": 27771168649244,
+      "requesterName": "Test-B2",
+      "requesterEmail": "test-B2@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko košta dostava?",
+          "ts": "2026-05-28T13:27:22.477Z"
+        },
+        {
+          "role": "assistant",
+          "content": "U Antikvarijatu Libar dostava iznosi: GLS na kućnu adresu 5,97 EUR, GLS paketomat 3,75 EUR, BoxNow paketomat 3,25 EUR, a osobno preuzimanje u Osijeku je besplatno. Rok dostave je 1–2 radna dana.\n\nAko želite, mogu Vam pomoći odabrati najpovoljniju opciju ili Vas uputiti na narudžbu preko webshopa.",
+          "ts": "2026-05-28T13:27:22.477Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:26:58.286Z",
+      "updatedAt": "2026-05-28T13:27:22.477Z"
+    },
+    {
+      "sessionId": "13203caa-7f00-4ded-89d8-2cfb335697e1",
+      "ticketId": 89063,
+      "requesterId": 27771202595612,
+      "requesterName": "Test-B3",
+      "requesterEmail": "test-B3@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koje opcije dostave imate?",
+          "ts": "2026-05-28T13:27:57.784Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Imamo sljedeće opcije dostave:\n- **GLS na kućnu adresu** — 5,97 EUR\n- **GLS paketomat** — 3,75 EUR\n- **BoxNow paketomat** — 3,25 EUR\n- **Osobno preuzimanje u Osijeku (Županijska 17)** — besplatno\n\nRok isporuke je **1–2 radna dana**. Ako Vam odgovara osobno preuzimanje, posjetite Antikvarijat Libar u radnom vremenu pon–pet 08:00–20:00, sub 08:00–13:00.",
+          "ts": "2026-05-28T13:27:57.784Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:27:25.713Z",
+      "updatedAt": "2026-05-28T13:27:57.784Z"
+    },
+    {
+      "sessionId": "4db5cb76-820a-4c89-ae9c-7dff368c3629",
+      "ticketId": 89064,
+      "requesterId": 27771209200156,
+      "requesterName": "Test-C1",
+      "requesterEmail": "test-C1@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Kako naručiti udžbenike?",
+          "ts": "2026-05-28T13:28:22.137Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Udžbenike u Antikvarijat Libar možete naručiti online ili osobno.\n\nOnline putem webshopa:\n1. Posjetite https://antikvarijat-libar.com/kupi-udzbenike/\n2. U tražilicu upišite **šifru/ISBN**, **naslov** ili **autora** i dodajte naslove u košaricu.\n3. Odaberite dostavu: **GLS na adresu 5,97 EUR**, **GLS paketomat 3,75 EUR**, **BoxNow 3,25 EUR** ili **osobno preuzimanje (Osijek) besplatno**.\n4. Unesite podatke i izaberite plaćanje: **pouzeće putem GLS-a** ili **CorvusPay**.\n5. Potvrdite narudžbu — primit ćete email potvrdu. Rok dostave je **1–2 radna dana**.\n\nOsobno u poslovnici:\n- Adresa: Županijska ulica 17, 31000 Osijek\n- Radno vrijeme: pon–pet 08:00–20:00, sub 08:00–13:00\n- Plaćanje: gotovina, MasterCard, Maestro, Visa; rate u poslovnici: **Zaba i PBZ do 6 rata**.\n\nSavjet: Pretraga radi i s djelomičnim nazivima (npr. “matematika”). Ako želite, pošaljite nam naslov ili **ISBN** pa ćemo Vas usmjeriti — dostupni smo na info@antikvarijat-libar.com ili 031/201-230.",
+          "ts": "2026-05-28T13:28:22.137Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:28:00.901Z",
+      "updatedAt": "2026-05-28T13:28:22.137Z"
+    },
+    {
+      "sessionId": "bd64a274-b937-4e54-a440-aa1e5f0dfd8a",
+      "ticketId": 89065,
+      "requesterId": 27771238150812,
+      "requesterName": "Test-C2",
+      "requesterEmail": "test-C2@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Kako provjeriti je li knjiga na stanju?",
+          "ts": "2026-05-28T13:28:52.503Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Najbrži način je da nam pošaljete točan naslov, autora i izdanje — provjerit ćemo i javiti Vam dostupnost. Antikvarijat Libar Vam odgovara najkasnije u roku 24 sata.\n\n- Kontakt: info@antikvarijat-libar.com ili 031/201-230\n- Poslovnica: Županijska 17, Osijek (pon–pet 08:00–20:00, sub 08:00–13:00)\n\nAko želite, napišite ovdje naslov pa ćemo Vas uputiti na podršku.",
+          "ts": "2026-05-28T13:28:52.503Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:28:25.314Z",
+      "updatedAt": "2026-05-28T13:28:52.503Z"
+    },
+    {
+      "sessionId": "f12e8547-86de-41d1-a985-2d50ca864caa",
+      "ticketId": 89066,
+      "requesterId": 27771213842588,
+      "requesterName": "Test-D1",
+      "requesterEmail": "test-D1@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Kako vratiti knjigu?",
+          "ts": "2026-05-28T13:29:30.476Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Najbrži način za povrat u Antikvarijat Libar ovisi o tome gdje ste kupili.\n\n- Kupnja u poslovnici:\n  1. Dođite s računom i knjigom u Županijsku 17, Osijek.\n  2. Odmah rješavamo **zamjenu ili povrat novca** na licu mjesta.\n\n- Online kupnja:\n  1. Pošaljite email na info@antikvarijat-libar.com.\n  2. Priložite **fotografiju računa**, **fotografiju sporne knjige** i **kratak opis razloga**.\n  3. Nakon pregleda organiziramo **preuzimanje na Vašoj adresi** te po zaprimanju šaljemo ispravan udžbenik ili **vraćamo novac na bankovni račun**.\n\nDodatno:\n- Kod opravdane zamjene (npr. krivi ili oštećen naslov), troškove preuzimanja i ponovne dostave snosi Antikvarijat Libar.\n- Za **jednostrani raskid online kupnje** imate rok **14 dana od primitka**, a trošak povrata snosi kupac.\n- Ako je rok prošao, javite nam se svejedno — u slučaju naše jasne greške tražimo rješenje neovisno o roku.\n\nAko želite, odmah nam pošaljite fotografiju računa i knjige na email, a mi ćemo Vam odgovoriti u roku 1 radnog dana.",
+          "ts": "2026-05-28T13:29:30.476Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:28:55.528Z",
+      "updatedAt": "2026-05-28T13:29:30.476Z"
+    },
+    {
+      "sessionId": "6550caad-992c-4822-858d-2275143c1edd",
+      "ticketId": 89067,
+      "requesterId": 27771263540380,
+      "requesterName": "Test-D2",
+      "requesterEmail": "test-D2@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Primio sam oštećenu knjigu",
+          "ts": "2026-05-28T13:30:05.301Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Žao nam je zbog oštećene knjige. Kako bismo pokrenuli **reklamaciju** u Antikvarijatu Libar, molimo Vas da kontaktirate našu podršku.\n\n1. Pošaljite email na info@antikvarijat-libar.com s brojem narudžbe i kratkim opisom oštećenja.  \n2. Ako Vam je hitno, nazovite 031/201-230 (pon–pet 08:00–20:00, sub 08:00–13:00).  \n3. Odgovorit ćemo najkasnije u roku 24 sata i javiti daljnje korake. Povrat ili zamjena mogući su unutar **14 dana** od primitka robe.",
+          "ts": "2026-05-28T13:30:05.301Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:29:33.532Z",
+      "updatedAt": "2026-05-28T13:30:05.301Z"
+    },
+    {
+      "sessionId": "cfe3d6cb-0a51-46bf-8933-d42508c32809",
+      "ticketId": 89068,
+      "requesterId": 27771287074460,
+      "requesterName": "Test-E1",
+      "requesterEmail": "test-E1@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koje je radno vrijeme?",
+          "ts": "2026-05-28T13:30:51.570Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Radno vrijeme Antikvarijata Libar: **poslovnica** ponedjeljak–petak 08:00–20:00, subota 08:00–13:00; nedjeljom i blagdanima zatvoreno. **Webshop** radi 0–24.\n\nAko trebate i adresu ili upute za dolazak, javite — rado pomažemo.",
+          "ts": "2026-05-28T13:30:51.570Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:30:08.192Z",
+      "updatedAt": "2026-05-28T13:30:51.570Z"
+    },
+    {
+      "sessionId": "ce1ddaed-db2f-46bc-bd3e-6a7122f77dd0",
+      "ticketId": 89070,
+      "requesterId": 27771288390684,
+      "requesterName": "Test-E2",
+      "requesterEmail": "test-E2@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Gdje se nalazite?",
+          "ts": "2026-05-28T13:31:11.593Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Nalazimo se na adresi **Županijska ulica 17, 31000 Osijek**. Antikvarijat Libar radi pon–pet 08:00–20:00 i sub 08:00–13:00; ako trebate upute kako do nas, javite se na 031/201-230 ili info@antikvarijat-libar.com.",
+          "ts": "2026-05-28T13:31:11.593Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:30:54.717Z",
+      "updatedAt": "2026-05-28T13:31:11.593Z"
+    },
+    {
+      "sessionId": "80b48931-74ee-4aee-8a16-c88b0bcb2efb",
+      "ticketId": 89071,
+      "requesterId": 27771321040668,
+      "requesterName": "Test-E3",
+      "requesterEmail": "test-E3@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koji je kontakt telefon?",
+          "ts": "2026-05-28T13:31:34.241Z"
+        },
+        {
+          "role": "assistant",
+          "content": "**Telefon:** 031/201-230. Možete nas dobiti pon–pet 08:00–20:00 i sub 08:00–13:00; po potrebi pišite na info@antikvarijat-libar.com. Antikvarijat Libar Vam je na raspolaganju.",
+          "ts": "2026-05-28T13:31:34.241Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:31:14.845Z",
+      "updatedAt": "2026-05-28T13:31:34.241Z"
+    },
+    {
+      "sessionId": "81c03986-5c66-413d-976b-baaf29661527",
+      "ticketId": 89072,
+      "requesterId": 27771305744796,
+      "requesterName": "Test-F1",
+      "requesterEmail": "test-F1@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koje načine plaćanja prihvaćate?",
+          "ts": "2026-05-28T13:31:58.834Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Prihvaćamo sljedeće načine plaćanja u Antikvarijatu Libar:\n- Online: pouzeće putem GLS-a ili kartično plaćanje preko CorvusPay.\n- U poslovnici: gotovina, kartice (MasterCard, Maestro, Visa).\n- Na rate u poslovnici: Zaba i PBZ kartice do 6 rata.\n\nAko trebate pomoć pri odabiru načina plaćanja, slobodno nam se javite na 031/201-230 ili info@antikvarijat-libar.com.",
+          "ts": "2026-05-28T13:31:58.834Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:31:37.243Z",
+      "updatedAt": "2026-05-28T13:31:58.834Z"
+    },
+    {
+      "sessionId": "368b551c-94b9-4944-a97d-2805a5c2856b",
+      "ticketId": 89073,
+      "requesterId": 27771338614556,
+      "requesterName": "Test-F2",
+      "requesterEmail": "test-F2@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Kako funkcionira Sjedi 5?",
+          "ts": "2026-05-28T13:32:49.227Z"
+        },
+        {
+          "role": "assistant",
+          "content": "U Antikvarijatu Libar, program vjernosti Sjedi 5 funkcionira ovako:\n- 5 prodanih udžbenika = besplatna dostava za taj nalog otkupa\n- 8 prodanih udžbenika = 5% popust na kupnju\n- 11 prodanih udžbenika = 10% popust na cijelu kupnju\n\nŽelite iskoristiti pogodnosti ili imate pitanja? Slobodno nam se javite na 031/201-230 ili info@antikvarijat-libar.com.",
+          "ts": "2026-05-28T13:32:49.227Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:32:02.175Z",
+      "updatedAt": "2026-05-28T13:32:49.227Z"
+    },
+    {
+      "sessionId": "f36a1743-a054-4a8c-9ebd-73fb4145a250",
+      "ticketId": 89074,
+      "requesterId": 27771315743004,
+      "requesterName": "Test-F3",
+      "requesterEmail": "test-F3@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Može li R1 račun?",
+          "ts": "2026-05-28T13:33:15.115Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Da, u Antikvarijatu Libar moguće je dobiti **R1 račun**. Nije automatski — molimo pošaljite podatke tvrtke na **info@antikvarijat-libar.com** pa ćemo ga pripremiti.",
+          "ts": "2026-05-28T13:33:15.115Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:32:52.278Z",
+      "updatedAt": "2026-05-28T13:33:15.115Z"
+    },
+    {
+      "sessionId": "bc60bf63-fed1-4fe7-9064-0ba193837a08",
+      "ticketId": 89075,
+      "requesterId": 27771317121820,
+      "requesterName": "Test-F4",
+      "requesterEmail": "test-F4@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Može li isplata na Aircash?",
+          "ts": "2026-05-28T13:33:33.959Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Nažalost, isplata na Aircash nije dostupna u Antikvarijatu Libar. Za online otkup isplaćujemo na Vaš IBAN (navodite OIB i IBAN u prijavi), a pri fizičkom otkupu isplata je odmah u gotovini u poslovnici.\n\nAko želite pokrenuti otkup ili imate dodatna pitanja, javite nam se na 031/201-230 ili info@antikvarijat-libar.com.",
+          "ts": "2026-05-28T13:33:33.959Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:33:18.120Z",
+      "updatedAt": "2026-05-28T13:33:33.959Z"
+    },
+    {
+      "sessionId": "62c4a486-a551-4908-94a8-b469c139fa78",
+      "ticketId": 89076,
+      "requesterId": 27771369290524,
+      "requesterName": "Test-G1",
+      "requesterEmail": "test-G1@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Pozdrav!",
+          "ts": "2026-05-28T13:33:39.221Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Pozdrav! 👋 Dobrodošli u Antikvarijat Libar. Kako vam mogu pomoći?",
+          "ts": "2026-05-28T13:33:39.221Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:33:38.002Z",
+      "updatedAt": "2026-05-28T13:33:39.221Z"
+    },
+    {
+      "sessionId": "8ba9f460-2105-418a-8bd8-daacb8171bfa",
+      "ticketId": 89077,
+      "requesterId": 27771358597916,
+      "requesterName": "Test-G2",
+      "requesterEmail": "test-G2@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko košta otkup matematike za 1. razred?",
+          "ts": "2026-05-28T13:34:31.989Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Hvala na pitanju! Nažalost, nemam dovoljno informacija da vam odgovorim. Proslijedit ću vaš upit našem timu koji će vam se javiti.",
+          "ts": "2026-05-28T13:34:31.989Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:33:42.449Z",
+      "updatedAt": "2026-05-28T13:34:31.989Z"
+    },
+    {
+      "sessionId": "573907bd-fbf2-4ebf-8242-b14ed7bd3c1f",
+      "ticketId": 89078,
+      "requesterId": 27771401273884,
+      "requesterName": "Test-G3",
+      "requesterEmail": "test-G3@libar.local",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koja je cijena udžbenika za 3. razred gimnazije?",
+          "ts": "2026-05-28T13:35:04.661Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Hvala na pitanju! Nažalost, nemam dovoljno informacija da vam odgovorim. Proslijedit ću vaš upit našem timu koji će vam se javiti.",
+          "ts": "2026-05-28T13:35:04.661Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-05-28T13:34:35.081Z",
+      "updatedAt": "2026-05-28T13:35:04.661Z"
+    }
+  ],
+  "processedWebhookAudits": [],
+  "processedWebhookMessages": [],
+  "recentChatStarts": [],
+  "savedAt": "2026-05-28T13:35:07.663Z"
+}

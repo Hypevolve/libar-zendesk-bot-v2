@@ -1,0 +1,628 @@
+/**
+ * Libar Zendesk Bot v2 — Main Entry Point
+ * (Skill §14 — Production API, §12 — Observability, §21 — Conversation Memory)
+ *
+ * Endpoints:
+ *  POST /api/chat/start    — start webchat session (creates Zendesk ticket)
+ *  POST /api/chat/message  — continue webchat session
+ *  POST /api/chat/restore  — restore existing session from Zendesk
+ *  POST /api/zendesk/webhook — Zendesk webhook receiver
+ *  GET  /health             — health check
+ *  GET  /admin/traces       — recent AI traces
+ *  GET  /admin/metrics      — runtime metrics
+ *  POST /admin/sync/vector  — trigger vector knowledge sync
+ */
+require("dotenv").config();
+
+const express = require("express");
+const multer = require("multer");
+const crypto = require("crypto");
+
+const env = require("./config/env");
+const log = require("./config/logger");
+const rateLimiter = require("./middleware/rateLimiter");
+const { middleware: inputSanitizer } = require("./middleware/inputSanitizer");
+
+const aiService = require("./services/aiService");
+const knowledgeService = require("./services/knowledgeService");
+const zendeskService = require("./services/zendeskService");
+const piiService = require("./services/piiService");
+const tracingService = require("./services/tracingService");
+const metricsService = require("./services/metricsService");
+const outputValidator = require("./services/outputValidator");
+const spamFilterService = require("./services/spamFilterService");
+const conversationService = require("./services/conversationService");
+const runtimeStore = require("./services/runtimeStore");
+const { normalizeForComparison } = require("./services/textUtils");
+const { buildDirectWebsiteLinks } = require("./services/siteLinkService");
+
+// ─── Express Setup ────────────────────────────────────────────
+
+const app = express();
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+app.set("trust proxy", true);
+
+const chatUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024, files: 5 }
+});
+
+// ─── Session Store ────────────────────────────────────────────
+
+const chatSessions = new Map();
+let runtimeState = runtimeStore.loadRuntimeState();
+let persistTimeout = null;
+
+function scheduleRuntimePersist() {
+  if (persistTimeout) return;
+  persistTimeout = setTimeout(() => {
+    persistTimeout = null;
+    runtimeStore.saveRuntimeState({
+      ...runtimeState,
+      sessions: [...chatSessions.values()].map(serializeSession)
+    });
+  }, 3000);
+}
+
+function serializeSession(s) {
+  return {
+    sessionId: s.sessionId, ticketId: s.ticketId, requesterId: s.requesterId,
+    requesterName: s.requesterName, requesterEmail: s.requesterEmail,
+    messages: (s.messages || []).slice(-30),
+    conversationState: s.conversationState, entryIntent: s.entryIntent,
+    createdAt: s.createdAt, updatedAt: s.updatedAt
+  };
+}
+
+function createSession(opts) {
+  const session = {
+    sessionId: crypto.randomUUID(),
+    ticketId: opts.ticketId,
+    requesterId: opts.requesterId,
+    requesterName: opts.requesterName || "",
+    requesterEmail: opts.requesterEmail || "",
+    messages: opts.messages || [],
+    conversationState: { tone: "ai-active", badge: "AI Asistent", subtitle: "" },
+    entryIntent: opts.entryIntent || null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  chatSessions.set(session.sessionId, session);
+  scheduleRuntimePersist();
+  return session;
+}
+
+function getSession(id) { return chatSessions.get(id) || null; }
+
+function findSessionByTicketId(ticketId) {
+  for (const s of chatSessions.values()) { if (s.ticketId === ticketId) return s; }
+  return null;
+}
+
+function removeSession(id) { chatSessions.delete(id); scheduleRuntimePersist(); }
+
+// ─── Helpers ──────────────────────────────────────────────────
+
+function normalizeMessage(msg) {
+  return String(msg || "").replace(/\s+/g, " ").trim().slice(0, 4000);
+}
+
+function buildChatSubject(name) {
+  return `Webshop chat: ${name || "Korisnik"}`;
+}
+
+function isClosedTicketStatus(status) {
+  return ["closed", "solved"].includes(String(status).toLowerCase());
+}
+
+const REFERENTNE_CINJENICE = [
+  "Antikvarijat Libar, Županijska 17, 31000 Osijek.",
+  "Radno vrijeme: pon-pet 08:00-20:00, sub 08:00-13:00.",
+  "Otkup udžbenika za srednju školu. Ne otkupljujemo knjige za osnovnu školu, romane, beletristiku, radne bilježnice.",
+  "Online otkup: knjige šaljete kurirskom službom. Dostavljač donosi gotovu naljepnicu. Vi ništa ne pišete na paket.",
+  "Fizički otkup: donosite knjige osobno u poslovnicu, isplata odmah u gotovini.",
+  "4+ knjige — dostava besplatna. 3 ili manje — 2,70 EUR dostava.",
+  "Isplata kod online otkupa: isti dan po primitku paketa ili sljedeći radni dan.",
+  "Kontakt: 031/201-230, info@antikvarijat-libar.com",
+  "Povrat i zamjena: unutar 14 dana od primitka robe, trošak povrata snosi kupac.",
+  "Načini plaćanja: kartica, gotovina, pouzeće, rate (2-6 rata PBZ/ZABA).",
+  "R1 račun: nije automatski, pošaljite podatke tvrtke na email.",
+  "Aircash isplata: nije dostupna.",
+  "Program vjernosti 'Sjedi 5': 5 udžb. → bespl. dostava, 8 udžb. → 5% popusta, 11 udžb. → 10% popusta."
+].join("\n");
+
+// ─── AI Outcome Resolution ───────────────────────────────────
+
+async function resolveAutomatedOutcome(session, userMessage, opts = {}) {
+  const start = Date.now();
+  metricsService.increment("totalRequests");
+
+  const { masked: maskedMsg, mappings: piiMappings } = piiService.maskPII(userMessage);
+
+  const conversationSummary = conversationService.buildConversationSummaryForAI(session.messages || []);
+  const groundedOpts = {
+    channelType: opts.channelType || "web_chat",
+    customerName: session.requesterName || "",
+    conversationSummary
+  };
+
+  // Reference facts check first
+  const normMsg = normalizeForComparison(userMessage);
+  const refResult = tryReferenceFacts(normMsg, maskedMsg, groundedOpts);
+  if (refResult) {
+    metricsService.recordLatency(Date.now() - start);
+    return { knowledge: null, outcome: refResult };
+  }
+
+  // Knowledge search
+  const rewrittenQuery = await aiService.rewriteStandaloneQuery(maskedMsg, conversationSummary);
+  const knowledge = await knowledgeService.searchKnowledgeDetailed(rewrittenQuery || maskedMsg, {
+    taskIntent: session.entryIntent,
+    conversationTerms: conversationService.extractConversationTerms(session.messages)
+  });
+
+  let customerMessage = null;
+
+  if (knowledge?.context) {
+    const relevance = await aiService.gradeContextRelevance(maskedMsg, knowledge.context);
+
+    if (relevance.relevant) {
+      customerMessage = await aiService.generateGroundedAnswer(maskedMsg, knowledge.context, groundedOpts);
+
+      if (customerMessage) {
+        const norm = normalizeForComparison(customerMessage);
+        if (/(ne mogu|nisam siguran|nemam informacij|pouzdano potvrditi)/.test(norm)) {
+          customerMessage = null;
+        }
+      }
+
+      if (customerMessage) {
+        const validation = outputValidator.validateAnswerQuality(customerMessage, { knowledgeContext: knowledge.context, userMessage: maskedMsg });
+        if (!validation.valid) {
+          log.warn("output_validation_failed", { reason: validation.reason });
+          customerMessage = null;
+        }
+        const piiFound = piiService.detectPII(customerMessage);
+        if (piiFound.length) {
+          log.warn("pii_in_output", { types: piiFound.map((p) => p.type) });
+        }
+      }
+    } else {
+      log.info("context_relevance_rejected", { reason: relevance.reason });
+    }
+  }
+
+  // Fallback: reference facts grounded answer
+  if (!customerMessage) {
+    const fallbackAnswer = await aiService.generateGroundedAnswer(maskedMsg, REFERENTNE_CINJENICE, groundedOpts);
+    if (fallbackAnswer) {
+      const norm = normalizeForComparison(fallbackAnswer);
+      if (!/(ne mogu|nisam siguran|nemam informacij|pouzdano potvrditi)/.test(norm)) {
+        customerMessage = fallbackAnswer;
+      }
+    }
+  }
+
+  const links = buildDirectWebsiteLinks(userMessage, { knowledge });
+
+  const outcome = customerMessage
+    ? {
+        type: "safe_answer", customerMessage, stateTag: "ai_active",
+        reason: "grounded_answer", source: knowledge ? "knowledge" : "reference_facts",
+        links, extraTags: []
+      }
+    : {
+        type: "escalate_no_answer",
+        customerMessage: "Hvala na pitanju! Nažalost, nemam dovoljno informacija da vam odgovorim. Proslijedit ću vaš upit našem timu koji će vam se javiti.",
+        stateTag: "awaiting_human", reason: "no_grounded_answer",
+        links, extraTags: ["ai_escalated"]
+      };
+
+  metricsService.recordDecision(outcome.type);
+  metricsService.recordLatency(Date.now() - start);
+
+  tracingService.createTrace({
+    input: maskedMsg,
+    llmOutput: outcome.customerMessage,
+    decision: outcome.type,
+    retrieval: knowledge ? { source: knowledge.primarySource, topScore: knowledge.topScore, articleCount: knowledge.totalMatches } : null,
+    latencyMs: Date.now() - start
+  });
+
+  return { knowledge, outcome };
+}
+
+function tryReferenceFacts(normMsg, maskedMsg, groundedOpts) {
+  if (/^(hvala|pozdrav|dobar dan|bok)[.!?\s]*$/.test(normMsg)) {
+    return {
+      type: "safe_answer",
+      customerMessage: "Pozdrav! 👋 Dobrodošli u Antikvarijat Libar. Kako vam mogu pomoći?",
+      stateTag: "ai_active", reason: "greeting", extraTags: []
+    };
+  }
+  return null;
+}
+
+// ─── POST /api/chat/start ─────────────────────────────────────
+
+app.post("/api/chat/start", rateLimiter, inputSanitizer, chatUpload.array("attachments", 5), async (req, res) => {
+  const { name, email, message: rawMessage, entryIntent } = req.body || {};
+  const message = normalizeMessage(rawMessage);
+  const files = req.files || [];
+
+  if (!message || !email) {
+    return res.status(400).json({ success: false, error: "message and email are required." });
+  }
+
+  try {
+    metricsService.increment("totalChatStarts");
+
+    let uploadTokens = [];
+    if (files.length) {
+      try {
+        const uploads = await zendeskService.uploadAttachments(files);
+        uploadTokens = uploads.map((u) => u.token).filter(Boolean);
+      } catch (err) {
+        return res.status(503).json({ success: false, error: "Privitke trenutno ne možemo obraditi." });
+      }
+    }
+
+    const { ticketId, requesterId } = await zendeskService.createChatTicket({
+      requesterName: name || "Korisnik",
+      requesterEmail: email,
+      initialMessage: message,
+      subject: buildChatSubject(name),
+      uploadTokens
+    });
+
+    const session = createSession({
+      ticketId, requesterId,
+      requesterName: name || "Korisnik",
+      requesterEmail: email,
+      entryIntent: entryIntent || null
+    });
+
+    const { knowledge, outcome } = await resolveAutomatedOutcome(session, message, { hasAttachments: files.length > 0, channelType: "web_chat" });
+
+    if (files.length) {
+      await zendeskService.addTagAndNote(ticketId, "hitno_slike", "Korisnik je poslao privitke. Potrebna ljudska provjera.");
+    }
+
+    if (outcome.type !== "safe_answer") {
+      await zendeskService.addInternalNote(ticketId, `[ESKALACIJA] ${outcome.reason}`);
+    }
+
+    try {
+      await zendeskService.updateConversationState(ticketId, outcome.stateTag, outcome.extraTags || []);
+      await zendeskService.addBotReplyToTicket(ticketId, outcome.customerMessage, { channelType: "web_chat" });
+    } catch (err) {
+      log.warn("zendesk_write_degraded", { ticketId, message: err.message });
+    }
+
+    session.messages.push(
+      { role: "user", content: message, ts: new Date().toISOString() },
+      { role: "assistant", content: outcome.customerMessage, ts: new Date().toISOString() }
+    );
+    session.updatedAt = new Date().toISOString();
+    scheduleRuntimePersist();
+
+    return res.status(200).json({
+      success: true, sessionId: session.sessionId, ticketId,
+      session: serializeSession(session),
+      messages: session.messages,
+      conversationState: session.conversationState,
+      links: outcome.links || []
+    });
+  } catch (error) {
+    log.error("chat_start_failed", { message: error.message, stack: error.stack });
+    return res.status(500).json({ success: false, error: "Unable to start chat session." });
+  }
+});
+
+// ─── POST /api/chat/message ───────────────────────────────────
+
+app.post("/api/chat/message", rateLimiter, inputSanitizer, chatUpload.array("attachments", 5), async (req, res) => {
+  const { sessionId } = req.body || {};
+  const message = normalizeMessage(req.body?.message);
+  const files = req.files || [];
+  const session = getSession(sessionId);
+
+  if (!session) return res.status(404).json({ success: false, error: "Chat session not found." });
+  if (!message && !files.length) return res.status(400).json({ success: false, error: "Message or attachment required." });
+
+  try {
+    metricsService.increment("totalChatMessages");
+
+    let ticketSummary;
+    try { ticketSummary = await zendeskService.getTicketSummary(session.ticketId); }
+    catch (err) { return res.status(503).json({ success: false, error: "Zendesk privremeno nije dostupan." }); }
+
+    if (isClosedTicketStatus(ticketSummary.status)) {
+      return res.status(409).json({
+        success: false,
+        error: "Prethodni razgovor je završen. Za novo pitanje pokrenite novi razgovor.",
+        conversationState: { tone: "resolved", badge: "Razgovor završen" }
+      });
+    }
+
+    let uploadTokens = [];
+    if (files.length) {
+      try {
+        const uploads = await zendeskService.uploadAttachments(files);
+        uploadTokens = uploads.map((u) => u.token).filter(Boolean);
+      } catch (err) {
+        return res.status(503).json({ success: false, error: "Privitke trenutno ne možemo obraditi." });
+      }
+    }
+
+    await zendeskService.addCustomerMessageToTicket(
+      session.ticketId, session.requesterId, message || "Šaljem privitak.", uploadTokens
+    );
+
+    session.messages.push({ role: "user", content: message || "Šaljem privitak.", ts: new Date().toISOString() });
+
+    // Human-active pass-through
+    if (session.conversationState?.tone === "human-active") {
+      session.updatedAt = new Date().toISOString();
+      scheduleRuntimePersist();
+      return res.status(200).json({
+        success: true, ticketId: session.ticketId,
+        messages: session.messages, conversationState: session.conversationState
+      });
+    }
+
+    const { knowledge, outcome } = await resolveAutomatedOutcome(session, message || "Šaljem privitak.", {
+      hasAttachments: files.length > 0, channelType: "web_chat"
+    });
+
+    if (files.length) {
+      await zendeskService.addTagAndNote(session.ticketId, "hitno_slike", "Korisnik je poslao privitke.");
+    }
+
+    if (outcome.type !== "safe_answer") {
+      await zendeskService.addInternalNote(session.ticketId, `[ESKALACIJA] ${outcome.reason}`);
+    }
+
+    try {
+      await zendeskService.updateConversationState(session.ticketId, outcome.stateTag, outcome.extraTags || []);
+      await zendeskService.addBotReplyToTicket(session.ticketId, outcome.customerMessage, { channelType: "web_chat" });
+    } catch (err) {
+      log.warn("zendesk_write_degraded", { ticketId: session.ticketId, message: err.message });
+    }
+
+    session.messages.push({ role: "assistant", content: outcome.customerMessage, ts: new Date().toISOString() });
+    session.updatedAt = new Date().toISOString();
+    scheduleRuntimePersist();
+
+    return res.status(200).json({
+      success: true, ticketId: session.ticketId,
+      messages: session.messages, conversationState: session.conversationState,
+      links: outcome.links || []
+    });
+  } catch (error) {
+    log.error("chat_message_failed", { sessionId, message: error.message, stack: error.stack });
+    return res.status(500).json({ success: false, error: "Unable to process message." });
+  }
+});
+
+// ─── POST /api/chat/restore ──────────────────────────────────
+
+app.post("/api/chat/restore", async (req, res) => {
+  const { ticketId, requesterId, requesterName, requesterEmail } = req.body || {};
+  if (!ticketId || !requesterId) {
+    return res.status(400).json({ success: false, error: "ticketId and requesterId are required." });
+  }
+
+  try {
+    const existing = findSessionByTicketId(ticketId);
+    let ticketSummary, audits;
+
+    try {
+      [audits, ticketSummary] = await Promise.all([
+        zendeskService.getTicketAudits(ticketId),
+        zendeskService.getTicketSummary(ticketId)
+      ]);
+    } catch (err) {
+      if (existing) return res.status(200).json({ success: true, restored: true, degraded: true, mode: "active_session", session: existing });
+      return res.status(503).json({ success: false, error: "Zendesk privremeno nije dostupan." });
+    }
+
+    const restoredMessages = mapAuditsToMessages(audits, requesterId, ticketSummary);
+
+    if (isClosedTicketStatus(ticketSummary.status)) {
+      if (existing) removeSession(existing.sessionId);
+      return res.status(200).json({ success: true, restored: true, mode: "closed_session", messages: restoredMessages });
+    }
+
+    if (existing) {
+      existing.messages = restoredMessages;
+      existing.requesterName = ticketSummary.requesterName || existing.requesterName;
+      existing.requesterEmail = ticketSummary.requesterEmail || existing.requesterEmail;
+      existing.updatedAt = new Date().toISOString();
+      scheduleRuntimePersist();
+      return res.status(200).json({ success: true, restored: true, mode: "active_session", session: existing });
+    }
+
+    const session = createSession({
+      ticketId, requesterId,
+      requesterName: ticketSummary.requesterName || requesterName || "",
+      requesterEmail: ticketSummary.requesterEmail || requesterEmail || "",
+      messages: restoredMessages
+    });
+    return res.status(200).json({ success: true, restored: true, mode: "active_session", session });
+  } catch (error) {
+    log.error("chat_restore_failed", { ticketId, message: error.message });
+    return res.status(500).json({ success: false, error: "Unable to restore chat session." });
+  }
+});
+
+function mapAuditsToMessages(audits = [], requesterId, ticketSummary) {
+  const messages = [];
+  for (const audit of audits) {
+    for (const event of (audit.events || [])) {
+      if (event.type !== "Comment" || !event.body) continue;
+      if (event.public === false) continue;
+      const role = String(event.author_id) === String(requesterId) ? "user" : "assistant";
+      messages.push({ role, content: event.body, ts: audit.created_at });
+    }
+  }
+  return messages;
+}
+
+// ─── POST /api/zendesk/webhook ────────────────────────────────
+
+app.post("/api/zendesk/webhook", async (req, res) => {
+  const token = req.headers["x-zendesk-webhook-token"] || req.body?.token;
+  if (!zendeskService.verifyWebhookToken(token)) {
+    return res.status(401).json({ success: false, error: "Invalid webhook token." });
+  }
+
+  metricsService.increment("totalWebhooks");
+
+  const { ticketId, channelType, latestMessage } = req.body || {};
+  if (!ticketId) return res.status(400).json({ success: false, error: "ticketId required." });
+
+  try {
+    const normalizedChannel = aiService.normalizeChannelType(channelType || "email");
+
+    // Spam filter for email
+    if (normalizedChannel === "email" && latestMessage) {
+      const ticketSummary = await zendeskService.getTicketSummary(ticketId);
+      const spam = await spamFilterService.evaluateIncomingMessage({ channelType: normalizedChannel, message: latestMessage, ticketSummary });
+      if (spam.shouldBlock) {
+        await zendeskService.addInternalNote(ticketId, spamFilterService.buildSpamFilterNote(spam, normalizedChannel), ["spam_blocked"]);
+        return res.status(200).json({ success: true, blocked: true, reason: spam.reason });
+      }
+    }
+
+    // Auto-reply for webhook tickets
+    if (latestMessage) {
+      const knowledge = await knowledgeService.searchKnowledgeDetailed(latestMessage);
+      let answer = null;
+
+      if (knowledge?.context) {
+        const relevance = await aiService.gradeContextRelevance(latestMessage, knowledge.context);
+        if (relevance.relevant) {
+          answer = await aiService.generateGroundedAnswer(latestMessage, knowledge.context, { channelType: normalizedChannel });
+        }
+      }
+
+      if (!answer) {
+        answer = await aiService.generateGroundedAnswer(latestMessage, REFERENTNE_CINJENICE, { channelType: normalizedChannel });
+        if (answer) {
+          const norm = normalizeForComparison(answer);
+          if (/(ne mogu|nisam siguran|nemam informacij)/.test(norm)) answer = null;
+        }
+      }
+
+      if (answer) {
+        const validation = outputValidator.validateAnswerQuality(answer, { knowledgeContext: knowledge?.context || "", userMessage: latestMessage });
+        if (validation.valid) {
+          await zendeskService.addBotReplyToTicket(ticketId, answer, { channelType: normalizedChannel });
+          await zendeskService.updateConversationState(ticketId, "ai_active", ["ai_replied"]);
+        } else {
+          await zendeskService.updateConversationState(ticketId, "awaiting_human", ["ai_escalated"]);
+          await zendeskService.addInternalNote(ticketId, `AI output validation failed: ${validation.reason}`);
+        }
+      } else {
+        await zendeskService.updateConversationState(ticketId, "awaiting_human", ["ai_escalated"]);
+        await zendeskService.addInternalNote(ticketId, "AI nije mogao generirati pouzdan odgovor. Eskalacija na tim.");
+      }
+    }
+
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    log.error("webhook_failed", { ticketId, message: error.message });
+    return res.status(200).json({ success: true, error: error.message });
+  }
+});
+
+// ─── GET /health ──────────────────────────────────────────────
+
+app.get("/health", async (req, res) => {
+  const vectorConfig = knowledgeService.getVectorConfigSummary?.();
+  const checks = { zendesk: false };
+
+  try {
+    const summary = zendeskService.getZendeskConfigSummary();
+    checks.zendesk = Boolean(summary.email);
+  } catch { /* pass */ }
+
+  const healthy = checks.zendesk !== false;
+  res.status(healthy ? 200 : 503).json({
+    success: healthy, status: healthy ? "ok" : "degraded",
+    checks, vectorConfig,
+    activeSessions: chatSessions.size,
+    uptime: Math.floor(process.uptime())
+  });
+});
+
+// ─── Admin Endpoints ──────────────────────────────────────────
+
+function requireAdmin(req, res, next) {
+  const token = req.headers["x-admin-token"] || req.query.token;
+  if (!env.ADMIN_TOKEN || token !== env.ADMIN_TOKEN) {
+    return res.status(401).json({ success: false, error: "Admin token required." });
+  }
+  next();
+}
+
+app.get("/admin/traces", requireAdmin, (req, res) => {
+  const limit = Math.min(Number(req.query.limit) || 50, 200);
+  res.json({ success: true, traces: tracingService.getRecentTraces(limit), stats: tracingService.getTraceStats() });
+});
+
+app.get("/admin/metrics", requireAdmin, (req, res) => {
+  res.json({ success: true, metrics: metricsService.getMetrics() });
+});
+
+app.post("/admin/sync/vector", requireAdmin, async (req, res) => {
+  try {
+    const result = await knowledgeService.syncVectorKnowledgeFromOneDrive({ force: req.body?.force === true });
+    res.json({ success: true, result });
+  } catch (error) {
+    log.error("vector_sync_failed", { message: error.message });
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ─── Vector Knowledge Auto-Sync ───────────────────────────────
+
+const VECTOR_SYNC_INTERVAL_MS = env.VECTOR_AUTO_SYNC_INTERVAL_MS || 1800000;
+
+async function runVectorSync() {
+  try {
+    const result = await knowledgeService.syncVectorKnowledgeFromOneDrive();
+    log.info("vector_sync_complete", {
+      indexed: result.indexedDocuments, skipped: result.skippedDocuments,
+      deleted: result.deletedDocuments, errors: result.errors?.length || 0
+    });
+  } catch (err) {
+    log.error("vector_sync_error", { message: err.message });
+  }
+}
+
+// ─── Static Widget ────────────────────────────────────────────
+
+app.use("/widget", express.static("public"));
+
+// ─── Server Startup ───────────────────────────────────────────
+
+const PORT = env.PORT;
+
+app.listen(PORT, () => {
+  log.info("server_started", { port: PORT });
+
+  // Restore persisted sessions
+  for (const s of runtimeState.sessions || []) {
+    if (s.sessionId && s.ticketId) chatSessions.set(s.sessionId, s);
+  }
+  log.info("sessions_restored", { count: chatSessions.size });
+
+  // Schedule vector sync
+  setTimeout(runVectorSync, 10000);
+  setInterval(runVectorSync, VECTOR_SYNC_INTERVAL_MS);
+});
+
+module.exports = app;

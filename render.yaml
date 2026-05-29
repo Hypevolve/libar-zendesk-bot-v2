@@ -1,0 +1,115 @@
+services:
+  - type: web
+    name: libar-zendesk-bot-v2
+    runtime: node
+    plan: starter
+    branch: main
+    autoDeploy: true
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: PORT
+        value: 3000
+      - key: ZENDESK_SUBDOMAIN
+        sync: false
+      - key: ZENDESK_EMAIL
+        sync: false
+      - key: ZENDESK_API_TOKEN
+        sync: false
+      - key: ZENDESK_WEBHOOK_TOKEN
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: openai/gpt-4.1-mini
+      - key: OPENROUTER_FALLBACK_MODEL
+        value: google/gemini-2.5-flash
+      - key: OPENROUTER_SITE_URL
+        sync: false
+      - key: OPENROUTER_SITE_NAME
+        value: Antikvarijat Libar Bot
+      - key: EMBED_ALLOWED_ORIGINS
+        sync: false
+      - key: ADMIN_TOKEN
+        sync: false
+      - key: RATE_LIMIT_MAX
+        value: 30
+      - key: HELP_CENTER_CACHE_TTL_MS
+        value: 300000
+      - key: HELP_CENTER_CONTEXT_ARTICLES
+        value: 5
+      - key: KNOWLEDGE_CONTEXT_ITEMS
+        value: 5
+      - key: KNOWLEDGE_MIN_TOP_SCORE
+        value: 8
+      - key: ENABLE_EMAIL_SPAM_CLASSIFIER
+        value: "true"
+      - key: EMAIL_SPAM_AI_MIN_CONFIDENCE
+        value: 0.75
+      - key: ONEDRIVE_TENANT_ID
+        sync: false
+      - key: ONEDRIVE_CLIENT_ID
+        sync: false
+      - key: ONEDRIVE_CLIENT_SECRET
+        sync: false
+      - key: ONEDRIVE_DRIVE_ID
+        sync: false
+      - key: ONEDRIVE_SITE_ID
+        sync: false
+      - key: ONEDRIVE_FOLDER_ID
+        sync: false
+      - key: ONEDRIVE_FOLDER_URL
+        sync: false
+      - key: ONEDRIVE_CACHE_TTL_MS
+        value: 300000
+      - key: ONEDRIVE_CONTEXT_DOCUMENTS
+        value: 3
+      - key: ONEDRIVE_MAX_FILE_SIZE_BYTES
+        value: 2097152
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: EMBEDDING_PROVIDER
+        value: openrouter
+      - key: OPENROUTER_EMBEDDING_MODEL
+        value: openai/text-embedding-3-small
+      - key: EMBEDDING_DIMENSIONS
+        value: 1536
+      - key: EMBEDDING_BATCH_SIZE
+        value: 64
+      - key: VECTOR_MATCH_COUNT
+        value: 8
+      - key: VECTOR_MIN_SCORE
+        value: 0.68
+      - key: VECTOR_DOMAIN_AWARE_MIN_SCORE
+        value: 0.58
+      - key: VECTOR_FALLBACK_MIN_SCORE
+        value: 0.55
+      - key: VECTOR_CONTEXT_ITEMS
+        value: 5
+      - key: VECTOR_CHUNK_MAX_CHARS
+        value: 1200
+      - key: VECTOR_CHUNK_OVERLAP_CHARS
+        value: 180
+      - key: VECTOR_SYNC_INTERVAL_MS
+        value: 1800000
+      - key: TOKEN_BUDGET_MAX_INPUT
+        value: 6000
+      - key: TOKEN_BUDGET_MAX_OUTPUT
+        value: 1500
+      - key: RESPONSE_CACHE_TTL_MS
+        value: 300000
+      - key: RESPONSE_CACHE_MAX_ENTRIES
+        value: 200
+      - key: CONVERSATION_MEMORY_MAX_MESSAGES
+        value: 10
+      - key: CONVERSATION_MEMORY_MAX_CHARS
+        value: 3000
+      - key: TRACE_LOG_ENABLED
+        value: "true"
+      - key: MAX_TRACE_BUFFER
+        value: 200
