@@ -12414,10 +12414,134 @@
       "entryIntent": null,
       "createdAt": "2026-06-01T17:49:04.267Z",
       "updatedAt": "2026-06-01T17:51:54.506Z"
+    },
+    {
+      "sessionId": "4a176f91-e435-44ee-81df-48af8487cd65",
+      "ticketId": 89516,
+      "requesterId": 27216941388316,
+      "requesterName": "Zrinko Kutnjak",
+      "requesterEmail": "zrinko@kontra.agency",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Pozdrav, naručio sam 3 udžbenika, a stiglo mi je samo 2. Jedan je i mokar i oštećen. Želim povrat novca i žalbu poslati inspekciji.",
+          "ts": "2026-06-01T18:00:00.171Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Žao nam je što ste imali problema! Vaš slučaj prosljeđujemo našem timu koji će Vam se javiti u najkraćem roku s rješenjem.",
+          "ts": "2026-06-01T18:00:00.171Z"
+        },
+        {
+          "role": "user",
+          "content": "[KORISNIK JE ZAVRŠIO RAZGOVOR]",
+          "ts": "2026-06-01T18:00:58.000Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Hvala na pitanju! Nažalost, nemam dovoljno informacija da vam odgovorim. Proslijedit ću vaš upit našem timu koji će vam se javiti.",
+          "ts": "2026-06-01T18:01:08.889Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-06-01T17:59:58.581Z",
+      "updatedAt": "2026-06-01T18:01:08.889Z"
+    },
+    {
+      "sessionId": "70a21a43-59f7-4e27-be96-61206e2779fd",
+      "ticketId": 89517,
+      "requesterId": 27216941388316,
+      "requesterName": "Zrinko Kutnjak",
+      "requesterEmail": "zrinko@kontra.agency",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko košta dostava za 5 udžbenika na adresu u Splitu, plaćanje pouzećem, i jesu li dostupni svi naslovi za 3. razred gimnazije?",
+          "ts": "2026-06-01T18:01:22.859Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Dostava putem GLS-a na kućnu adresu, uključujući Split, iznosi **5,97 EUR**. Plaćanje pouzećem je moguće putem GLS-a. \n\nŠto se tiče dostupnosti svih naslova za 3. razred gimnazije, preporučujem da ih potražite putem webshop tražilice na našoj stranici antikvarijat-libar.com. Tamo možete pretraživati po naslovu, autoru ili ISBN-u i provjeriti dostupnost svakog artikla. Ako trebate dodatnu pomoć, slobodno nas kontaktirajte putem emaila na info@antikvarijat-libar.com.",
+          "ts": "2026-06-01T18:01:22.859Z"
+        },
+        {
+          "role": "user",
+          "content": "Kupio sam rabljene knjige od vas prošli mjesec. Mogu li ih sada otkupiti natrag i koliko bih dobio?",
+          "ts": "2026-06-01T18:01:50.557Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Hvala na pitanju! Nažalost, nemam dovoljno informacija da vam odgovorim. Proslijedit ću vaš upit našem timu koji će vam se javiti.",
+          "ts": "2026-06-01T18:02:02.099Z"
+        },
+        {
+          "role": "user",
+          "content": "Kako funkcionira otkup, jesu li cijene fiksne ili pregovarate, i koliko traje cijeli proces od dostave do isplate?",
+          "ts": "2026-06-01T18:02:23.310Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Otkup u Antikvarijatu Libar funkcionira na sljedeći način:\n\n1. **Priprema knjiga**: Knjige možete poslati putem GLS dostavne službe ili ih donijeti osobno u našu poslovnicu u Osijeku. Ako šaljete putem GLS-a, potrebno je unijeti OIB i IBAN za isplatu.\n\n2. **Cijene**: Otkupne cijene su fiksne i ovise o potražnji na tržištu, cijeni novog udžbenika i stanju ponude. Nažalost, stanje knjige ne utječe na cijenu, ali možete nam poslati fotografije i svoju ponudu, koju ćemo razmotriti.\n\n3. **Proces isplate**: Ako knjige donosite osobno, isplata je odmah u gotovini. Za online otkup, isplata se vrši isti dan po primitku paketa, osim u iznimnim slučajevima visokog obujma kada može kasniti do sljedećeg radnog dana.\n\nAko imate dodatnih pitanja ili trebate pomoć, slobodno nas kontaktirajte putem emaila na info@antikvarijat-libar.com.",
+          "ts": "2026-06-01T18:02:33.274Z"
+        },
+        {
+          "role": "user",
+          "content": "Koliko košta dostava?",
+          "ts": "2026-06-01T18:03:25.977Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Dostava putem GLS-a na kućnu adresu iznosi **5,97 EUR**. Ako se odlučite za dostavu u GLS paketomat, cijena je **3,75 EUR**, dok je dostava u BoxNow paketomat **3,25 EUR**. Osobno preuzimanje u našoj poslovnici u Osijeku je besplatno. Ako imate dodatnih pitanja, slobodno se obratite Antikvarijatu Libar.",
+          "ts": "2026-06-01T18:03:33.083Z"
+        },
+        {
+          "role": "user",
+          "content": "A za iste knjige u paketomat?",
+          "ts": "2026-06-01T18:03:44.847Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Hvala na pitanju! Nažalost, nemam dovoljno informacija da vam odgovorim. Proslijedit ću vaš upit našem timu koji će vam se javiti.",
+          "ts": "2026-06-01T18:03:53.320Z"
+        },
+        {
+          "role": "user",
+          "content": "A za otkup knjiga - šaljete li kurira?",
+          "ts": "2026-06-01T18:04:44.445Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Da, Antikvarijat Libar šalje GLS kurira po paket s knjigama za otkup. Potrebno je zapakirati knjige u kutiju ili vrećicu, a kurir će doći na Vašu kućnu adresu. Ako imate dodatnih pitanja, slobodno se obratite našoj podršci.",
+          "ts": "2026-06-01T18:04:49.756Z"
+        },
+        {
+          "role": "user",
+          "content": "[KORISNIK JE ZAVRŠIO RAZGOVOR]",
+          "ts": "2026-06-01T18:05:22.026Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Hvala na Vašem interesu. Ako imate dodatnih pitanja ili trebate pomoć, slobodno se obratite Antikvarijatu Libar putem emaila na info@antikvarijat-libar.com ili telefonom na 031/201-230. Ugodan dan!",
+          "ts": "2026-06-01T18:05:27.317Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-06-01T18:01:12.530Z",
+      "updatedAt": "2026-06-01T18:05:27.317Z"
     }
   ],
   "processedWebhookAudits": [],
   "processedWebhookMessages": [],
   "recentChatStarts": [],
-  "savedAt": "2026-06-01T17:51:57.508Z"
+  "savedAt": "2026-06-01T18:05:30.318Z"
 }

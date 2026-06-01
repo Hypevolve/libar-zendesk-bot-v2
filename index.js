@@ -380,10 +380,24 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
     }
   }
 
-  const knowledge = await knowledgeService.searchKnowledgeDetailed(rewrittenQuery || maskedMsg, {
+  let knowledge = await knowledgeService.searchKnowledgeDetailed(rewrittenQuery || maskedMsg, {
     taskIntent: session.entryIntent,
     conversationTerms: conversationService.extractConversationTerms(session.messages)
   });
+
+  // Fallback: if no results and this is a follow-up, combine previous user query with current one
+  if (!knowledge?.context && hasHistory) {
+    const userMsgs = (session.messages || []).filter((m) => m.role === "user");
+    const prevQuery = userMsgs.length >= 2 ? String(userMsgs[userMsgs.length - 2].content || "").trim() : "";
+    if (prevQuery && prevQuery !== maskedMsg) {
+      const combinedQuery = `${prevQuery} ${maskedMsg}`.trim();
+      log.info("knowledge_fallback_combined_query", { original: rewrittenQuery || maskedMsg, combined: combinedQuery });
+      knowledge = await knowledgeService.searchKnowledgeDetailed(combinedQuery, {
+        taskIntent: session.entryIntent,
+        conversationTerms: conversationService.extractConversationTerms(session.messages)
+      });
+    }
+  }
 
   let customerMessage = null;
 
