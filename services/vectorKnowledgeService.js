@@ -16,7 +16,9 @@ const SUPABASE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
 const MATCH_COUNT = env.VECTOR_MATCH_COUNT;
 const MIN_SCORE = env.VECTOR_MIN_SCORE;
 const DOMAIN_MIN_SCORE = parseFloat(process.env.VECTOR_DOMAIN_AWARE_MIN_SCORE || "0.58");
-const FALLBACK_MIN_SCORE = parseFloat(process.env.VECTOR_FALLBACK_MIN_SCORE || "0.40");
+// Default aligned with .env / .env.example / render.yaml (0.55). Previously 0.40,
+// which silently let low-relevance chunks through whenever the env var was absent.
+const FALLBACK_MIN_SCORE = parseFloat(process.env.VECTOR_FALLBACK_MIN_SCORE || "0.55");
 const CONTEXT_ITEMS = env.VECTOR_CONTEXT_ITEMS;
 const CHUNK_MAX = env.VECTOR_CHUNK_MAX_CHARS;
 const CHUNK_OVERLAP = env.VECTOR_CHUNK_OVERLAP_CHARS;
@@ -258,6 +260,18 @@ function normalizeDomainFilter(options = {}) {
   return ["buyback", "delivery", "order", "support_info"].includes(d) ? d : null;
 }
 
+// Normalized 0–1 retrieval confidence. Semantic similarity is the primary signal;
+// a lexical match adds a *bounded* bonus rather than overriding semantics. The old
+// `Math.max(similarity, Math.min(1, lexical*4))` let a weak lexical hit (rank 0.25)
+// masquerade as full confidence (1.0), blocking fallback/escalation and feeding
+// noisy chunks to the LLM.
+function computeConfidence(similarity, lexical) {
+  const sim = Number(similarity) || 0;
+  const lex = Number(lexical) || 0;
+  const lexicalBonus = Math.min(0.15, lex * 0.5);
+  return Math.min(1, sim > 0 ? sim + lexicalBonus : lex * 0.6);
+}
+
 function buildVectorMatchAttempts(options = {}) {
   const domain = normalizeDomainFilter(options);
   const fb = Math.min(MIN_SCORE, FALLBACK_MIN_SCORE);
@@ -265,8 +279,11 @@ function buildVectorMatchAttempts(options = {}) {
   if (domain && DOMAIN_MIN_SCORE < MIN_SCORE) attempts.push({ threshold: DOMAIN_MIN_SCORE, domainFilter: domain, reason: "domain_aware_lower" });
   if (domain) attempts.push({ threshold: MIN_SCORE, domainFilter: null, reason: "no_domain_filter" });
   if (fb < MIN_SCORE) attempts.push({ threshold: fb, domainFilter: null, reason: "lower_threshold" });
-  // Last resort: catch weakly related chunks that reranking / LLM can filter
-  attempts.push({ threshold: 0.30, domainFilter: null, reason: "last_resort" });
+  // Last resort: catch weakly related chunks that reranking / LLM can filter.
+  // Raised 0.30 -> 0.45: at 0.30 cosine similarity (Croatian text) results are
+  // effectively random noise that pollute the LLM context and trigger hallucinations.
+  // Only add this tier if 0.45 is actually below the configured floor.
+  if (0.45 < fb) attempts.push({ threshold: 0.45, domainFilter: null, reason: "last_resort" });
   return attempts;
 }
 
@@ -337,9 +354,7 @@ async function searchVectorKnowledgeDetailed(query, options = {}) {
     const articles = rows.slice(0, CONTEXT_ITEMS).map((r) => {
       const similarity = Number(r.similarity || 0);
       const lexical = Number(r.lexical_rank || 0);
-      // Normalized 0–1 confidence: semantic similarity is primary; a strong
-      // lexical match (exact tokens) can lift a lexical-only hit.
-      const confidence = Math.max(similarity, Math.min(1, lexical * 4));
+      const confidence = computeConfidence(similarity, lexical);
       return {
         id: r.chunk_id || r.id || null, title: r.title || "OneDrive dokument",
         body: r.body || "", score: Math.round(confidence * 100), confidence,
@@ -373,5 +388,5 @@ async function ping() {
 module.exports = {
   buildDocumentChunks, getVectorConfigSummary, isConfigured,
   searchVectorKnowledgeDetailed, syncOneDriveKnowledge, ping,
-  __internal: { chunkText, inferDomain, buildVectorQuery, buildVectorMatchAttempts, normalizeDomainFilter, hashText }
+  __internal: { chunkText, inferDomain, buildVectorQuery, buildVectorMatchAttempts, normalizeDomainFilter, hashText, computeConfidence }
 };
