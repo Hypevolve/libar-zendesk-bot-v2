@@ -90,4 +90,59 @@ describe("intentEscalationService", () => {
       assert.ok(result.message.includes("javiti"));
     });
   });
+
+  describe("detectEscalationIntent — extended Croatian coverage", () => {
+    // Female-gender first person (used-book buyers are often women)
+    it("escalates wrong_order for female gender 'dobila sam krivu'", () => {
+      const result = detectEscalationIntent(n("dobila sam krivu knjigu"));
+      assert.strictEqual(result.shouldEscalate, true);
+      assert.strictEqual(result.intent, "wrong_order");
+    });
+
+    // Damaged used-book condition scenarios
+    it("escalates complaint_damaged for mokre stranice", () => {
+      const result = detectEscalationIntent(n("stranice su mokre i zgužvane"));
+      assert.strictEqual(result.shouldEscalate, true);
+      assert.strictEqual(result.intent, "complaint_damaged");
+    });
+
+    it("escalates complaint_damaged for fali korica", () => {
+      const result = detectEscalationIntent(n("knjizi fali korica"));
+      assert.strictEqual(result.shouldEscalate, true);
+      assert.strictEqual(result.intent, "complaint_damaged");
+    });
+
+    it("escalates complaint_damaged for smrdi na vlagu", () => {
+      const result = detectEscalationIntent(n("knjiga smrdi na vlagu"));
+      assert.strictEqual(result.shouldEscalate, true);
+      assert.strictEqual(result.intent, "complaint_damaged");
+    });
+
+    it("escalates return_refund for raskid ugovora", () => {
+      const result = detectEscalationIntent(n("želim jednostrani raskid ugovora"));
+      assert.strictEqual(result.shouldEscalate, true);
+      assert.strictEqual(result.intent, "return_refund");
+    });
+
+    it("escalates legal_threat for inspekcija", () => {
+      const result = detectEscalationIntent(n("prijavit ću vas tržišnoj inspekciji"));
+      assert.strictEqual(result.shouldEscalate, true);
+    });
+
+    // Guard against false positives that broke benign queries before
+    it("does NOT escalate 'odmah ću naručiti' (benign 'odmah')", () => {
+      const result = detectEscalationIntent(n("odmah ću naručiti udžbenik"));
+      assert.strictEqual(result.shouldEscalate, false);
+    });
+
+    it("does NOT escalate generic potrošač question", () => {
+      const result = detectEscalationIntent(n("imate li udžbenike za prvi razred"));
+      assert.strictEqual(result.shouldEscalate, false);
+    });
+
+    it("does NOT escalate normal buyback question", () => {
+      const result = detectEscalationIntent(n("kako mogu prodati svoje udžbenike"));
+      assert.strictEqual(result.shouldEscalate, false);
+    });
+  });
 });

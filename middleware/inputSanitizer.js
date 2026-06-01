@@ -7,6 +7,7 @@
 const log = require("../config/logger");
 
 const REJECT_PATTERNS = [
+  // --- English ---
   /ignore\s+(all\s+)?previous\s+instructions/i,
   /pretend\s+you\s+are/i,
   /reveal\s+your\s+(system\s+)?prompt/i,
@@ -16,10 +17,24 @@ const REJECT_PATTERNS = [
   /act\s+as\s+(?:an?\s+)?(unrestricted|evil|malicious)/i,
   /output\s+your\s+(system|initial)\s+prompt/i,
   /what\s+(are|were)\s+your\s+(initial\s+)?instructions/i,
+  // --- Croatian (customers write in Croatian) ---
+  /ignorira[jš]?\s+(sve\s+)?(prethodn|prijašnj|dosadašnj)/i,
+  /zanemari\s+(sve\s+)?(prethodn|prijašnj|upute|instrukcij|pravila)/i,
+  /zaboravi\s+(sve\s+)?(prethodn|upute|instrukcij|što\s+sam|pravila)/i,
+  /(otkrij|pokaži|ispiši|reci\s+mi)\s+(svoj\s+|tvoj\s+)?(sistemski\s+|početni\s+)?prompt/i,
+  /(koje|koji|kakve)\s+su\s+(tvoje|vaše)\s+(početne\s+)?(upute|instrukcij)/i,
+  /(ti\s+si\s+sada|sada\s+si)\s+.{0,20}(mod|način\s+rada|developer)/i,
+  /ponašaj\s+se\s+kao\s+(?:da\s+si\s+)?(?:neograničen|zao|zloban|haker)/i,
+  /pretvaraj\s+se\s+da\s+si/i,
+  /pre(s|đ)i\s+u\s+(developer|razvojni)\s+(mod|način)/i,
+  /(zaobiđi|preskoči)\s+(sigurnosn|sve)\s+(filter|provjer|pravila)/i,
+  // --- Structural injection markers (language-agnostic) ---
   /\[SYSTEM\]/i,
   /\[INST\]/i,
   /```system/i,
-  /<\|im_start\|>/i
+  /<\|im_start\|>/i,
+  /<\|im_end\|>/i,
+  /###\s*(system|instruction)/i
 ];
 
 const DANGEROUS_DELIMITERS = /[-]{3,}|[=]{3,}|[#]{3,}/g;

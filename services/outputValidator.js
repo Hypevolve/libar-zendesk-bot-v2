@@ -81,10 +81,19 @@ function validateAnswerQuality(answer, { knowledgeContext = "", userMessage = ""
   }
 
   // 4. Output PII check (Skill §13 Layer 6)
+  // High-risk financial/identity PII (OIB, IBAN, credit card) must NEVER be sent
+  // to a customer — block it. Public business contacts (email/phone) are allowed
+  // via the SAFE_* allowlists inside piiService and are only warned about.
   const outputPII = piiService.detectPII(answer);
   if (outputPII.length > 0) {
+    const HARD_BLOCK_TYPES = new Set(["OIB", "IBAN", "CREDIT_CARD"]);
+    const blocking = outputPII.filter((p) => HARD_BLOCK_TYPES.has(p.type));
+    if (blocking.length > 0) {
+      log.warn("pii_blocked_in_output", { types: blocking.map((p) => p.type) });
+      return { valid: false, reason: "sensitive_pii_in_output" };
+    }
     log.warn("pii_in_output", { types: outputPII.map((p) => p.type) });
-    // Don't block — just warn. PII in answer may be from knowledge (e.g. business email).
+    // Email/phone may be a public business contact from knowledge — warn only.
   }
 
   // 5. Invented URL detection
@@ -93,8 +102,12 @@ function validateAnswerQuality(answer, { knowledgeContext = "", userMessage = ""
     const knowledgeLower = knowledgeContext.toLowerCase();
 
     for (const url of urlsInAnswer) {
-      const domain = url.toLowerCase().replace(/^https?:\/\//, "").split("/")[0];
-      if (!knowledgeLower.includes(domain) && !domain.includes("antikvarijat-libar")) {
+      const host = url.toLowerCase().replace(/^https?:\/\//, "").split("/")[0].replace(/^www\./, "");
+      // Allow only if the host appears verbatim in knowledge, or is an official
+      // Libar registrable domain (antikvarijat-libar.com / .hr — exact host or subdomain).
+      const isOfficial = host === "antikvarijat-libar.com" || host === "antikvarijat-libar.hr"
+        || host.endsWith(".antikvarijat-libar.com") || host.endsWith(".antikvarijat-libar.hr");
+      if (!knowledgeLower.includes(host) && !isOfficial) {
         return { valid: false, reason: "invented_url" };
       }
     }
@@ -112,8 +125,11 @@ function validateAnswerQuality(answer, { knowledgeContext = "", userMessage = ""
         if (knowledgeTokens.has(token)) overlap++;
       }
       const ratio = overlap / answerTokens.size;
-      // Short answers paraphrase more; use lower threshold.
-      const threshold = answerWords.length < 15 ? 0.04 : 0.08;
+      // Require a meaningful fraction of the answer to be grounded in the retrieved
+      // knowledge. Short answers paraphrase more, so use a slightly lower threshold.
+      // Raised from 0.04/0.08 — those were trivially passed by hallucinations that
+      // merely reused a couple of common words.
+      const threshold = answerWords.length < 15 ? 0.12 : 0.18;
 
       if (ratio < threshold) {
         return { valid: false, reason: "low_knowledge_overlap" };

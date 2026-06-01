@@ -43,10 +43,55 @@ const PII_PATTERNS = {
 const SAFE_EMAILS = new Set(["info@antikvarijat-libar.com", "info@antikvarijat-libar.hr"]);
 const SAFE_PHONES = new Set(["031/201-230", "031 201 230", "031201230"]);
 
+/**
+ * ISO 7064 MOD 11,10 — Croatian OIB control-digit check.
+ * Used to distinguish a real OIB from any random 11-digit number so we can log
+ * detection confidence. We still mask all isolated 11-digit numbers (privacy-first),
+ * but a valid checksum removes ambiguity in logs/metrics.
+ */
+function isValidOIB(digits) {
+  if (!/^\d{11}$/.test(digits)) return false;
+  let a = 10;
+  for (let i = 0; i < 10; i++) {
+    a = (a + Number(digits[i])) % 10;
+    if (a === 0) a = 10;
+    a = (a * 2) % 11;
+  }
+  const control = (11 - a) % 10;
+  return control === Number(digits[10]);
+}
+
+/**
+ * Luhn check for credit-card candidates — avoids masking arbitrary 16-digit
+ * numbers (e.g. order references) that merely look like a card.
+ */
+function isLuhnValid(value) {
+  const digits = String(value).replace(/[-\s]/g, "");
+  if (!/^\d{13,19}$/.test(digits)) return false;
+  let sum = 0;
+  let alt = false;
+  for (let i = digits.length - 1; i >= 0; i--) {
+    let d = Number(digits[i]);
+    if (alt) {
+      d *= 2;
+      if (d > 9) d -= 9;
+    }
+    sum += d;
+    alt = !alt;
+  }
+  return sum % 10 === 0;
+}
+
 function isSafe(value, type) {
   if (type === "email") return SAFE_EMAILS.has(String(value).toLowerCase());
   if (type === "phone_hr" || type === "phone_intl") {
     return SAFE_PHONES.has(String(value).replace(/[-/\s]/g, "")) || SAFE_PHONES.has(value);
+  }
+  // Credit card: only treat as PII when it passes the Luhn checksum, so random
+  // 16-digit order numbers aren't redacted. (OIB is left permissive on purpose —
+  // privacy-first — but its checksum is exposed via isValidOIB for logging.)
+  if (type === "credit_card") {
+    return !isLuhnValid(value);
   }
   return false;
 }
@@ -106,4 +151,4 @@ function detectPII(text) {
   return found;
 }
 
-module.exports = { maskPII, unmaskPII, detectPII, SAFE_EMAILS, SAFE_PHONES };
+module.exports = { maskPII, unmaskPII, detectPII, isValidOIB, isLuhnValid, SAFE_EMAILS, SAFE_PHONES };
