@@ -89,6 +89,12 @@ module.exports = {
   EMBED_ALLOWED_ORIGINS: envStr("EMBED_ALLOWED_ORIGINS")
     .split(",").map(s => s.trim()).filter(Boolean),
 
+  // --- Kill switch ---
+  // When false, the bot stops generating AI answers and politely escalates every
+  // conversation to a human. Set BOT_ENABLED=false in the environment for a hard
+  // stop, or toggle at runtime via the admin endpoint (no redeploy needed).
+  BOT_ENABLED: envBool("BOT_ENABLED", true),
+
   // --- Token budget ---
   TOKEN_BUDGET_MAX_INPUT: envInt("TOKEN_BUDGET_MAX_INPUT", 12000),
   TOKEN_BUDGET_MAX_OUTPUT: envInt("TOKEN_BUDGET_MAX_OUTPUT", 1500),

@@ -290,6 +290,31 @@ async function setTicketTags(ticketId, nextTags = []) {
 
 const STATE_TAGS = new Set(["ai_active", "awaiting_human", "awaiting_customer_detail", "human_active", "resolved"]);
 
+// Tags that mean a human agent has taken over (or the ticket is closed). When any
+// of these is present the bot MUST stay silent so it never talks over an agent or
+// re-opens a resolved conversation. Pure function so it can be unit-tested.
+const HUMAN_OWNED_TAGS = new Set(["human_active", "awaiting_human", "resolved"]);
+
+function isHumanHandled(tags = []) {
+  if (!Array.isArray(tags)) return false;
+  return tags.some((t) => HUMAN_OWNED_TAGS.has(String(t || "").trim().toLowerCase()));
+}
+
+/**
+ * Fetch the ticket and decide whether the bot should stay silent. Returns
+ * { handled: boolean, tags: string[] }. On API failure we FAIL-OPEN to false so a
+ * transient Zendesk error doesn't permanently mute the bot — but we log it.
+ */
+async function isTicketHumanHandled(ticketId) {
+  try {
+    const summary = await getTicketSummary(ticketId);
+    return { handled: isHumanHandled(summary.tags), tags: summary.tags || [] };
+  } catch (error) {
+    log.warn("human_handled_check_failed", { ticketId, message: error.message });
+    return { handled: false, tags: [] };
+  }
+}
+
 async function updateConversationState(ticketId, nextState, extraTags = []) {
   const ticket = await getTicketSummary(ticketId);
   const nextTags = (ticket.tags || []).filter((t) => !STATE_TAGS.has(t));
@@ -423,5 +448,6 @@ module.exports = {
   getPublicTicketComments, getRequesterProfile, getTicketAudits, getTicketSummary,
   ping, replyToTicket, resetHelpCenterCache, searchHelpCenter, searchHelpCenterDetailed,
   setTicketTags, solveTicket, testZendeskTicketAccess, updateConversationState,
-  uploadAttachments, verifyWebhookToken
+  uploadAttachments, verifyWebhookToken,
+  isHumanHandled, isTicketHumanHandled, HUMAN_OWNED_TAGS
 };

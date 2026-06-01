@@ -32,6 +32,7 @@ const zendeskService = require("./services/zendeskService");
 const piiService = require("./services/piiService");
 const tracingService = require("./services/tracingService");
 const metricsService = require("./services/metricsService");
+const botStateService = require("./services/botStateService");
 const outputValidator = require("./services/outputValidator");
 const spamFilterService = require("./services/spamFilterService");
 const conversationService = require("./services/conversationService");
@@ -218,6 +219,24 @@ async function resolveAutomatedOutcome(session, userMessage, opts = {}) {
 
 async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
   const start = Date.now();
+
+  // ── KILL SWITCH (absolute highest priority) ───────────────────
+  // When the bot is globally disabled, generate no AI answer — politely hand the
+  // whole conversation to a human. This is the incident-response stop button.
+  if (!botStateService.isEnabled()) {
+    metricsService.recordDecision("escalate_no_answer");
+    metricsService.recordLatency(Date.now() - start);
+    metricsService.increment("botDisabledEscalations");
+    log.warn("bot_disabled_escalation", { ticketId: session.ticketId });
+    return {
+      knowledge: null,
+      outcome: {
+        type: "escalate_no_answer",
+        customerMessage: botStateService.PAUSED_MESSAGE,
+        stateTag: "awaiting_human", reason: "bot_disabled", links: [], extraTags: ["ai_paused"]
+      }
+    };
+  }
 
   const { masked: maskedMsg, mappings: piiMappings } = piiService.maskPII(userMessage);
 
@@ -678,6 +697,17 @@ app.post("/api/zendesk/webhook", async (req, res) => {
     return res.status(200).json({ success: true, duplicate: true });
   }
 
+  // Human-takeover guard: if an agent has taken over (human_active / awaiting_human)
+  // or the ticket is resolved, the bot stays silent so it never talks over an agent.
+  if (latestMessage) {
+    const handoff = await zendeskService.isTicketHumanHandled(ticketId);
+    if (handoff.handled) {
+      log.info("webhook_skipped_human_handled", { ticketId, tags: handoff.tags });
+      metricsService.increment("webhooksSkippedHumanHandled");
+      return res.status(200).json({ success: true, skipped: "human_handled" });
+    }
+  }
+
   try {
     const normalizedChannel = aiService.normalizeChannelType(channelType || "email");
 
@@ -848,6 +878,21 @@ app.get("/admin/traces", requireAdmin, (req, res) => {
 
 app.get("/admin/metrics", requireAdmin, (req, res) => {
   res.json({ success: true, metrics: metricsService.getMetrics() });
+});
+
+// Kill switch: read current state and toggle the bot on/off at runtime (no redeploy).
+app.get("/admin/bot-state", requireAdmin, (req, res) => {
+  res.json({ success: true, ...botStateService.getState() });
+});
+
+app.post("/admin/bot-state", requireAdmin, (req, res) => {
+  const desired = req.body?.enabled;
+  if (typeof desired !== "boolean") {
+    return res.status(400).json({ success: false, error: "Body must include boolean 'enabled'." });
+  }
+  const state = botStateService.setEnabled(desired, "admin");
+  log.warn("bot_state_toggled", { enabled: state.enabled });
+  res.json({ success: true, ...state });
 });
 
 app.post("/admin/sync/vector", requireAdmin, async (req, res) => {
