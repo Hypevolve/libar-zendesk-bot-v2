@@ -242,8 +242,6 @@ function updateMetrics(metrics) {
   document.getElementById('m-cache').textContent = hitRate + '%';
   document.getElementById('m-cache-detail').textContent = (cache.hits || 0) + ' hits / ' + (cache.misses || 0) + ' misses';
 
-  document.getElementById('m-errors').textContent = metrics.errors || 0;
-
   // Decision breakdown
   updateDecisionBreakdown(metrics.decisions || {}, metrics.totalRequests || 0);
 
