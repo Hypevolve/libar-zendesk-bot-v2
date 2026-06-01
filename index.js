@@ -17,6 +17,7 @@ require("dotenv").config();
 const express = require("express");
 const multer = require("multer");
 const crypto = require("crypto");
+const path = require("path");
 
 const env = require("./config/env");
 const log = require("./config/logger");
@@ -860,6 +861,12 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
     log.error("webhook_failed", { ticketId, message: error.message });
     return res.status(200).json({ success: true, error: error.message });
   }
+});
+
+// ─── GET / (Web Chat Widget) ────────────────────────────────
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // ─── GET /health ──────────────────────────────────────────────
