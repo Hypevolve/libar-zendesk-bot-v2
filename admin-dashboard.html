@@ -78,38 +78,57 @@
       <div class="card"><h3>Prosječna latencija</h3><div class="value" id="m-latency">—</div><div class="sub" id="m-latency-p95">—</div></div>
     </div>
 
-    <!-- Token & Cache -->
+    <!-- Decision Breakdown -->
+    <div class="section">
+      <h2>Breakdown odluka</h2>
+      <div id="decision-breakdown" style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px;">
+        <div style="flex: 1; min-width: 200px;">
+          <div class="mini-stat"><span class="label">Odgovoreno (safe_answer)</span><span class="val" id="d-answered">—</span></div>
+          <div class="progress-bar"><div class="fill green" id="d-answered-bar" style="width: 0%;"></div></div>
+        </div>
+        <div style="flex: 1; min-width: 200px;">
+          <div class="mini-stat"><span class="label">Eskalirano (escalate)</span><span class="val" id="d-escalated">—</span></div>
+          <div class="progress-bar"><div class="fill red" id="d-escalated-bar" style="width: 0%;"></div></div>
+        </div>
+        <div style="flex: 1; min-width: 200px;">
+          <div class="mini-stat"><span class="label">Ostalo</span><span class="val" id="d-other">—</span></div>
+          <div class="progress-bar"><div class="fill orange" id="d-other-bar" style="width: 0%;"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kill Switch -->
+    <div class="section" id="kill-switch-section">
+      <h2>Kill Switch — Bot status</h2>
+      <div style="display: flex; align-items: center; gap: 20px; margin-top: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span id="bot-status-dot" style="width: 12px; height: 12px; border-radius: 50%; background: #22c55e; display: inline-block;"></span>
+          <span id="bot-status-text" style="font-weight: 600; font-size: 16px;">Učitavanje...</span>
+        </div>
+        <button id="kill-switch-btn" onclick="toggleBotState()" style="padding: 10px 24px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background: #ef4444; color: white;">Isključi bota</button>
+      </div>
+      <div id="kill-switch-msg" style="margin-top: 10px; font-size: 13px; color: #888;"></div>
+    </div>
+
+    <!-- Token & Cache & Cost -->
     <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
       <div class="card">
         <h3>Token potrošnja</h3>
         <div class="value" style="font-size: 20px; margin-top: 8px;" id="m-tokens">—</div>
         <div class="sub" id="m-tokens-req">—</div>
+        <div class="sub" style="margin-top: 6px; font-size: 11px; color: #999;">Model: <span id="m-model">—</span></div>
+      </div>
+      <div class="card">
+        <h3>Procijenjeni trošak</h3>
+        <div class="value" style="font-size: 20px; margin-top: 8px;" id="m-cost">—</div>
+        <div class="sub">Na temelju OpenRouter cijena</div>
+        <div class="sub" style="margin-top: 6px; font-size: 11px; color: #999;">~$<span id="m-cost-input">—</span> / 1M input | ~$<span id="m-cost-output">—</span> / 1M output</div>
       </div>
       <div class="card">
         <h3>Cache hit rate</h3>
         <div class="value" style="font-size: 20px; margin-top: 8px;" id="m-cache">—</div>
         <div class="sub" id="m-cache-detail">—</div>
       </div>
-      <div class="card">
-        <h3>Greške</h3>
-        <div class="value" style="font-size: 20px; margin-top: 8px; color: #22c55e;" id="m-errors">—</div>
-        <div class="sub">Nema sustavnih grešaka</div>
-      </div>
-    </div>
-
-    <!-- Coverage Progress -->
-    <div class="section">
-      <h2><span class="live-dot"></span> Pokrivenost po kategorijama</h2>
-      <div class="mini-stat"><span class="label">Dostava</span><span class="val">85%</span></div>
-      <div class="progress-bar"><div class="fill green" style="width: 85%;"></div></div>
-      <div class="mini-stat" style="margin-top: 12px;"><span class="label">Povrat / Reklamacije</span><span class="val">75%</span></div>
-      <div class="progress-bar"><div class="fill green" style="width: 75%;"></div></div>
-      <div class="mini-stat" style="margin-top: 12px;"><span class="label">Otkup</span><span class="val">65%</span></div>
-      <div class="progress-bar"><div class="fill orange" style="width: 65%;"></div></div>
-      <div class="mini-stat" style="margin-top: 12px;"><span class="label">Kontakt / Meta</span><span class="val">40%</span></div>
-      <div class="progress-bar"><div class="fill orange" style="width: 40%;"></div></div>
-      <div class="mini-stat" style="margin-top: 12px;"><span class="label">Plaćanje (pouzeće)</span><span class="val">25%</span></div>
-      <div class="progress-bar"><div class="fill red" style="width: 25%;"></div></div>
     </div>
 
     <!-- Traces Table -->
@@ -133,20 +152,6 @@
       </div>
     </div>
 
-    <!-- Latency Chart -->
-    <div class="section">
-      <h2>Distribucija latencije</h2>
-      <div style="display: flex; align-items: flex-end; gap: 2px; height: 120px; padding-top: 20px;">
-        <div style="flex: 1; background: #22c55e; height: 15%; border-radius: 2px 2px 0 0;"></div>
-        <div style="flex: 1; background: #22c55e; height: 35%; border-radius: 2px 2px 0 0;"></div>
-        <div style="flex: 1; background: #f97316; height: 30%; border-radius: 2px 2px 0 0;"></div>
-        <div style="flex: 1; background: #f97316; height: 15%; border-radius: 2px 2px 0 0;"></div>
-        <div style="flex: 1; background: #ef4444; height: 5%; border-radius: 2px 2px 0 0;"></div>
-      </div>
-      <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: #888;">
-        <span>0s</span><span>1s</span><span>3s</span><span>5s</span><span>7s</span><span>10s+</span>
-      </div>
-    </div>
   </div>
 
 </div>
@@ -238,6 +243,119 @@ function updateMetrics(metrics) {
   document.getElementById('m-cache-detail').textContent = (cache.hits || 0) + ' hits / ' + (cache.misses || 0) + ' misses';
 
   document.getElementById('m-errors').textContent = metrics.errors || 0;
+
+  // Decision breakdown
+  updateDecisionBreakdown(metrics.decisions || {}, metrics.totalRequests || 0);
+
+  // Token cost (approximate OpenRouter pricing)
+  updateTokenCost(metrics.tokenUsage || {});
+}
+
+function updateDecisionBreakdown(decisions, total) {
+  if (total === 0) return;
+  const answered = decisions.safe_answer || 0;
+  const escalated = decisions.escalate_no_answer || 0;
+  const other = total - answered - escalated;
+
+  document.getElementById('d-answered').textContent = answered + ' (' + ((answered/total)*100).toFixed(0) + '%)';
+  document.getElementById('d-answered-bar').style.width = ((answered/total)*100) + '%';
+  document.getElementById('d-escalated').textContent = escalated + ' (' + ((escalated/total)*100).toFixed(0) + '%)';
+  document.getElementById('d-escalated-bar').style.width = ((escalated/total)*100) + '%';
+  document.getElementById('d-other').textContent = Math.max(0, other) + ' (' + ((Math.max(0, other)/total)*100).toFixed(0) + '%)';
+  document.getElementById('d-other-bar').style.width = ((Math.max(0, other)/total)*100) + '%';
+}
+
+// Approximate OpenRouter pricing per model (USD per 1M tokens)
+const MODEL_PRICING = {
+  'openai/gpt-5': { input: 2.50, output: 10.00 },
+  'openai/gpt-4.1-mini': { input: 0.40, output: 1.60 },
+  'openai/gpt-4o': { input: 2.50, output: 10.00 },
+  'google/gemini-2.5-flash': { input: 0.15, output: 0.60 },
+  'anthropic/claude-3.5-sonnet': { input: 3.00, output: 15.00 },
+  'default': { input: 2.50, output: 10.00 }
+};
+
+function updateTokenCost(tokenUsage) {
+  const input = tokenUsage.totalInputTokens || 0;
+  const output = tokenUsage.totalOutputTokens || 0;
+  const model = tokenUsage.model || 'openai/gpt-5';
+
+  // Try exact match, then provider prefix, then default
+  let pricing = MODEL_PRICING[model];
+  if (!pricing) {
+    const provider = model.split('/')[0];
+    pricing = Object.entries(MODEL_PRICING).find(([k, v]) => k.startsWith(provider))?.[1] || MODEL_PRICING.default;
+  }
+
+  const costInput = (input / 1_000_000) * pricing.input;
+  const costOutput = (output / 1_000_000) * pricing.output;
+  const totalCost = costInput + costOutput;
+
+  document.getElementById('m-cost').textContent = '~$' + totalCost.toFixed(2);
+  document.getElementById('m-model').textContent = model.split('/').pop();
+  document.getElementById('m-cost-input').textContent = pricing.input.toFixed(2);
+  document.getElementById('m-cost-output').textContent = pricing.output.toFixed(2);
+}
+
+async function fetchBotState() {
+  const token = getToken();
+  try {
+    const res = await fetch(`${API_BASE}/admin/bot-state`, {
+      headers: { 'x-admin-token': token }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return data.enabled;
+  } catch (err) {
+    console.error('Bot state error:', err);
+    return null;
+  }
+}
+
+async function toggleBotState() {
+  const current = await fetchBotState();
+  if (current === null) return;
+  const next = !current;
+  const token = getToken();
+
+  const btn = document.getElementById('kill-switch-btn');
+  btn.disabled = true;
+  btn.textContent = 'Učitavanje...';
+
+  try {
+    const res = await fetch(`${API_BASE}/admin/bot-state`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+      body: JSON.stringify({ enabled: next })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    renderBotState(data.enabled);
+    document.getElementById('kill-switch-msg').textContent = next ? 'Bot je uključen.' : 'Bot je isključen. Svi razgovori će se eskalirati.';
+  } catch (err) {
+    console.error('Toggle error:', err);
+    document.getElementById('kill-switch-msg').textContent = 'Greška prilikom promjene statusa.';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderBotState(enabled) {
+  const dot = document.getElementById('bot-status-dot');
+  const text = document.getElementById('bot-status-text');
+  const btn = document.getElementById('kill-switch-btn');
+
+  if (enabled) {
+    dot.style.background = '#22c55e';
+    text.textContent = 'Bot je AKTIVAN';
+    btn.textContent = 'Isključi bota';
+    btn.style.background = '#ef4444';
+  } else {
+    dot.style.background = '#ef4444';
+    text.textContent = 'Bot je ISKLJUČEN';
+    btn.textContent = 'Uključi bota';
+    btn.style.background = '#22c55e';
+  }
 }
 
 function updateTraces(traces) {
@@ -269,6 +387,7 @@ function updateTraces(traces) {
 async function loadAll() {
   const metrics = await fetchMetrics();
   const traces = await fetchTraces(15);
+  const botEnabled = await fetchBotState();
 
   if (metrics === null && traces === null) {
     document.getElementById('token-status').innerHTML = '<div class="error-msg">Server nije dostupan. Provjeri da je bot pokrenut (npm start).</div>';
@@ -277,6 +396,7 @@ async function loadAll() {
 
   updateMetrics(metrics);
   updateTraces(traces);
+  if (botEnabled !== null) renderBotState(botEnabled);
   document.getElementById('last-update-time').textContent = new Date().toLocaleTimeString('hr-HR');
 }
 
