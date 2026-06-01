@@ -405,8 +405,11 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
     // Skip relevance grading if hybrid confidence is already high
     let relevance = { relevant: true, reason: "high_confidence" };
     const topConfidence = knowledge.topConfidence || 0;
-    if (!skipNonEssential && topConfidence < 0.72) {
-      relevance = await aiService.gradeContextRelevance(maskedMsg, knowledge.context);
+    const isFollowUp = hasHistory && messageWordCount <= 6;
+    if (!skipNonEssential && topConfidence < 0.72 && !isFollowUp) {
+      relevance = await aiService.gradeContextRelevance(maskedMsg, knowledge.context, {
+        conversationSummary: conversationService.buildConversationSummaryForAI(session.messages || [])
+      });
     }
 
     if (relevance.relevant) {

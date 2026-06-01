@@ -12538,10 +12538,340 @@
       "entryIntent": null,
       "createdAt": "2026-06-01T18:01:12.530Z",
       "updatedAt": "2026-06-01T18:05:27.317Z"
+    },
+    {
+      "sessionId": "20aca5f3-c175-4dfd-b1f7-d370ad027944",
+      "ticketId": 89518,
+      "requesterId": 27216941388316,
+      "requesterName": "Zrinko Kutnjak",
+      "requesterEmail": "zrinko@kontra.agency",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko košta dostava?",
+          "ts": "2026-06-01T18:09:11.763Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Dostava putem GLS-a na kućnu adresu košta **5,97 EUR**, dok dostava u GLS paketomat iznosi **3,75 EUR**. Dostava u BoxNow paketomat košta **3,25 EUR**. Osobno preuzimanje u poslovnici Antikvarijata Libar u Osijeku je besplatno.",
+          "ts": "2026-06-01T18:09:11.763Z"
+        },
+        {
+          "role": "user",
+          "content": "A za iste knjige u paketomat?",
+          "ts": "2026-06-01T18:09:18.220Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Hvala na pitanju! Nažalost, nemam dovoljno informacija da vam odgovorim. Proslijedit ću vaš upit našem timu koji će vam se javiti.",
+          "ts": "2026-06-01T18:09:23.845Z"
+        },
+        {
+          "role": "user",
+          "content": "[KORISNIK JE ZAVRŠIO RAZGOVOR]",
+          "ts": "2026-06-01T18:10:23.576Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Ako imate dodatnih pitanja ili trebate pomoć, slobodno se obratite Antikvarijatu Libar putem emaila na info@antikvarijat-libar.com ili telefonom na 031/201-230. Hvala što ste nas kontaktirali!",
+          "ts": "2026-06-01T18:10:29.439Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-06-01T18:09:03.937Z",
+      "updatedAt": "2026-06-01T18:10:29.439Z"
+    },
+    {
+      "sessionId": "710b25f3-5042-47b6-8dc7-aeb594df83b9",
+      "ticketId": 89519,
+      "requesterId": 27303361513628,
+      "requesterName": "Test",
+      "requesterEmail": "test@example.com",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko košta dostava?",
+          "ts": "2026-06-01T18:10:34.135Z"
+        },
+        {
+          "role": "assistant",
+          "content": "**Antikvarijat Libar** nudi nekoliko opcija dostave s različitim cijenama:\n\n1. **Dostava na kućnu adresu (GLS)**: 5,97 EUR\n2. **Dostava u GLS paketomat**: 3,75 EUR\n3. **Dostava u BoxNow paketomat**: 3,25 EUR\n4. **Osobno preuzimanje u Osijeku**: besplatno\n\nAko imate dodatnih pitanja ili trebate pomoć, slobodno se obratite našoj podršci.",
+          "ts": "2026-06-01T18:10:34.135Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-06-01T18:10:28.116Z",
+      "updatedAt": "2026-06-01T18:10:34.135Z"
+    },
+    {
+      "sessionId": "f702cd7a-08b9-4e07-9d61-3d93a1fc1b80",
+      "ticketId": 89520,
+      "requesterId": 27303361513628,
+      "requesterName": "Test",
+      "requesterEmail": "test@example.com",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko košta dostava?",
+          "ts": "2026-06-01T18:10:54.160Z"
+        },
+        {
+          "role": "assistant",
+          "content": "**Antikvarijat Libar** nudi nekoliko opcija dostave s različitim cijenama:\n\n1. **Dostava na kućnu adresu (GLS)**: 5,97 EUR\n2. **Dostava u GLS paketomat**: 3,75 EUR\n3. **Dostava u BoxNow paketomat**: 3,25 EUR\n4. **Osobno preuzimanje u Osijeku**: besplatno\n\nAko imate dodatnih pitanja ili trebate pomoć, slobodno se obratite našoj podršci.",
+          "ts": "2026-06-01T18:10:54.160Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-06-01T18:10:52.625Z",
+      "updatedAt": "2026-06-01T18:10:54.160Z"
+    },
+    {
+      "sessionId": "05154ca3-873a-4e7c-9f78-3902cda8b625",
+      "ticketId": 89521,
+      "requesterId": 27303361513628,
+      "requesterName": "Test",
+      "requesterEmail": "test@example.com",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko košta dostava?",
+          "ts": "2026-06-01T18:11:04.699Z"
+        },
+        {
+          "role": "assistant",
+          "content": "**Antikvarijat Libar** nudi nekoliko opcija dostave s različitim cijenama:\n\n1. **Dostava na kućnu adresu (GLS)**: 5,97 EUR\n2. **Dostava u GLS paketomat**: 3,75 EUR\n3. **Dostava u BoxNow paketomat**: 3,25 EUR\n4. **Osobno preuzimanje u Osijeku**: besplatno\n\nAko imate dodatnih pitanja ili trebate pomoć, slobodno se obratite našoj podršci.",
+          "ts": "2026-06-01T18:11:04.699Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-06-01T18:11:03.718Z",
+      "updatedAt": "2026-06-01T18:11:04.699Z"
+    },
+    {
+      "sessionId": "3bdd3ac8-4b7a-4d51-bc30-d117b5d75e26",
+      "ticketId": 89522,
+      "requesterId": 27303361513628,
+      "requesterName": "Test",
+      "requesterEmail": "test@example.com",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko košta dostava?",
+          "ts": "2026-06-01T18:11:13.953Z"
+        },
+        {
+          "role": "assistant",
+          "content": "**Antikvarijat Libar** nudi nekoliko opcija dostave s različitim cijenama:\n\n1. **Dostava na kućnu adresu (GLS)**: 5,97 EUR\n2. **Dostava u GLS paketomat**: 3,75 EUR\n3. **Dostava u BoxNow paketomat**: 3,25 EUR\n4. **Osobno preuzimanje u Osijeku**: besplatno\n\nAko imate dodatnih pitanja ili trebate pomoć, slobodno se obratite našoj podršci.",
+          "ts": "2026-06-01T18:11:13.953Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-06-01T18:11:12.978Z",
+      "updatedAt": "2026-06-01T18:11:13.953Z"
+    },
+    {
+      "sessionId": "4db0ffb1-1d27-476e-be8a-513c7708b996",
+      "ticketId": 89523,
+      "requesterId": 369816658839,
+      "requesterName": "T",
+      "requesterEmail": "t@t.com",
+      "messages": [
+        {
+          "role": "user",
+          "content": "test",
+          "ts": "2026-06-01T18:11:30.473Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Hvala na pitanju! Nažalost, nemam dovoljno informacija da vam odgovorim. Proslijedit ću vaš upit našem timu koji će vam se javiti.",
+          "ts": "2026-06-01T18:11:30.473Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-06-01T18:11:22.882Z",
+      "updatedAt": "2026-06-01T18:11:30.473Z"
+    },
+    {
+      "sessionId": "4ad1948a-b68a-4b73-a47e-8b2f9576013f",
+      "ticketId": 89524,
+      "requesterId": 386186859511,
+      "requesterName": "Test",
+      "requesterEmail": "test@test.com",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko košta dostava?",
+          "ts": "2026-06-01T18:11:58.587Z"
+        },
+        {
+          "role": "assistant",
+          "content": "**Antikvarijat Libar** nudi nekoliko opcija dostave s različitim cijenama:\n\n1. **Dostava na kućnu adresu (GLS)**: 5,97 EUR\n2. **Dostava u GLS paketomat**: 3,75 EUR\n3. **Dostava u BoxNow paketomat**: 3,25 EUR\n4. **Osobno preuzimanje u Osijeku**: besplatno\n\nAko imate dodatnih pitanja ili trebate pomoć, slobodno se obratite našoj podršci.",
+          "ts": "2026-06-01T18:11:58.587Z"
+        },
+        {
+          "role": "user",
+          "content": "A za iste knjige u paketomat?",
+          "ts": "2026-06-01T18:12:33.260Z"
+        },
+        {
+          "role": "assistant",
+          "content": "**Antikvarijat Libar** nudi dostavu u paketomat po cijeni od 3,50 EUR za GLS i BoxNow paketomate. Možete odabrati točnu lokaciju paketomata u Vašem gradu prilikom narudžbe.",
+          "ts": "2026-06-01T18:12:45.856Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-06-01T18:11:57.046Z",
+      "updatedAt": "2026-06-01T18:12:45.856Z"
+    },
+    {
+      "sessionId": "049c2e70-0a87-4de5-bf27-8a174b18d087",
+      "ticketId": 89525,
+      "requesterId": 386186859511,
+      "requesterName": "Test",
+      "requesterEmail": "test@test.com",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko košta dostava?",
+          "ts": "2026-06-01T18:15:09.479Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Dostava putem GLS-a na kućnu adresu košta **5,97 EUR**, dok dostava u GLS paketomat iznosi **3,75 EUR**. Dostava u BoxNow paketomat košta **3,25 EUR**. Osobno preuzimanje u poslovnici Antikvarijata Libar u Osijeku je besplatno.",
+          "ts": "2026-06-01T18:15:09.479Z"
+        },
+        {
+          "role": "user",
+          "content": "A za iste knjige u paketomat?",
+          "ts": "2026-06-01T18:15:12.454Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Hvala na pitanju! Nažalost, nemam dovoljno informacija da vam odgovorim. Proslijedit ću vaš upit našem timu koji će vam se javiti.",
+          "ts": "2026-06-01T18:15:20.470Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-06-01T18:15:03.555Z",
+      "updatedAt": "2026-06-01T18:15:20.470Z"
+    },
+    {
+      "sessionId": "de8f3cdb-762a-44cc-9207-f516a6f86b6e",
+      "ticketId": 89526,
+      "requesterId": 386186859511,
+      "requesterName": "Test",
+      "requesterEmail": "test@test.com",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko košta dostava?",
+          "ts": "2026-06-01T18:17:16.865Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Dostava putem GLS-a na kućnu adresu iznosi **5,97 EUR**, dok dostava u GLS paketomat košta **3,75 EUR**. Dostava u BoxNow paketomat je **3,25 EUR**. Osobno preuzimanje u poslovnici Antikvarijata Libar u Osijeku je besplatno.",
+          "ts": "2026-06-01T18:17:16.865Z"
+        },
+        {
+          "role": "user",
+          "content": "A za iste knjige u paketomat?",
+          "ts": "2026-06-01T18:17:18.839Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Hvala na pitanju! Nažalost, nemam dovoljno informacija da vam odgovorim. Proslijedit ću vaš upit našem timu koji će vam se javiti.",
+          "ts": "2026-06-01T18:17:24.345Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-06-01T18:17:11.557Z",
+      "updatedAt": "2026-06-01T18:17:24.345Z"
+    },
+    {
+      "sessionId": "37f2f0f8-0df3-4bc4-b5fb-e6b287ba41c0",
+      "ticketId": 89527,
+      "requesterId": 386186859511,
+      "requesterName": "Test",
+      "requesterEmail": "test@test.com",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Koliko košta dostava?",
+          "ts": "2026-06-01T18:18:11.882Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Cijene dostave u Antikvarijatu Libar su sljedeće:\n\n1. **Dostava na kućnu adresu (GLS)**: 5,97 EUR\n2. **Dostava u GLS paketomat**: 3,75 EUR\n3. **Dostava u BoxNow paketomat**: 3,25 EUR\n4. **Osobno preuzimanje u Osijeku**: besplatno\n\nAko imate dodatnih pitanja, slobodno se obratite Antikvarijatu Libar.",
+          "ts": "2026-06-01T18:18:11.882Z"
+        },
+        {
+          "role": "user",
+          "content": "A za iste knjige u paketomat?",
+          "ts": "2026-06-01T18:18:13.724Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Cijena dostave za iste knjige u **GLS paketomat** iznosi 3,75 EUR, dok je dostava u **BoxNow paketomat** 3,25 EUR. Ako imate dodatnih pitanja, slobodno se obratite Antikvarijatu Libar.",
+          "ts": "2026-06-01T18:18:19.715Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-06-01T18:18:06.275Z",
+      "updatedAt": "2026-06-01T18:18:19.715Z"
     }
   ],
   "processedWebhookAudits": [],
   "processedWebhookMessages": [],
   "recentChatStarts": [],
-  "savedAt": "2026-06-01T18:05:30.318Z"
+  "savedAt": "2026-06-01T18:18:22.716Z"
 }

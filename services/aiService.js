@@ -357,19 +357,24 @@ function buildFallbackDecision(reason = "ai_generation_failed") {
  * Context Relevance Grading (Skill §17.4 — Agentic RAG)
  * Lightweight LLM call to check if retrieved context matches the query.
  */
-async function gradeContextRelevance(userMessage, context) {
+async function gradeContextRelevance(userMessage, context, { conversationSummary = "" } = {}) {
   if (!context || !userMessage) return { relevant: false, reason: "missing_input" };
 
   try {
+    const historyBlock = conversationSummary
+      ? `\n\nPRETHODNI RAZGOVOR:\n${String(conversationSummary).slice(0, 400)}`
+      : "";
+
     const reply = await llmCall(
       [
         "Ti si sustav za ocjenu relevantnosti konteksta.",
         "Dobivši korisnikovo pitanje i dohvaćeni kontekst, odredi sadrži li kontekst informacije koje IZRAVNO odgovaraju na pitanje.",
+        conversationSummary ? "Obratite pažnju na prethodni razgovor: korisnikovo pitanje može biti follow-up na prethodnu temu." : "",
         "Odgovori SAMO jednom riječju: DA ili NE.",
         "DA = kontekst sadrži relevantne informacije za odgovor.",
         "NE = kontekst govori o nečem drugom."
-      ].join("\n"),
-      `PITANJE: ${String(userMessage).slice(0, 300)}\n\nKONTEKST:\n${String(context).slice(0, 1500)}`,
+      ].filter(Boolean).join("\n"),
+      `PITANJE: ${String(userMessage).slice(0, 300)}${historyBlock}\n\nKONTEKST:\n${String(context).slice(0, 1500)}`,
       { purpose: "context_relevance_grading", maxTokens: 10, maxAttemptsPerModel: 1 }
     );
 
