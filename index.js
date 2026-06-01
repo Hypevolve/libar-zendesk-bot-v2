@@ -18,6 +18,7 @@ const express = require("express");
 const multer = require("multer");
 const crypto = require("crypto");
 const path = require("path");
+const fs = require("fs");
 
 const env = require("./config/env");
 const log = require("./config/logger");
@@ -967,6 +968,18 @@ app.post("/admin/sync/vector", requireAdmin, async (req, res) => {
   } catch (error) {
     log.error("vector_sync_failed", { message: error.message });
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Admin Dashboard HTML UI
+app.get("/admin/dashboard", requireAdmin, (req, res) => {
+  const dashboardPath = path.join(__dirname, "admin-dashboard.html");
+  try {
+    const html = fs.readFileSync(dashboardPath, "utf8");
+    res.setHeader("Content-Type", "text/html");
+    res.send(html);
+  } catch (error) {
+    res.status(500).json({ success: false, error: "Dashboard file not found." });
   }
 });
 

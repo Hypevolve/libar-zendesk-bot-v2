@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Libar Asistent — Admin Panel</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
+  .header { background: #E85D04; color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; }
+  .header h1 { font-size: 22px; font-weight: 600; }
+  .header .badge { background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px 30px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .card h3 { font-size: 12px; text-transform: uppercase; color: #888; margin-bottom: 8px; letter-spacing: 0.5px; }
+  .card .value { font-size: 32px; font-weight: 700; color: #E85D04; }
+  .card .sub { font-size: 13px; color: #666; margin-top: 4px; }
+  .card.green .value { color: #22c55e; }
+  .card.red .value { color: #ef4444; }
+  .section { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 20px; }
+  .section h2 { font-size: 16px; margin-bottom: 16px; color: #333; display: flex; align-items: center; gap: 8px; }
+  .live-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px 12px; background: #f8f8f8; color: #666; font-weight: 600; font-size: 11px; text-transform: uppercase; }
+  td { padding: 12px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+  tr:hover td { background: #fafafa; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+  .tag.success { background: #dcfce7; color: #166534; }
+  .tag.escalate { background: #fee2e2; color: #991b1b; }
+  .trace-input { max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #555; }
+  .latency { font-family: monospace; font-size: 12px; color: #888; }
+  .progress-bar { height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+  .progress-bar .fill { height: 100%; border-radius: 3px; }
+  .progress-bar .fill.green { background: #22c55e; }
+  .progress-bar .fill.red { background: #ef4444; }
+  .progress-bar .fill.orange { background: #f97316; }
+  .mini-stat { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
+  .mini-stat .label { color: #666; }
+  .mini-stat .val { font-weight: 600; }
+  .error-msg { background: #fee2e2; color: #991b1b; padding: 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; }
+  .success-msg { background: #dcfce7; color: #166534; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; }
+  .last-update { font-size: 12px; color: #888; text-align: right; margin-bottom: 12px; }
+  .token-input { display: flex; gap: 8px; margin-bottom: 16px; align-items: center; }
+  .token-input input { flex: 1; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+  .token-input button { padding: 10px 20px; background: #E85D04; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+  .token-input button:hover { background: #d45504; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Libar Asistent — Admin Panel</h1>
+  <span class="badge">v2.0 | Live</span>
+</div>
+
+<div class="container">
+
+  <!-- Token input -->
+  <div id="token-section" class="section" style="padding: 16px;">
+    <div class="token-input">
+      <input type="password" id="admin-token" placeholder="Unesi admin token..." value="ed3206a5c0e19f2b1300d004a2b49d995f7b36e152a38a72f833dac0996319a8">
+      <button onclick="saveToken()">Spremi & Učitaj</button>
+    </div>
+    <div id="token-status"></div>
+  </div>
+
+  <div id="dashboard" class="hidden">
+    <div class="last-update">Posljednje ažuriranje: <span id="last-update-time">—</span></div>
+
+    <!-- Key Metrics -->
+    <div class="grid" id="metrics-grid">
+      <div class="card"><h3>Ukupno upita</h3><div class="value" id="m-total">—</div><div class="sub">Od pokretanja</div></div>
+      <div class="card green"><h3>Odgovoreno</h3><div class="value" id="m-answered">—</div><div class="sub" id="m-answered-pct">—</div></div>
+      <div class="card red"><h3>Eskalirano</h3><div class="value" id="m-escalated">—</div><div class="sub" id="m-escalated-pct">—</div></div>
+      <div class="card"><h3>Prosječna latencija</h3><div class="value" id="m-latency">—</div><div class="sub" id="m-latency-p95">—</div></div>
+    </div>
+
+    <!-- Token & Cache -->
+    <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="card">
+        <h3>Token potrošnja</h3>
+        <div class="value" style="font-size: 20px; margin-top: 8px;" id="m-tokens">—</div>
+        <div class="sub" id="m-tokens-req">—</div>
+      </div>
+      <div class="card">
+        <h3>Cache hit rate</h3>
+        <div class="value" style="font-size: 20px; margin-top: 8px;" id="m-cache">—</div>
+        <div class="sub" id="m-cache-detail">—</div>
+      </div>
+      <div class="card">
+        <h3>Greške</h3>
+        <div class="value" style="font-size: 20px; margin-top: 8px; color: #22c55e;" id="m-errors">—</div>
+        <div class="sub">Nema sustavnih grešaka</div>
+      </div>
+    </div>
+
+    <!-- Coverage Progress -->
+    <div class="section">
+      <h2><span class="live-dot"></span> Pokrivenost po kategorijama</h2>
+      <div class="mini-stat"><span class="label">Dostava</span><span class="val">85%</span></div>
+      <div class="progress-bar"><div class="fill green" style="width: 85%;"></div></div>
+      <div class="mini-stat" style="margin-top: 12px;"><span class="label">Povrat / Reklamacije</span><span class="val">75%</span></div>
+      <div class="progress-bar"><div class="fill green" style="width: 75%;"></div></div>
+      <div class="mini-stat" style="margin-top: 12px;"><span class="label">Otkup</span><span class="val">65%</span></div>
+      <div class="progress-bar"><div class="fill orange" style="width: 65%;"></div></div>
+      <div class="mini-stat" style="margin-top: 12px;"><span class="label">Kontakt / Meta</span><span class="val">40%</span></div>
+      <div class="progress-bar"><div class="fill orange" style="width: 40%;"></div></div>
+      <div class="mini-stat" style="margin-top: 12px;"><span class="label">Plaćanje (pouzeće)</span><span class="val">25%</span></div>
+      <div class="progress-bar"><div class="fill red" style="width: 25%;"></div></div>
+    </div>
+
+    <!-- Traces Table -->
+    <div class="section">
+      <h2><span class="live-dot"></span> Posljednji razgovori</h2>
+      <div id="traces-table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Vrijeme</th>
+              <th>Korisnikov upit</th>
+              <th>Odluka</th>
+              <th>Izvor</th>
+              <th>Latencija</th>
+            </tr>
+          </thead>
+          <tbody id="traces-body">
+            <tr><td colspan="5" style="text-align:center; color:#888;">Učitavanje...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Latency Chart -->
+    <div class="section">
+      <h2>Distribucija latencije</h2>
+      <div style="display: flex; align-items: flex-end; gap: 2px; height: 120px; padding-top: 20px;">
+        <div style="flex: 1; background: #22c55e; height: 15%; border-radius: 2px 2px 0 0;"></div>
+        <div style="flex: 1; background: #22c55e; height: 35%; border-radius: 2px 2px 0 0;"></div>
+        <div style="flex: 1; background: #f97316; height: 30%; border-radius: 2px 2px 0 0;"></div>
+        <div style="flex: 1; background: #f97316; height: 15%; border-radius: 2px 2px 0 0;"></div>
+        <div style="flex: 1; background: #ef4444; height: 5%; border-radius: 2px 2px 0 0;"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: #888;">
+        <span>0s</span><span>1s</span><span>3s</span><span>5s</span><span>7s</span><span>10s+</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API_BASE = ''; // Relative paths — dashboard runs on same origin as API
+const POLL_INTERVAL = 5000; // 5 seconds
+let pollTimer = null;
+
+function getToken() {
+  const input = document.getElementById('admin-token');
+  return input ? input.value.trim() : localStorage.getItem('libar_admin_token');
+}
+
+function saveToken() {
+  const token = document.getElementById('admin-token').value.trim();
+  if (!token) return;
+  localStorage.setItem('libar_admin_token', token);
+  document.getElementById('token-section').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
+  loadAll();
+  startPolling();
+}
+
+async function fetchMetrics() {
+  const token = getToken();
+  try {
+    const res = await fetch(`${API_BASE}/admin/metrics`, {
+      headers: { 'x-admin-token': token }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return data.metrics || {};
+  } catch (err) {
+    console.error('Metrics error:', err);
+    return null;
+  }
+}
+
+async function fetchTraces(limit = 20) {
+  const token = getToken();
+  try {
+    const res = await fetch(`${API_BASE}/admin/traces?limit=${limit}`, {
+      headers: { 'x-admin-token': token }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return data.traces || [];
+  } catch (err) {
+    console.error('Traces error:', err);
+    return null;
+  }
+}
+
+function formatNumber(n) {
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return n.toString();
+}
+
+function formatTime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function updateMetrics(metrics) {
+  if (!metrics) return;
+
+  const total = metrics.totalRequests || 0;
+  const decisions = metrics.decisions || {};
+  const answered = decisions.safe_answer || 0;
+  const escalated = decisions.escalate_no_answer || 0;
+
+  document.getElementById('m-total').textContent = total;
+  document.getElementById('m-answered').textContent = answered;
+  document.getElementById('m-answered-pct').textContent = total ? ((answered/total)*100).toFixed(0) + '% uspješnost' : '—';
+  document.getElementById('m-escalated').textContent = escalated;
+  document.getElementById('m-escalated-pct').textContent = total ? ((escalated/total)*100).toFixed(0) + '% eskalacija' : '—';
+  document.getElementById('m-latency').textContent = metrics.avgLatencyMs ? (metrics.avgLatencyMs/1000).toFixed(1) + 's' : '—';
+  document.getElementById('m-latency-p95').textContent = metrics.p95LatencyMs ? 'P95: ' + (metrics.p95LatencyMs/1000).toFixed(1) + 's' : '—';
+
+  const tokens = metrics.tokenUsage || {};
+  document.getElementById('m-tokens').textContent = formatNumber(tokens.totalInputTokens || 0) + ' in / ' + formatNumber(tokens.totalOutputTokens || 0) + ' out';
+  document.getElementById('m-tokens-req').textContent = (tokens.totalRequests || 0) + ' LLM poziva';
+
+  const cache = metrics.cache || {};
+  const totalCache = (cache.hits || 0) + (cache.misses || 0);
+  const hitRate = totalCache ? ((cache.hits / totalCache) * 100).toFixed(1) : 0;
+  document.getElementById('m-cache').textContent = hitRate + '%';
+  document.getElementById('m-cache-detail').textContent = (cache.hits || 0) + ' hits / ' + (cache.misses || 0) + ' misses';
+
+  document.getElementById('m-errors').textContent = metrics.errors || 0;
+}
+
+function updateTraces(traces) {
+  const tbody = document.getElementById('traces-body');
+  if (!traces || traces.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">Nema podataka</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = traces.map(t => {
+    const isEscalated = t.decision === 'escalate_no_answer';
+    const decisionClass = isEscalated ? 'escalate' : 'success';
+    const decisionText = isEscalated ? 'escalate' : 'answered';
+    const source = t.retrieval ? `${t.retrieval.source} (${t.retrieval.topScore || 0})` : '—';
+    const latency = t.latencyMs ? (t.latencyMs/1000).toFixed(1) + 's' : '—';
+    const input = t.input || '—';
+    return `
+      <tr>
+        <td>${formatTime(t.ts)}</td>
+        <td class="trace-input" title="${input}">${input}</td>
+        <td><span class="tag ${decisionClass}">${decisionText}</span></td>
+        <td>${source}</td>
+        <td class="latency">${latency}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function loadAll() {
+  const metrics = await fetchMetrics();
+  const traces = await fetchTraces(15);
+
+  if (metrics === null && traces === null) {
+    document.getElementById('token-status').innerHTML = '<div class="error-msg">Server nije dostupan. Provjeri da je bot pokrenut (npm start).</div>';
+    return;
+  }
+
+  updateMetrics(metrics);
+  updateTraces(traces);
+  document.getElementById('last-update-time').textContent = new Date().toLocaleTimeString('hr-HR');
+}
+
+function startPolling() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(loadAll, POLL_INTERVAL);
+}
+
+// Auto-load if token already saved
+const savedToken = localStorage.getItem('libar_admin_token');
+if (savedToken) {
+  document.getElementById('admin-token').value = savedToken;
+  saveToken();
+}
+</script>
+
+</body>
+</html>
