@@ -3,84 +3,241 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Libar Chat</title>
+  <title>Libar Asistent</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --primary: #1a73e8; --primary-dark: #1557b0; --bg: #f5f7fa;
-      --surface: #ffffff; --text: #1f2937; --text-muted: #6b7280;
-      --border: #e5e7eb; --radius: 12px; --shadow: 0 2px 12px rgba(0,0,0,.08);
+      --accent: #f26a35; --accent-hover: #e05520; --accent-light: rgba(242,106,53,0.15);
+      --bg: #121212; --bg-elevated: #1e1e1e;
+      --surface: #1e1e1e; --surface-hover: #2a2a2a;
+      --text: #ffffff; --text-muted: #a0a0a0; --text-dim: #707070;
+      --border: #2a2a2a; --border-light: #333333;
+      --radius-sm: 8px; --radius-md: 14px; --radius-lg: 20px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4); --shadow-lg: 0 16px 48px rgba(0,0,0,0.5);
+      --transition: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
 
-    #chat-container {
-      width: 420px; max-width: 100vw; height: 640px; max-height: 95vh;
-      background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
-      display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border);
+    body {
+      font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: transparent; color: var(--text); min-height: 100vh; overflow: hidden;
     }
+
+    /* ─── Floating Button ─── */
+    #fab {
+      position: fixed; bottom: 24px; right: 24px;
+      width: 60px; height: 60px; border-radius: 50%;
+      background: var(--accent); color: #fff; border: none;
+      cursor: pointer; box-shadow: var(--shadow);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; z-index: 9999;
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+    #fab:hover { transform: scale(1.08); box-shadow: var(--shadow-lg); }
+    #fab:active { transform: scale(0.95); }
+    #fab .close-x { display: none; font-size: 22px; }
+    #fab.open .chat-icon { display: none; }
+    #fab.open .close-x { display: block; }
+
+    /* ─── Chat Panel ─── */
+    #chat-panel {
+      position: fixed; bottom: 96px; right: 24px;
+      width: 400px; max-width: calc(100vw - 32px);
+      height: 580px; max-height: calc(100vh - 120px);
+      background: var(--bg); border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      display: flex; flex-direction: column; overflow: hidden;
+      border: 1px solid var(--border); z-index: 9998;
+      transform: translateY(20px) scale(0.95); opacity: 0;
+      pointer-events: none;
+      transition: transform var(--transition), opacity var(--transition);
+    }
+    #chat-panel.open { transform: translateY(0) scale(1); opacity: 1; pointer-events: all; }
+
+    /* ─── Header ─── */
     #chat-header {
-      background: var(--primary); color: #fff; padding: 16px 20px;
-      display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+      background: var(--surface); padding: 18px 20px;
+      display: flex; align-items: center; gap: 14px;
+      flex-shrink: 0; border-bottom: 1px solid var(--border);
     }
-    #chat-header .avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    #chat-header .avatar-wrap { position: relative; }
+    #chat-header .avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--accent-light); display: flex;
+      align-items: center; justify-content: center; font-size: 22px;
+      border: 2px solid var(--accent);
+    }
+    #chat-header .status-dot {
+      position: absolute; bottom: 2px; right: 2px;
+      width: 10px; height: 10px; background: #22c55e;
+      border-radius: 50%; border: 2px solid var(--surface);
+    }
     #chat-header .info h2 { font-size: 15px; font-weight: 600; }
-    #chat-header .info p { font-size: 12px; opacity: .85; }
+    #chat-header .info p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
-    #pre-chat { padding: 24px 20px; flex: 1; overflow-y: auto; }
-    #pre-chat h3 { font-size: 16px; margin-bottom: 16px; }
-    #pre-chat .field { margin-bottom: 14px; }
-    #pre-chat label { display: block; font-size: 13px; font-weight: 500; color: var(--text-muted); margin-bottom: 4px; }
-    #pre-chat input, #pre-chat textarea {
-      width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
-      font-size: 14px; font-family: inherit; outline: none; transition: border-color .2s;
+    /* ─── Messages ─── */
+    #messages {
+      flex: 1; overflow-y: auto; padding: 16px;
+      display: none; flex-direction: column; gap: 12px;
+      scroll-behavior: smooth;
     }
-    #pre-chat input:focus, #pre-chat textarea:focus { border-color: var(--primary); }
-    #pre-chat textarea { resize: vertical; min-height: 80px; }
-    #pre-chat button {
-      width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none;
-      border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s;
+    .msg-group { display: flex; flex-direction: column; gap: 2px; }
+    .msg {
+      max-width: 85%; padding: 12px 16px;
+      border-radius: var(--radius-md);
+      font-size: 14px; line-height: 1.55;
+      word-wrap: break-word;
+      animation: msgIn 0.25s ease-out;
     }
-    #pre-chat button:hover { background: var(--primary-dark); }
-    #pre-chat button:disabled { opacity: .6; cursor: not-allowed; }
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .msg.user {
+      align-self: flex-end; background: var(--accent); color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .msg.assistant {
+      align-self: flex-start; background: var(--surface); color: var(--text);
+      border: 1px solid var(--border); border-bottom-left-radius: 4px;
+    }
+    .msg .ts { display: block; font-size: 10px; opacity: 0.5; margin-top: 6px; }
 
-    #messages { flex: 1; overflow-y: auto; padding: 16px 20px; display: none; flex-direction: column; gap: 10px; }
-    .msg { max-width: 82%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
-    .msg.user { align-self: flex-end; background: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
-    .msg.assistant { align-self: flex-start; background: #f0f2f5; color: var(--text); border-bottom-left-radius: 4px; }
-    .msg .ts { display: block; font-size: 11px; opacity: .6; margin-top: 4px; }
+    .links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .links a {
+      font-size: 12px; background: var(--accent-light); color: var(--accent);
+      padding: 5px 12px; border-radius: var(--radius-sm);
+      text-decoration: none; font-weight: 500;
+    }
 
-    .links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-    .links a { font-size: 12px; background: #e8f0fe; color: var(--primary); padding: 4px 10px; border-radius: 12px; text-decoration: none; }
-    .links a:hover { background: #d2e3fc; }
+    /* ─── Typing Indicator ─── */
+    .typing-indicator {
+      display: none; align-self: flex-start;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-md); border-bottom-left-radius: 4px;
+      padding: 14px 18px; margin: 0 16px 8px;
+    }
+    .typing-indicator.visible { display: flex; }
+    .typing-indicator .dots { display: flex; gap: 4px; align-items: center; }
+    .typing-indicator .dot {
+      width: 7px; height: 7px; background: var(--text-muted);
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+    .typing-indicator .dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-indicator .dot:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1); opacity: 1; }
+    }
 
+    /* ─── Scroll to Bottom ─── */
+    #scroll-bottom {
+      position: absolute; bottom: 76px; right: 20px;
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text-muted); cursor: pointer;
+      display: none; align-items: center; justify-content: center;
+      font-size: 14px; box-shadow: var(--shadow);
+    }
+    #scroll-bottom.visible { display: flex; }
+
+    /* ─── Input Bar ─── */
     #input-bar {
-      display: none; padding: 12px 16px; border-top: 1px solid var(--border);
-      flex-shrink: 0; gap: 8px; align-items: flex-end;
+      display: none; padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0; gap: 10px; align-items: flex-end;
+      background: var(--bg);
     }
     #input-bar textarea {
-      flex: 1; resize: none; border: 1px solid var(--border); border-radius: 20px;
-      padding: 10px 14px; font-size: 14px; font-family: inherit; max-height: 100px;
-      outline: none; transition: border-color .2s;
+      flex: 1; resize: none; border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg); background: var(--surface);
+      color: var(--text); padding: 12px 16px;
+      font-size: 14px; font-family: inherit; max-height: 120px;
+      outline: none;
     }
-    #input-bar textarea:focus { border-color: var(--primary); }
+    #input-bar textarea:focus { border-color: var(--accent); }
+    #input-bar textarea::placeholder { color: var(--text-dim); }
     #input-bar button {
-      width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--primary);
-      color: #fff; font-size: 18px; cursor: pointer; flex-shrink: 0; transition: background .2s;
+      width: 40px; height: 40px; border-radius: 50%;
+      border: none; background: var(--accent); color: #fff;
+      font-size: 18px; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
     }
-    #input-bar button:hover { background: var(--primary-dark); }
-    #input-bar button:disabled { opacity: .5; cursor: not-allowed; }
+    #input-bar button:hover { background: var(--accent-hover); }
+    #input-bar button:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    .typing { display: none; padding: 0 20px 8px; font-size: 13px; color: var(--text-muted); }
+    /* ─── Pre-Chat Form ─── */
+    #pre-chat {
+      flex: 1; overflow-y: auto; padding: 24px;
+      display: flex; flex-direction: column;
+    }
+    #pre-chat .welcome { text-align: center; margin-bottom: 24px; }
+    #pre-chat .welcome h3 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+    #pre-chat .welcome p { font-size: 13px; color: var(--text-muted); }
+    #pre-chat .field { margin-bottom: 16px; }
+    #pre-chat label {
+      display: block; font-size: 12px; font-weight: 600;
+      color: var(--text-muted); margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    #pre-chat input, #pre-chat textarea {
+      width: 100%; padding: 12px 14px;
+      border: 1px solid var(--border-light); border-radius: var(--radius-sm);
+      background: var(--surface); color: var(--text);
+      font-size: 14px; font-family: inherit; outline: none;
+    }
+    #pre-chat input:focus, #pre-chat textarea:focus { border-color: var(--accent); }
+    #pre-chat textarea { resize: vertical; min-height: 90px; }
+    #pre-chat input::placeholder, #pre-chat textarea::placeholder { color: var(--text-dim); }
+    #pre-chat button {
+      width: 100%; padding: 14px; background: var(--accent); color: #fff;
+      border: none; border-radius: var(--radius-sm); font-size: 15px;
+      font-weight: 600; cursor: pointer; margin-top: 8px;
+    }
+    #pre-chat button:hover { background: var(--accent-hover); }
+    #pre-chat button:disabled { opacity: 0.5; cursor: not-allowed; }
 
+    /* ─── Error ─── */
+    .error-msg {
+      align-self: center; background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3); color: #f87171;
+      padding: 12px 16px; border-radius: var(--radius-sm);
+      font-size: 13px; text-align: center; max-width: 90%;
+    }
+    .retry-btn {
+      background: transparent; border: 1px solid var(--accent);
+      color: var(--accent); padding: 6px 16px;
+      border-radius: var(--radius-sm); cursor: pointer;
+      font-size: 13px; font-weight: 500; margin-top: 8px;
+    }
+
+    /* ─── Mobile ─── */
     @media (max-width: 480px) {
-      #chat-container { width: 100%; height: 100vh; max-height: 100vh; border-radius: 0; border: none; }
+      #chat-panel { width: 100vw; height: 100vh; max-height: 100vh; right: 0; bottom: 0; border-radius: 0; border: none; }
+      #fab { bottom: 16px; right: 16px; }
     }
+
+    /* Scrollbar */
+    #messages::-webkit-scrollbar { width: 4px; }
+    #messages::-webkit-scrollbar-track { background: transparent; }
+    #messages::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
   </style>
 </head>
 <body>
-  <div id="chat-container">
+  <!-- Floating Action Button -->
+  <button id="fab" aria-label="Otvori chat">
+    <span class="chat-icon">💬</span>
+    <span class="close-x">✕</span>
+  </button>
+
+  <!-- Chat Panel -->
+  <div id="chat-panel">
     <div id="chat-header">
-      <div class="avatar">📚</div>
+      <div class="avatar-wrap">
+        <div class="avatar">📚</div>
+        <div class="status-dot"></div>
+      </div>
       <div class="info">
         <h2>Libar Asistent</h2>
         <p>Online — obično odgovaramo odmah</p>
@@ -88,15 +245,24 @@
     </div>
 
     <div id="pre-chat">
-      <h3>Započnite razgovor</h3>
-      <div class="field"><label>Ime</label><input id="pc-name" placeholder="Vaše ime"></div>
-      <div class="field"><label>Email *</label><input id="pc-email" type="email" placeholder="vas@email.com" required></div>
+      <div class="welcome">
+        <h3>Započnite razgovor</h3>
+        <p>Tu smo za sva vaša pitanja o udžbenicima, dostavi i otkupu.</p>
+      </div>
+      <div class="field"><label>Ime</label><input id="pc-name" placeholder="Vaše ime" autocomplete="name"></div>
+      <div class="field"><label>Email *</label><input id="pc-email" type="email" placeholder="vas@email.com" required autocomplete="email"></div>
       <div class="field"><label>Poruka *</label><textarea id="pc-message" placeholder="Kako vam možemo pomoći?"></textarea></div>
       <button id="pc-submit">Pošalji</button>
     </div>
 
     <div id="messages"></div>
-    <div class="typing" id="typing">Libar Asistent piše…</div>
+
+    <div class="typing-indicator" id="typing">
+      <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    </div>
+
+    <button id="scroll-bottom" aria-label="Scroll to bottom">↓</button>
+
     <div id="input-bar">
       <textarea id="msg-input" rows="1" placeholder="Napišite poruku…"></textarea>
       <button id="msg-send">➤</button>
@@ -107,24 +273,56 @@
     const API = window.location.origin;
     let sessionId = null;
     let ticketId = null;
+    let isOpen = false;
 
     const $ = (sel) => document.querySelector(sel);
+    const fab = $("#fab");
+    const panel = $("#chat-panel");
     const preChat = $("#pre-chat");
     const messagesEl = $("#messages");
     const inputBar = $("#input-bar");
     const typingEl = $("#typing");
+    const scrollBtn = $("#scroll-bottom");
+
+    function formatTime() {
+      return new Date().toLocaleTimeString("hr-HR", { hour: "2-digit", minute: "2-digit" });
+    }
 
     function addMessage(role, content, links) {
-      const div = document.createElement("div");
-      div.className = `msg ${role}`;
-      div.textContent = content;
+      const group = document.createElement("div");
+      group.className = "msg-group";
+      const msg = document.createElement("div");
+      msg.className = `msg ${role}`;
+      msg.innerHTML = content.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
+      const ts = document.createElement("span");
+      ts.className = "ts";
+      ts.textContent = formatTime();
+      msg.appendChild(ts);
       if (links && links.length) {
         const ld = document.createElement("div");
         ld.className = "links";
-        links.forEach((l) => { const a = document.createElement("a"); a.href = l.url; a.target = "_blank"; a.textContent = l.label; ld.appendChild(a); });
-        div.appendChild(ld);
+        links.forEach((l) => { const a = document.createElement("a"); a.href = l.url; a.target = "_blank"; a.rel = "noopener"; a.textContent = l.label; ld.appendChild(a); });
+        msg.appendChild(ld);
       }
-      messagesEl.appendChild(div);
+      group.appendChild(msg);
+      messagesEl.appendChild(group);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      checkScroll();
+    }
+
+    function showError(text, onRetry) {
+      const err = document.createElement("div");
+      err.className = "error-msg";
+      err.innerHTML = text;
+      if (onRetry) {
+        const btn = document.createElement("button");
+        btn.className = "retry-btn";
+        btn.textContent = "Pokušaj ponovno";
+        btn.onclick = () => { err.remove(); onRetry(); };
+        err.appendChild(document.createElement("br"));
+        err.appendChild(btn);
+      }
+      messagesEl.appendChild(err);
       messagesEl.scrollTop = messagesEl.scrollHeight;
     }
 
@@ -134,6 +332,21 @@
       inputBar.style.display = "flex";
       $("#msg-input").focus();
     }
+
+    function togglePanel() {
+      isOpen = !isOpen;
+      fab.classList.toggle("open", isOpen);
+      panel.classList.toggle("open", isOpen);
+    }
+
+    fab.addEventListener("click", togglePanel);
+
+    function checkScroll() {
+      const nearBottom = messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight < 80;
+      scrollBtn.classList.toggle("visible", !nearBottom && messagesEl.scrollHeight > messagesEl.clientHeight);
+    }
+    messagesEl.addEventListener("scroll", checkScroll);
+    scrollBtn.addEventListener("click", () => { messagesEl.scrollTop = messagesEl.scrollHeight; });
 
     function setLoading(btn, loading) {
       btn.disabled = loading;
@@ -163,10 +376,15 @@
         (data.messages || []).forEach((m) => addMessage(m.role, m.content));
         if (data.links?.length) {
           const last = messagesEl.lastElementChild;
-          if (last) { const ld = document.createElement("div"); ld.className = "links"; data.links.forEach((l) => { const a = document.createElement("a"); a.href = l.url; a.target = "_blank"; a.textContent = l.label; ld.appendChild(a); }); last.appendChild(ld); }
+          if (last) {
+            const ld = document.createElement("div");
+            ld.className = "links";
+            data.links.forEach((l) => { const a = document.createElement("a"); a.href = l.url; a.target = "_blank"; a.rel = "noopener"; a.textContent = l.label; ld.appendChild(a); });
+            last.querySelector(".msg").appendChild(ld);
+          }
         }
       } catch (e) {
-        alert(e.message);
+        showError("Nije moguće započeti razgovor. <br><small>" + e.message + "</small>", () => $("#pc-submit").click());
       } finally {
         setLoading(btn, false);
       }
@@ -176,28 +394,31 @@
       const input = $("#msg-input");
       const message = input.value.trim();
       if (!message || !sessionId) return;
+      const msgText = message;
 
       input.value = "";
       addMessage("user", message);
-      typingEl.style.display = "block";
+      typingEl.classList.add("visible");
       $("#msg-send").disabled = true;
 
       try {
         const res = await fetch(`${API}/api/chat/message`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId, message })
+          body: JSON.stringify({ sessionId, message: msgText })
         });
         const data = await res.json();
-        typingEl.style.display = "none";
-        if (!data.success) { addMessage("assistant", data.error || "Greška."); return; }
-
+        typingEl.classList.remove("visible");
+        if (!data.success) {
+          showError(data.error || "Greška prilikom slanja.", () => { input.value = msgText; sendMessage(); });
+          return;
+        }
         const botMsgs = (data.messages || []).filter((m) => m.role === "assistant");
         const last = botMsgs[botMsgs.length - 1];
         if (last) addMessage("assistant", last.content, data.links);
       } catch (e) {
-        typingEl.style.display = "none";
-        addMessage("assistant", "Nešto je pošlo po krivu. Pokušajte ponovno.");
+        typingEl.classList.remove("visible");
+        showError("Veza s poslužiteljem je prekinuta. <br><small>Pokušajte ponovno.</small>", () => { input.value = msgText; sendMessage(); });
       } finally {
         $("#msg-send").disabled = false;
         input.focus();
@@ -207,6 +428,12 @@
     $("#msg-send").addEventListener("click", sendMessage);
     $("#msg-input").addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+
+    // Auto-resize textarea
+    $("#msg-input").addEventListener("input", function () {
+      this.style.height = "auto";
+      this.style.height = Math.min(this.scrollHeight, 120) + "px";
     });
   </script>
 </body>
