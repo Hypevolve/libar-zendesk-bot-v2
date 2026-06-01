@@ -148,7 +148,37 @@ function isWebhookDuplicate(ticketId, message) {
   return false;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────
+/**
+ * Detect whether the customer's latest inbound message carries attachments
+ * (images/files) that the bot cannot analyze. Two layers:
+ *  1. Inspect the webhook payload itself (cheap) — many Zendesk triggers can be
+ *     configured to send an `attachments` count/array or media flags.
+ *  2. Fallback to the latest public comment via the Comments API and check its
+ *     `attachments` array. The bot only escalates on attachments authored by the
+ *     customer (not on its own/agent replies).
+ */
+async function detectWebhookAttachments(body = {}, ticketId) {
+  // Layer 1: webhook payload heuristics (configuration-dependent, best-effort).
+  const direct = body.attachments ?? body.attachment ?? body.media ?? body.files;
+  if (Array.isArray(direct) && direct.length > 0) return true;
+  if (typeof body.attachmentCount === "number" && body.attachmentCount > 0) return true;
+  if (typeof body.hasAttachments === "boolean") return body.hasAttachments;
+
+  // Layer 2: authoritative check via the Comments API.
+  if (!ticketId) return false;
+  let comments = [];
+  try {
+    comments = await zendeskService.getPublicTicketComments(ticketId);
+  } catch {
+    return false; // fail-open to text handling; attachment escalation is a best-effort safety net
+  }
+  if (!comments.length) return false;
+
+  // The most recent public comment is the customer's current message.
+  const latest = comments[comments.length - 1];
+  const atts = Array.isArray(latest?.attachments) ? latest.attachments : [];
+  return atts.length > 0;
+}
 
 function normalizeMessage(msg) {
   return String(msg || "").replace(/\s+/g, " ").trim().slice(0, 4000);
@@ -198,8 +228,48 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
     conversationSummary
   };
 
-  // Reference facts check first
   const normMsg = normalizeForComparison(userMessage);
+
+  // ── ESCALATION GATES (highest priority) ───────────────────────
+  // These run BEFORE reference-facts shortcuts and the response cache so an
+  // urgent/complaint/attachment message is never answered from cache or treated
+  // as a generic greeting. A human must always see these.
+
+  // Attachment escalation: if the user uploaded images/files, we cannot analyze
+  // them, so immediately hand off to a human agent with a reassuring message.
+  if (opts.hasAttachments) {
+    metricsService.recordDecision("escalate_no_answer");
+    metricsService.recordLatency(Date.now() - start);
+    return {
+      knowledge: null,
+      outcome: {
+        type: "escalate_no_answer",
+        customerMessage: "Hvala na upitu i privitcima! Vaša poruka je zaprimljena i razgovor će biti preusmjeren na našeg agenta koji će se ubrzo javiti.",
+        stateTag: "awaiting_human", reason: "user_uploaded_attachments", links: [], extraTags: ["attachment_uploaded"]
+      }
+    };
+  }
+
+  // Intent-based escalation: detect intents that MUST go to a human agent
+  // (complaints, returns, legal, damaged items) — never let AI answer these.
+  const escalationCheck = detectEscalationIntent(normMsg);
+  if (escalationCheck.shouldEscalate) {
+    metricsService.recordDecision("escalate_no_answer");
+    metricsService.recordLatency(Date.now() - start);
+    log.info("intent_escalation", { reason: escalationCheck.reason, intent: escalationCheck.intent });
+    return {
+      knowledge: null,
+      outcome: {
+        type: "escalate_no_answer",
+        customerMessage: escalationCheck.message,
+        stateTag: "awaiting_human", reason: escalationCheck.reason,
+        links: buildDirectWebsiteLinks(userMessage, { knowledge: null }),
+        extraTags: ["ai_escalated", `intent_${escalationCheck.intent}`]
+      }
+    };
+  }
+
+  // Reference facts check (greetings, canned facts) — only after escalation gates
   const refResult = tryReferenceFacts(normMsg, maskedMsg, groundedOpts);
   if (refResult) {
     metricsService.recordLatency(Date.now() - start);
@@ -248,38 +318,6 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
       log.warn("query_rewrite_failed", { message: err.message });
       rewrittenQuery = maskedMsg;
     }
-  }
-
-  // Attachment escalation: if user uploaded images/files, we cannot analyze them,
-  // so immediately hand off to a human agent with a reassuring message.
-  if (opts.hasAttachments) {
-    return {
-      knowledge: null,
-      outcome: {
-        type: "escalate_no_answer",
-        customerMessage: "Hvala na upitu i privitcima! Vaša poruka je zaprimljena i razgovor će biti preusmjeren na našeg agenta koji će se ubrzo javiti.",
-        stateTag: "awaiting_human", reason: "user_uploaded_attachments", links: [], extraTags: ["attachment_uploaded"]
-      }
-    };
-  }
-
-  // Intent-based escalation: detect intents that MUST go to a human agent
-  // (complaints, returns, legal, damaged items) — never let AI answer these.
-  const escalationCheck = detectEscalationIntent(normMsg);
-  if (escalationCheck.shouldEscalate) {
-    metricsService.recordDecision("escalate_no_answer");
-    metricsService.recordLatency(Date.now() - start);
-    log.info("intent_escalation", { reason: escalationCheck.reason, intent: escalationCheck.intent });
-    return {
-      knowledge: null,
-      outcome: {
-        type: "escalate_no_answer",
-        customerMessage: escalationCheck.message,
-        stateTag: "awaiting_human", reason: escalationCheck.reason,
-        links: buildDirectWebsiteLinks(userMessage, { knowledge: null }),
-        extraTags: ["ai_escalated", `intent_${escalationCheck.intent}`]
-      }
-    };
   }
 
   const knowledge = await knowledgeService.searchKnowledgeDetailed(rewrittenQuery || maskedMsg, {
@@ -331,8 +369,20 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
     const fallbackAnswer = await aiService.generateGroundedAnswer(maskedMsg, aiService.REFERENTNE_CINJENICE, groundedOpts);
     if (fallbackAnswer) {
       const norm = normalizeForComparison(fallbackAnswer);
-      if (!/(ne mogu|nisam siguran|nemam informacij|pouzdano potvrditi)/.test(norm)) {
-        customerMessage = fallbackAnswer;
+      const uncertain = /(ne mogu|nisam siguran|nemam informacij|pouzdano potvrditi)/.test(norm);
+      if (!uncertain) {
+        // Apply the SAME quality validation as the knowledge path. The fallback is
+        // grounded in REFERENTNE_CINJENICE, so validate against those facts —
+        // otherwise a hallucinated price/term could slip through unchecked.
+        const fbValidation = outputValidator.validateAnswerQuality(fallbackAnswer, {
+          knowledgeContext: aiService.REFERENTNE_CINJENICE,
+          userMessage: maskedMsg
+        });
+        if (fbValidation.valid) {
+          customerMessage = fallbackAnswer;
+        } else {
+          log.warn("fallback_validation_failed", { reason: fbValidation.reason });
+        }
       }
     }
   }
@@ -651,6 +701,11 @@ app.post("/api/zendesk/webhook", async (req, res) => {
       }
       const cleanMessage = inputSanitizerModule.clean(latestMessage);
 
+      // Mask PII BEFORE it reaches the LLM or knowledge search (parity with the
+      // web-chat path). The model only ever sees masked tokens; we unmask the
+      // final answer just before it goes back to the customer.
+      const { masked: maskedMsg, mappings: piiMappings } = piiService.maskPII(cleanMessage);
+
       // Intent-based escalation check (before any LLM calls)
       const normWebhookMsg = normalizeForComparison(cleanMessage);
       const webhookEscalation = detectEscalationIntent(normWebhookMsg);
@@ -659,6 +714,23 @@ app.post("/api/zendesk/webhook", async (req, res) => {
         await zendeskService.updateConversationState(ticketId, "awaiting_human", ["ai_escalated", `intent_${webhookEscalation.intent}`]);
         log.info("webhook_intent_escalation", { ticketId, intent: webhookEscalation.intent });
         return res.status(200).json({ success: true, escalated: true, reason: webhookEscalation.reason });
+      }
+
+      // Attachment escalation: the bot cannot analyze images/files. If the customer's
+      // latest message carries attachments (sent via Facebook, email or web form into
+      // Zendesk), hand off to a human immediately — parity with the web-chat path.
+      let hasAttachments = false;
+      try {
+        hasAttachments = await detectWebhookAttachments(req.body, ticketId);
+      } catch (err) {
+        log.warn("webhook_attachment_check_failed", { ticketId, message: err.message });
+      }
+      if (hasAttachments) {
+        const attachmentReply = "Hvala na upitu i privitcima! Vaša poruka je zaprimljena i razgovor će biti preusmjeren na našeg agenta koji će se ubrzo javiti.";
+        await zendeskService.addBotReplyToTicket(ticketId, attachmentReply, { channelType: normalizedChannel });
+        await zendeskService.updateConversationState(ticketId, "awaiting_human", ["ai_escalated", "attachment_uploaded"]);
+        log.info("webhook_attachment_escalation", { ticketId });
+        return res.status(200).json({ success: true, escalated: true, reason: "user_uploaded_attachments" });
       }
 
       // Fetch conversation history for multi-turn context
@@ -676,19 +748,19 @@ app.post("/api/zendesk/webhook", async (req, res) => {
         log.warn("webhook_history_fetch_failed", { ticketId, message: err.message });
       }
 
-      const knowledge = await knowledgeService.searchKnowledgeDetailed(cleanMessage);
+      const knowledge = await knowledgeService.searchKnowledgeDetailed(maskedMsg);
       let answer = null;
 
       if (knowledge?.context) {
-        const relevance = await aiService.gradeContextRelevance(cleanMessage, knowledge.context);
+        const relevance = await aiService.gradeContextRelevance(maskedMsg, knowledge.context);
         if (relevance.relevant) {
           const enrichedContext = `${aiService.REFERENTNE_CINJENICE}\n\n--- RELEVANTNI DOKUMENTI ---\n\n${knowledge.context}`;
-          answer = await aiService.generateGroundedAnswer(cleanMessage, enrichedContext, { channelType: normalizedChannel, conversationSummary });
+          answer = await aiService.generateGroundedAnswer(maskedMsg, enrichedContext, { channelType: normalizedChannel, conversationSummary });
         }
       }
 
       if (!answer) {
-        answer = await aiService.generateGroundedAnswer(cleanMessage, aiService.REFERENTNE_CINJENICE, { channelType: normalizedChannel, conversationSummary });
+        answer = await aiService.generateGroundedAnswer(maskedMsg, aiService.REFERENTNE_CINJENICE, { channelType: normalizedChannel, conversationSummary });
         if (answer) {
           const norm = normalizeForComparison(answer);
           if (/(ne mogu|nisam siguran|nemam informacij|pouzdano potvrditi)/.test(norm)) answer = null;
@@ -696,9 +768,11 @@ app.post("/api/zendesk/webhook", async (req, res) => {
       }
 
       if (answer) {
-        const validation = outputValidator.validateAnswerQuality(answer, { knowledgeContext: knowledge?.context || "", userMessage: cleanMessage });
+        const validation = outputValidator.validateAnswerQuality(answer, { knowledgeContext: knowledge?.context || "", userMessage: maskedMsg });
         if (validation.valid) {
-          await zendeskService.addBotReplyToTicket(ticketId, answer, { channelType: normalizedChannel });
+          // Restore any masked PII (e.g. customer's own order email) before replying.
+          const finalAnswer = piiService.unmaskPII(answer, piiMappings);
+          await zendeskService.addBotReplyToTicket(ticketId, finalAnswer, { channelType: normalizedChannel });
           await zendeskService.updateConversationState(ticketId, "ai_active", ["ai_replied"]);
         } else {
           await zendeskService.updateConversationState(ticketId, "awaiting_human", ["ai_escalated"]);
