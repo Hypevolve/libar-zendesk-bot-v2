@@ -77,7 +77,7 @@ Odgovori SAMO u JSON formatu (bez markdown, bez objašnjenja prije i poslije):
     const body = JSON.stringify({
       model: OPENROUTER_MODEL,
       messages: [{ role: "user", content: prompt }],
-      max_tokens: 3000,
+      max_tokens: 8000,
       temperature: 0.1
     });
 
@@ -100,11 +100,25 @@ Odgovori SAMO u JSON formatu (bez markdown, bez objašnjenja prije i poslije):
           console.log("API response keys:", Object.keys(parsed));
           if (parsed.error) { console.log("API error:", parsed.error); }
           const content = parsed.choices?.[0]?.message?.content?.trim() || "";
-          console.log("LLM content:", content.slice(0, 800));
-          // Try to extract JSON
-          const match = content.match(/\{[\s\S]*\}/);
+          console.log("LLM content length:", content.length);
+          console.log("LLM content preview:", content.slice(0, 300));
+          
+          // Try to extract JSON — handle markdown code blocks first
+          let jsonText = content;
+          const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+          if (codeBlockMatch) {
+            jsonText = codeBlockMatch[1].trim();
+          }
+          
+          // Find the outermost JSON object
+          const match = jsonText.match(/\{[\s\S]*\}/);
           if (match) {
-            resolve(JSON.parse(match[0]));
+            try {
+              resolve(JSON.parse(match[0]));
+            } catch (parseErr) {
+              console.log("JSON parse error:", parseErr.message);
+              resolve({ error: "json_parse", raw: match[0].slice(0, 500) });
+            }
           } else {
             resolve({ error: "no_json", raw: content.slice(0, 500) });
           }
@@ -163,7 +177,7 @@ async function main() {
 
   const queries = [];
   let processed = 0;
-  for (const ticket of tickets.slice(0, 50)) { // max 50 for API rate limiting
+  for (const ticket of tickets.slice(0, 150)) { // max 150 for more diverse test cases
     try {
       const comments = await fetchTicketComments(ticket.id);
       const firstCustomerComment = comments.find((c) => c.author_id === ticket.requester_id);
@@ -186,25 +200,44 @@ async function main() {
     process.exit(0);
   }
 
-  console.log("Analyzing with LLM...");
-  const analysis = await llmAnalyze(queries);
+  console.log("Analyzing with LLM in batches...");
 
-  if (analysis.error) {
-    console.error("LLM analysis failed:", analysis.error, analysis.raw?.slice(0, 200));
-    process.exit(1);
+  // Batch queries into groups of ~15 to avoid token limits
+  const BATCH_SIZE = 15;
+  const allResults = { otkup: [], dostava: [], narudzba: [], povrat: [], kontakt: [], placanje: [], ostalo: [] };
+
+  for (let i = 0; i < queries.length; i += BATCH_SIZE) {
+    const batch = queries.slice(i, i + BATCH_SIZE);
+    console.log(`  Batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(queries.length / BATCH_SIZE)} (${batch.length} queries)...`);
+    const analysis = await llmAnalyze(batch);
+
+    if (analysis.error) {
+      console.error("  LLM analysis failed:", analysis.error, analysis.raw?.slice(0, 200));
+      continue;
+    }
+
+    // Merge batch results
+    for (const group of Object.keys(allResults)) {
+      if (Array.isArray(analysis[group])) {
+        allResults[group].push(...analysis[group]);
+      }
+    }
+    await new Promise((r) => setTimeout(r, 1000)); // Rate limit buffer
   }
 
   console.log("\nAnalysis results:");
-  for (const [group, data] of Object.entries(analysis.groups || {})) {
-    console.log(`  ${group}: ${(data.patterns || []).length} patterns`);
+  let totalPatterns = 0;
+  for (const [group, patterns] of Object.entries(allResults)) {
+    if (patterns.length > 0) {
+      console.log(`  ${group}: ${patterns.length} patterns`);
+      totalPatterns += patterns.length;
+    }
   }
-  if (analysis.edgeCases?.length) {
-    console.log(`  Edge cases: ${analysis.edgeCases.length}`);
-  }
+  console.log(`  Total patterns: ${totalPatterns}`);
 
-  const testContent = buildTestFile(analysis);
+  const testContent = buildTestFile(allResults);
   fs.writeFileSync(OUTPUT_FILE, testContent, "utf8");
-  console.log(`\nGenerated ${OUTPUT_FILE} with ${(analysis.groups || {}).length} groups`);
+  console.log(`\nGenerated ${OUTPUT_FILE} with ${totalPatterns} scenarios`);
 }
 
 main().catch((err) => { console.error(err); process.exit(1); });
