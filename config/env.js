@@ -90,7 +90,7 @@ module.exports = {
     .split(",").map(s => s.trim()).filter(Boolean),
 
   // --- Token budget ---
-  TOKEN_BUDGET_MAX_INPUT: envInt("TOKEN_BUDGET_MAX_INPUT", 6000),
+  TOKEN_BUDGET_MAX_INPUT: envInt("TOKEN_BUDGET_MAX_INPUT", 12000),
   TOKEN_BUDGET_MAX_OUTPUT: envInt("TOKEN_BUDGET_MAX_OUTPUT", 1500),
 
   // --- Response cache ---

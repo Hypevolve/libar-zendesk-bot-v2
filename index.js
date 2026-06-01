@@ -21,7 +21,8 @@ const crypto = require("crypto");
 const env = require("./config/env");
 const log = require("./config/logger");
 const rateLimiter = require("./middleware/rateLimiter");
-const { middleware: inputSanitizer } = require("./middleware/inputSanitizer");
+const inputSanitizerModule = require("./middleware/inputSanitizer");
+const inputSanitizer = inputSanitizerModule.middleware;
 
 const aiService = require("./services/aiService");
 const knowledgeService = require("./services/knowledgeService");
@@ -149,7 +150,7 @@ async function resolveAutomatedOutcome(session, userMessage, opts = {}) {
   const hasHistory = (session.messages || []).length > 2;
   let cacheKey = null;
   if (!hasHistory && messageWordCount <= 12) {
-    cacheKey = `${maskedMsg}:${session.entryIntent || ""}`;
+    cacheKey = `${maskedMsg}:${session.entryIntent || ""}:${opts.channelType || "web_chat"}`;
     const cached = responseCacheService.get(cacheKey);
     if (cached) {
       metricsService.recordLatency(Date.now() - start);
@@ -197,6 +198,25 @@ async function resolveAutomatedOutcome(session, userMessage, opts = {}) {
         type: "escalate_no_answer",
         customerMessage: "Hvala na upitu i privitcima! Vaša poruka je zaprimljena i razgovor će biti preusmjeren na našeg agenta koji će se ubrzo javiti.",
         stateTag: "awaiting_human", reason: "user_uploaded_attachments", links: [], extraTags: ["attachment_uploaded"]
+      }
+    };
+  }
+
+  // Intent-based escalation: detect intents that MUST go to a human agent
+  // (complaints, returns, legal, damaged items) — never let AI answer these.
+  const escalationCheck = detectEscalationIntent(normMsg);
+  if (escalationCheck.shouldEscalate) {
+    metricsService.recordDecision("escalate_no_answer");
+    metricsService.recordLatency(Date.now() - start);
+    log.info("intent_escalation", { reason: escalationCheck.reason, intent: escalationCheck.intent });
+    return {
+      knowledge: null,
+      outcome: {
+        type: "escalate_no_answer",
+        customerMessage: escalationCheck.message,
+        stateTag: "awaiting_human", reason: escalationCheck.reason,
+        links: buildDirectWebsiteLinks(userMessage, { knowledge: null }),
+        extraTags: ["ai_escalated", `intent_${escalationCheck.intent}`]
       }
     };
   }
@@ -299,6 +319,47 @@ function tryReferenceFacts(normMsg, maskedMsg, groundedOpts) {
     };
   }
   return null;
+}
+
+// ─── Intent Escalation ───────────────────────────────────────
+
+const ESCALATION_INTENTS = [
+  {
+    intent: "complaint_damaged",
+    patterns: [/ostecen[aeiou]?\b/, /pokidan[aeiou]?\b/, /slomlj/, /razderen/, /otrgnu/, /defekt/, /nedostaje stranica/, /kriv[aeiou]? knjig/],
+    message: "Žao nam je što ste imali problema! Vaš slučaj prosljeđujemo našem timu koji će Vam se javiti u najkraćem roku s rješenjem."
+  },
+  {
+    intent: "return_refund",
+    patterns: [/povrat novca/, /vrati(te)? novac/, /refund/, /reklamacij[aeiou]/, /povrat (robe|knjig)/, /vracam/, /vratit cu/],
+    message: "Razumijemo Vaš zahtjev. Prosljeđujemo Vas našem timu za reklamacije koji će Vam se javiti s detaljima postupka."
+  },
+  {
+    intent: "wrong_order",
+    patterns: [/kriv[aeiou]? narudzb/, /pogresn[aeiou]? (knjig|artikl|narudzb)/, /poslali ste (mi )?krivo/, /nije ono sto sam narucio/, /dobio sam kriv/],
+    message: "Žao nam je zbog neugodnosti! Vaš upit o pogrešnoj pošiljci prosljeđujemo timu koji će Vam se javiti s rješenjem."
+  },
+  {
+    intent: "legal_threat",
+    patterns: [/odvjetnik/, /tuzb[aeiou]/, /tuzit cu/, /pravni/, /sud\b/, /inspekcij/, /zakon o zastit/, /prigovor/, /potrosac/],
+    message: "Vaš upit smo zabilježili. Naš tim će Vam se javiti u najkraćem roku."
+  },
+  {
+    intent: "urgent_problem",
+    patterns: [/hitno/, /urgentno/, /odmah/, /vec (dva|tri|cetiri|pet|sest) (dana|tjedn)/, /ne javljate se/, /ne odgovarate/, /cekam odgovor/],
+    message: "Razumijemo hitnost Vašeg upita. Prosljeđujemo Vas našem timu koji će Vam se javiti u najkraćem mogućem roku."
+  }
+];
+
+function detectEscalationIntent(normMsg) {
+  for (const { intent, patterns, message } of ESCALATION_INTENTS) {
+    for (const pattern of patterns) {
+      if (pattern.test(normMsg)) {
+        return { shouldEscalate: true, intent, reason: `intent_${intent}`, message };
+      }
+    }
+  }
+  return { shouldEscalate: false };
 }
 
 // ─── POST /api/chat/start ─────────────────────────────────────
@@ -556,26 +617,60 @@ app.post("/api/zendesk/webhook", async (req, res) => {
 
     // Auto-reply for webhook tickets
     if (latestMessage) {
-      const knowledge = await knowledgeService.searchKnowledgeDetailed(latestMessage);
+      // Input sanitization for webhook messages
+      const sanitized = inputSanitizerModule.check(latestMessage);
+      if (!sanitized.safe) {
+        log.warn("webhook_input_blocked", { ticketId, reason: sanitized.reason });
+        return res.status(200).json({ success: true, blocked: true, reason: "injection_detected" });
+      }
+      const cleanMessage = inputSanitizerModule.clean(latestMessage);
+
+      // Intent-based escalation check (before any LLM calls)
+      const normWebhookMsg = normalizeForComparison(cleanMessage);
+      const webhookEscalation = detectEscalationIntent(normWebhookMsg);
+      if (webhookEscalation.shouldEscalate) {
+        await zendeskService.addBotReplyToTicket(ticketId, webhookEscalation.message, { channelType: normalizedChannel });
+        await zendeskService.updateConversationState(ticketId, "awaiting_human", ["ai_escalated", `intent_${webhookEscalation.intent}`]);
+        log.info("webhook_intent_escalation", { ticketId, intent: webhookEscalation.intent });
+        return res.status(200).json({ success: true, escalated: true, reason: webhookEscalation.reason });
+      }
+
+      // Fetch conversation history for multi-turn context
+      let conversationSummary = "";
+      try {
+        const comments = await zendeskService.getPublicTicketComments(ticketId);
+        if (comments.length > 1) {
+          const recent = comments.slice(-6, -1); // exclude the latest (current) message
+          conversationSummary = recent.map(c => {
+            const role = c.author_id ? "Korisnik" : "Asistent";
+            return `${role}: ${String(c.body || "").slice(0, 200)}`;
+          }).join("\n");
+        }
+      } catch (err) {
+        log.warn("webhook_history_fetch_failed", { ticketId, message: err.message });
+      }
+
+      const knowledge = await knowledgeService.searchKnowledgeDetailed(cleanMessage);
       let answer = null;
 
       if (knowledge?.context) {
-        const relevance = await aiService.gradeContextRelevance(latestMessage, knowledge.context);
+        const relevance = await aiService.gradeContextRelevance(cleanMessage, knowledge.context);
         if (relevance.relevant) {
-          answer = await aiService.generateGroundedAnswer(latestMessage, knowledge.context, { channelType: normalizedChannel });
+          const enrichedContext = `${aiService.REFERENTNE_CINJENICE}\n\n--- RELEVANTNI DOKUMENTI ---\n\n${knowledge.context}`;
+          answer = await aiService.generateGroundedAnswer(cleanMessage, enrichedContext, { channelType: normalizedChannel, conversationSummary });
         }
       }
 
       if (!answer) {
-        answer = await aiService.generateGroundedAnswer(latestMessage, aiService.REFERENTNE_CINJENICE, { channelType: normalizedChannel });
+        answer = await aiService.generateGroundedAnswer(cleanMessage, aiService.REFERENTNE_CINJENICE, { channelType: normalizedChannel, conversationSummary });
         if (answer) {
           const norm = normalizeForComparison(answer);
-          if (/(ne mogu|nisam siguran|nemam informacij)/.test(norm)) answer = null;
+          if (/(ne mogu|nisam siguran|nemam informacij|pouzdano potvrditi)/.test(norm)) answer = null;
         }
       }
 
       if (answer) {
-        const validation = outputValidator.validateAnswerQuality(answer, { knowledgeContext: knowledge?.context || "", userMessage: latestMessage });
+        const validation = outputValidator.validateAnswerQuality(answer, { knowledgeContext: knowledge?.context || "", userMessage: cleanMessage });
         if (validation.valid) {
           await zendeskService.addBotReplyToTicket(ticketId, answer, { channelType: normalizedChannel });
           await zendeskService.updateConversationState(ticketId, "ai_active", ["ai_replied"]);
@@ -725,5 +820,21 @@ function gracefulShutdown(signal) {
 
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
+process.on("uncaughtException", (err) => {
+  log.error("uncaught_exception", { message: err.message, stack: err.stack });
+  try {
+    runtimeStore.saveRuntimeState({
+      ...runtimeState,
+      sessions: [...chatSessions.values()].map(serializeSession),
+      rateLimits: rateLimiter.getState()
+    });
+  } catch (_) { /* best effort */ }
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason) => {
+  log.error("unhandled_rejection", { message: String(reason?.message || reason), stack: reason?.stack });
+});
 
 module.exports = app;

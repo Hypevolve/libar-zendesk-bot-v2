@@ -25,6 +25,7 @@ if (!env.OPENROUTER_API_KEY) {
 const client = new OpenAI({
   apiKey: env.OPENROUTER_API_KEY,
   baseURL: "https://openrouter.ai/api/v1",
+  timeout: 15000,
   defaultHeaders: {
     ...(env.OPENROUTER_SITE_URL ? { "HTTP-Referer": env.OPENROUTER_SITE_URL } : {}),
     ...(env.OPENROUTER_SITE_NAME ? { "X-Title": env.OPENROUTER_SITE_NAME } : {})

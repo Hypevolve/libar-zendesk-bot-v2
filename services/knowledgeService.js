@@ -84,7 +84,7 @@ function finalizeResult(candidates) {
     context: buildContext(candidates),
     articles: candidates,
     topScore: primary.score || 0,          // 0–100 (backward compat for tracing)
-    topConfidence: primary.confidence || 0, // 0–1 (for gating decisions)
+    topConfidence: Math.max(...candidates.map(c => c.confidence || 0)), // 0–1 (for gating decisions)
     totalMatches: candidates.length,
     primarySource: primary.source || null
   };
