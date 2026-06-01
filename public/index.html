@@ -4,16 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Libar Asistent</title>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --accent: #f26a35; --accent-hover: #e05520; --accent-light: rgba(242,106,53,0.15);
-      --bg: #121212; --bg-elevated: #1e1e1e;
-      --surface: #1e1e1e; --surface-hover: #2a2a2a;
-      --text: #ffffff; --text-muted: #a0a0a0; --text-dim: #707070;
-      --border: #2a2a2a; --border-light: #333333;
+      --accent: #f26a35; --accent-hover: #e05520; --accent-light: rgba(242,106,53,0.12);
+      --bg: #f5f7fa; --bg-elevated: #ffffff;
+      --surface: #ffffff; --surface-hover: #f9fafb;
+      --text: #1f2937; --text-muted: #6b7280; --text-dim: #9ca3af;
+      --border: #e5e7eb; --border-light: #f3f4f6;
       --radius-sm: 8px; --radius-md: 14px; --radius-lg: 20px;
-      --shadow: 0 8px 32px rgba(0,0,0,0.4); --shadow-lg: 0 16px 48px rgba(0,0,0,0.5);
+      --shadow: 0 4px 20px rgba(0,0,0,0.1); --shadow-lg: 0 12px 40px rgba(0,0,0,0.15);
       --transition: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
 
@@ -21,6 +22,7 @@
       font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
       background: transparent; color: var(--text); min-height: 100vh; overflow: hidden;
     }
+    .ph { font-size: inherit; vertical-align: middle; }
 
     /* ─── Floating Button ─── */
     #fab {
@@ -63,13 +65,14 @@
     #chat-header .avatar {
       width: 44px; height: 44px; border-radius: 50%;
       background: var(--accent-light); display: flex;
-      align-items: center; justify-content: center; font-size: 22px;
-      border: 2px solid var(--accent);
+      align-items: center; justify-content: center;
+      border: 2px solid var(--accent); color: var(--accent);
+      font-size: 22px;
     }
     #chat-header .status-dot {
       position: absolute; bottom: 2px; right: 2px;
       width: 10px; height: 10px; background: #22c55e;
-      border-radius: 50%; border: 2px solid var(--surface);
+      border-radius: 50%; border: 2px solid #fff;
     }
     #chat-header .info h2 { font-size: 15px; font-weight: 600; }
     #chat-header .info p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
@@ -99,6 +102,7 @@
     .msg.assistant {
       align-self: flex-start; background: var(--surface); color: var(--text);
       border: 1px solid var(--border); border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     }
     .msg .ts { display: block; font-size: 10px; opacity: 0.5; margin-top: 6px; }
 
@@ -115,6 +119,7 @@
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius-md); border-bottom-left-radius: 4px;
       padding: 14px 18px; margin: 0 16px 8px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     }
     .typing-indicator.visible { display: flex; }
     .typing-indicator .dots { display: flex; gap: 4px; align-items: center; }
@@ -137,7 +142,7 @@
       background: var(--surface); border: 1px solid var(--border);
       color: var(--text-muted); cursor: pointer;
       display: none; align-items: center; justify-content: center;
-      font-size: 14px; box-shadow: var(--shadow);
+      font-size: 18px; box-shadow: var(--shadow);
     }
     #scroll-bottom.visible { display: flex; }
 
@@ -160,7 +165,7 @@
     #input-bar button {
       width: 40px; height: 40px; border-radius: 50%;
       border: none; background: var(--accent); color: #fff;
-      font-size: 18px; cursor: pointer; flex-shrink: 0;
+      font-size: 20px; cursor: pointer; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
       transition: background 0.2s;
     }
@@ -200,8 +205,8 @@
 
     /* ─── Error ─── */
     .error-msg {
-      align-self: center; background: rgba(239,68,68,0.1);
-      border: 1px solid rgba(239,68,68,0.3); color: #f87171;
+      align-self: center; background: #fef2f2;
+      border: 1px solid #fecaca; color: #dc2626;
       padding: 12px 16px; border-radius: var(--radius-sm);
       font-size: 13px; text-align: center; max-width: 90%;
     }
@@ -211,6 +216,7 @@
       border-radius: var(--radius-sm); cursor: pointer;
       font-size: 13px; font-weight: 500; margin-top: 8px;
     }
+    .retry-btn:hover { background: var(--accent-light); }
 
     /* ─── Mobile ─── */
     @media (max-width: 480px) {
@@ -227,15 +233,15 @@
 <body>
   <!-- Floating Action Button -->
   <button id="fab" aria-label="Otvori chat">
-    <span class="chat-icon">💬</span>
-    <span class="close-x">✕</span>
+    <i class="ph ph-chat-circle-text chat-icon" style="font-size: 28px;"></i>
+    <i class="ph ph-x close-x" style="font-size: 24px;"></i>
   </button>
 
   <!-- Chat Panel -->
   <div id="chat-panel">
     <div id="chat-header">
       <div class="avatar-wrap">
-        <div class="avatar">📚</div>
+        <div class="avatar"><i class="ph ph-books" style="font-size: 22px;"></i></div>
         <div class="status-dot"></div>
       </div>
       <div class="info">
@@ -261,11 +267,11 @@
       <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
     </div>
 
-    <button id="scroll-bottom" aria-label="Scroll to bottom">↓</button>
+    <button id="scroll-bottom" aria-label="Scroll to bottom"><i class="ph ph-arrow-down"></i></button>
 
     <div id="input-bar">
       <textarea id="msg-input" rows="1" placeholder="Napišite poruku…"></textarea>
-      <button id="msg-send">➤</button>
+      <button id="msg-send"><i class="ph ph-paper-plane-right"></i></button>
     </div>
   </div>
 
