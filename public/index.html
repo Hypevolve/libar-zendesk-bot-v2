@@ -76,6 +76,22 @@
     }
     #chat-header .info h2 { font-size: 15px; font-weight: 600; }
     #chat-header .info p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    #chat-header .end-chat {
+      margin-left: auto;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 20px;
+      padding: 4px;
+      border-radius: 50%;
+      width: 32px; height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, color 0.2s;
+    }
+    #chat-header .end-chat:hover { background: var(--border-light); color: var(--text); }
 
     /* ─── Messages ─── */
     #messages {
@@ -248,6 +264,9 @@
         <h2>Libar Asistent</h2>
         <p>Online — obično odgovaramo odmah</p>
       </div>
+      <button class="end-chat" id="end-chat-btn" title="Završi razgovor" aria-label="Završi razgovor">
+        <i class="ph ph-sign-out"></i>
+      </button>
     </div>
 
     <div id="pre-chat">
@@ -435,6 +454,38 @@
     $("#msg-input").addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
     });
+
+    function endChat() {
+      if (!sessionId) {
+        togglePanel();
+        return;
+      }
+      // Send closing note to backend
+      fetch(`${API}/api/chat/message`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, message: "[KORISNIK JE ZAVRŠIO RAZGOVOR]" })
+      }).catch(() => {});
+
+      // Show thank you in chat
+      addMessage("assistant", "Hvala što ste koristili Libar Asistent! Ako imate dodatnih pitanja, slobodno se javite.");
+
+      // Reset after delay
+      setTimeout(() => {
+        sessionId = null;
+        ticketId = null;
+        messagesEl.innerHTML = "";
+        preChat.style.display = "flex";
+        messagesEl.style.display = "none";
+        inputBar.style.display = "none";
+        $("#pc-name").value = "";
+        $("#pc-email").value = "";
+        $("#pc-message").value = "";
+        togglePanel();
+      }, 2500);
+    }
+
+    $("#end-chat-btn").addEventListener("click", endChat);
 
     // Auto-resize textarea
     $("#msg-input").addEventListener("input", function () {

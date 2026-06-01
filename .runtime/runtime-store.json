@@ -12347,10 +12347,77 @@
       "entryIntent": null,
       "createdAt": "2026-06-01T17:32:07.858Z",
       "updatedAt": "2026-06-01T17:32:14.258Z"
+    },
+    {
+      "sessionId": "a6a36c34-c743-4434-bc88-fc4de4b7c7f8",
+      "ticketId": 89515,
+      "requesterId": 27216941388316,
+      "requesterName": "Zrinko Kutnjak",
+      "requesterEmail": "zrinko@kontra.agency",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Pozdrav, otkupljujete li knjige?",
+          "ts": "2026-06-01T17:49:12.593Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Pozdrav! Da, Antikvarijat Libar otkupljuje knjige. Možete ih donijeti osobno u našu poslovnicu u Osijeku ili ih poslati putem GLS dostavne službe. Za online otkup, zapakirajte knjige i kurir će ih preuzeti na Vašoj adresi. Za isplatu je potreban OIB i IBAN. Ako imate dodatnih pitanja, slobodno se obratite na info@antikvarijat-libar.com.",
+          "ts": "2026-06-01T17:49:12.593Z"
+        },
+        {
+          "role": "user",
+          "content": "A kako mogu saznati koliko novaca mogu dobiti za to?",
+          "ts": "2026-06-01T17:49:39.484Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Cijena otkupa knjiga u Antikvarijatu Libar određuje se prema našim internim kriterijima, koji uključuju prodajnu cijenu i trenutnu ponudu i potražnju. Ako želite saznati koliko biste mogli dobiti za svoje knjige, možete nam poslati slike knjiga i željeni iznos na email **info@antikvarijat-libar.com**. Svaku ponudu uzimamo u obzir i javit ćemo Vam se s povratnom informacijom.",
+          "ts": "2026-06-01T17:49:56.935Z"
+        },
+        {
+          "role": "user",
+          "content": "A kako isplaćujete?",
+          "ts": "2026-06-01T17:50:21.509Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Antikvarijat Libar isplaćuje za otkup knjiga na nekoliko načina. Ako se radi o fizičkom otkupu u poslovnici, isplata se vrši gotovinom odmah pri predaji knjiga. Za online otkup, isplata se vrši isti dan po primitku paketa, ili iznimno sljedeći radni dan u slučaju visoke gužve. Isplata se može izvršiti na **bankovni račun (IBAN)**, putem **Revoluta** ili **HP uplatnicom** (troškove HP podmiruje primatelj). Na Aircash ne vršimo isplatu. Ako imate dodatnih pitanja, slobodno nas kontaktirajte.",
+          "ts": "2026-06-01T17:50:31.702Z"
+        },
+        {
+          "role": "user",
+          "content": "A koji vam je kontakt?",
+          "ts": "2026-06-01T17:51:08.883Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Možete nas kontaktirati putem emaila na **info@antikvarijat-libar.com** ili telefonski na broj **031/201-230**. Također, možete nas posjetiti osobno u našoj poslovnici na adresi Županijska ulica 17, Osijek. Radno vrijeme je od ponedjeljka do petka od 08:00 do 20:00 sati, te subotom od 08:00 do 13:00 sati.",
+          "ts": "2026-06-01T17:51:17.376Z"
+        },
+        {
+          "role": "user",
+          "content": "Reci mi kako se zoveš.",
+          "ts": "2026-06-01T17:51:45.649Z"
+        },
+        {
+          "role": "assistant",
+          "content": "Hvala na pitanju! Nažalost, nemam dovoljno informacija da vam odgovorim. Proslijedit ću vaš upit našem timu koji će vam se javiti.",
+          "ts": "2026-06-01T17:51:54.506Z"
+        }
+      ],
+      "conversationState": {
+        "tone": "ai-active",
+        "badge": "AI Asistent",
+        "subtitle": ""
+      },
+      "entryIntent": null,
+      "createdAt": "2026-06-01T17:49:04.267Z",
+      "updatedAt": "2026-06-01T17:51:54.506Z"
     }
   ],
   "processedWebhookAudits": [],
   "processedWebhookMessages": [],
   "recentChatStarts": [],
-  "savedAt": "2026-06-01T17:32:17.261Z"
+  "savedAt": "2026-06-01T17:51:57.508Z"
 }
