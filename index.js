@@ -108,6 +108,45 @@ function findSessionByTicketId(ticketId) {
 
 function removeSession(id) { chatSessions.delete(id); scheduleRuntimePersist(); }
 
+// Session cleanup: remove stale sessions older than 24h every 30min
+const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const SESSION_CLEANUP_INTERVAL_MS = 30 * 60 * 1000;
+
+setInterval(() => {
+  const cutoff = Date.now() - SESSION_MAX_AGE_MS;
+  let removed = 0;
+  for (const [id, session] of chatSessions) {
+    const updated = new Date(session.updatedAt || session.createdAt).getTime();
+    if (updated < cutoff) {
+      chatSessions.delete(id);
+      removed++;
+    }
+  }
+  if (removed) {
+    log.info("session_cleanup", { removed, remaining: chatSessions.size });
+    scheduleRuntimePersist();
+  }
+}, SESSION_CLEANUP_INTERVAL_MS).unref?.();
+
+// Webhook idempotency: track last processed message per ticket (5min TTL)
+const webhookProcessed = new Map();
+const WEBHOOK_IDEMPOTENCY_TTL_MS = 5 * 60 * 1000;
+
+function isWebhookDuplicate(ticketId, message) {
+  const key = `${ticketId}:${String(message).slice(0, 200)}`;
+  const entry = webhookProcessed.get(key);
+  if (entry && Date.now() - entry.ts < WEBHOOK_IDEMPOTENCY_TTL_MS) {
+    return true;
+  }
+  webhookProcessed.set(key, { ts: Date.now() });
+  // Cleanup old entries
+  const cutoff = Date.now() - WEBHOOK_IDEMPOTENCY_TTL_MS;
+  for (const [k, v] of webhookProcessed) {
+    if (v.ts < cutoff) webhookProcessed.delete(k);
+  }
+  return false;
+}
+
 // ─── Helpers ──────────────────────────────────────────────────
 
 function normalizeMessage(msg) {
@@ -127,6 +166,27 @@ function isClosedTicketStatus(status) {
 async function resolveAutomatedOutcome(session, userMessage, opts = {}) {
   const start = Date.now();
   metricsService.increment("totalRequests");
+
+  try {
+    return await _resolveAutomatedOutcome(session, userMessage, opts);
+  } catch (error) {
+    log.error("automated_outcome_failed", { message: error.message, stack: error.stack });
+    metricsService.recordDecision("escalate_no_answer");
+    metricsService.recordLatency(Date.now() - start);
+    return {
+      knowledge: null,
+      outcome: {
+        type: "escalate_no_answer",
+        customerMessage: "Nažalost, trenutno imam tehničkih poteškoća. Prosljeđujem Vaš upit našem timu koji će Vam se javiti u najkraćem mogućem roku.",
+        stateTag: "awaiting_human", reason: "pipeline_error",
+        links: [], extraTags: ["ai_escalated"]
+      }
+    };
+  }
+}
+
+async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
+  const start = Date.now();
 
   const { masked: maskedMsg, mappings: piiMappings } = piiService.maskPII(userMessage);
 
@@ -601,6 +661,12 @@ app.post("/api/zendesk/webhook", async (req, res) => {
 
   const { ticketId, channelType, latestMessage } = req.body || {};
   if (!ticketId) return res.status(400).json({ success: false, error: "ticketId required." });
+
+  // Idempotency: skip duplicate webhook deliveries for the same message
+  if (latestMessage && isWebhookDuplicate(ticketId, latestMessage)) {
+    log.info("webhook_duplicate_skipped", { ticketId });
+    return res.status(200).json({ success: true, duplicate: true });
+  }
 
   try {
     const normalizedChannel = aiService.normalizeChannelType(channelType || "email");
