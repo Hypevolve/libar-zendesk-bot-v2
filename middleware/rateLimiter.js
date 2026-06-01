@@ -64,4 +64,40 @@ rateLimiter.reset = () => store.clear();
 rateLimiter.load = load;
 rateLimiter.getState = getState;
 
-module.exports = rateLimiter;
+// ─── Webhook-specific rate limiter (higher threshold for Zendesk bursts) ──
+
+const WEBHOOK_WINDOW_MS = 60 * 1000;
+const WEBHOOK_MAX = 80;
+let webhookStore = new Map();
+
+function webhookRateLimiter(req, res, next) {
+  const ip = req.ip || req.connection?.remoteAddress || "unknown";
+  const now = Date.now();
+  const entry = webhookStore.get(ip);
+
+  if (!entry || now - entry.windowStart > WEBHOOK_WINDOW_MS) {
+    webhookStore.set(ip, { windowStart: now, count: 1 });
+    return next();
+  }
+
+  entry.count++;
+
+  if (entry.count > WEBHOOK_MAX) {
+    return res.status(429).json({
+      success: false,
+      error: "Too many webhook requests."
+    });
+  }
+
+  return next();
+}
+
+// Share cleanup cycle with main limiter
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of webhookStore) {
+    if (now - entry.windowStart > WEBHOOK_WINDOW_MS * 2) webhookStore.delete(ip);
+  }
+}, WEBHOOK_WINDOW_MS * 2).unref?.();
+
+module.exports = Object.assign(rateLimiter, { webhookRateLimiter });

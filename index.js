@@ -21,6 +21,7 @@ const crypto = require("crypto");
 const env = require("./config/env");
 const log = require("./config/logger");
 const rateLimiter = require("./middleware/rateLimiter");
+const { webhookRateLimiter } = rateLimiter;
 const inputSanitizerModule = require("./middleware/inputSanitizer");
 const inputSanitizer = inputSanitizerModule.middleware;
 
@@ -110,6 +111,24 @@ function findSessionByTicketId(ticketId) {
 
 function removeSession(id) { chatSessions.delete(id); scheduleRuntimePersist(); }
 
+// Sync webhook messages with in-memory session so /api/chat/restore stays current
+function syncWebhookMessageToSession(ticketId, userMessage, botReply) {
+  const session = findSessionByTicketId(ticketId);
+  if (!session) return;
+
+  const now = new Date().toISOString();
+  session.messages.push({ role: "user", content: String(userMessage).slice(0, 2000), ts: now });
+  if (botReply) {
+    session.messages.push({ role: "assistant", content: String(botReply).slice(0, 2000), ts: now });
+  }
+  // Trim to memory budget
+  if (session.messages.length > 30) {
+    session.messages = session.messages.slice(-30);
+  }
+  session.updatedAt = now;
+  scheduleRuntimePersist();
+}
+
 // Session cleanup: remove stale sessions older than 24h every 30min
 const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const SESSION_CLEANUP_INTERVAL_MS = 30 * 60 * 1000;
@@ -134,13 +153,34 @@ setInterval(() => {
 const webhookProcessed = new Map();
 const WEBHOOK_IDEMPOTENCY_TTL_MS = 5 * 60 * 1000;
 
-function isWebhookDuplicate(ticketId, message) {
-  const key = `${ticketId}:${String(message).slice(0, 200)}`;
+function normalizeDedupText(text) {
+  return String(text || "")
+    .replace(/<[^>]+>/g, " ") // strip HTML
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase()
+    .slice(0, 200);
+}
+
+function isWebhookDuplicate(ticketId, message, timestamp = null) {
+  // Prefer timestamp-based dedup if available (Zendesk trigger can send created_at)
+  if (timestamp) {
+    const tsKey = `${ticketId}:ts:${String(timestamp).slice(0, 30)}`;
+    const tsEntry = webhookProcessed.get(tsKey);
+    if (tsEntry && Date.now() - tsEntry.ts < WEBHOOK_IDEMPOTENCY_TTL_MS) {
+      return true;
+    }
+    webhookProcessed.set(tsKey, { ts: Date.now() });
+  }
+
+  // Fallback: normalized text hash
+  const key = `${ticketId}:${normalizeDedupText(message)}`;
   const entry = webhookProcessed.get(key);
   if (entry && Date.now() - entry.ts < WEBHOOK_IDEMPOTENCY_TTL_MS) {
     return true;
   }
   webhookProcessed.set(key, { ts: Date.now() });
+
   // Cleanup old entries
   const cutoff = Date.now() - WEBHOOK_IDEMPOTENCY_TTL_MS;
   for (const [k, v] of webhookProcessed) {
@@ -357,8 +397,7 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
     if (relevance.relevant) {
       // Enrich vector chunks with canonical reference facts so the LLM always
       // has access to core business rules even when chunks are incomplete.
-      const enrichedContext = `${aiService.REFERENTNE_CINJENICE}\n\n--- RELEVANTNI DOKUMENTI ---\n\n${knowledge.context}`;
-      customerMessage = await aiService.generateGroundedAnswer(maskedMsg, enrichedContext, groundedOpts);
+      customerMessage = await aiService.generateGroundedAnswer(maskedMsg, knowledge.context, groundedOpts);
 
       if (customerMessage) {
         const norm = normalizeForComparison(customerMessage);
@@ -680,7 +719,7 @@ function mapAuditsToMessages(audits = [], requesterId, ticketSummary) {
 
 // ─── POST /api/zendesk/webhook ────────────────────────────────
 
-app.post("/api/zendesk/webhook", async (req, res) => {
+app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
   const token = req.headers["x-zendesk-webhook-token"] || req.body?.token;
   if (!zendeskService.verifyWebhookToken(token)) {
     return res.status(401).json({ success: false, error: "Invalid webhook token." });
@@ -688,11 +727,11 @@ app.post("/api/zendesk/webhook", async (req, res) => {
 
   metricsService.increment("totalWebhooks");
 
-  const { ticketId, channelType, latestMessage } = req.body || {};
+  const { ticketId, channelType, latestMessage, timestamp: webhookTimestamp } = req.body || {};
   if (!ticketId) return res.status(400).json({ success: false, error: "ticketId required." });
 
   // Idempotency: skip duplicate webhook deliveries for the same message
-  if (latestMessage && isWebhookDuplicate(ticketId, latestMessage)) {
+  if (latestMessage && isWebhookDuplicate(ticketId, latestMessage, webhookTimestamp)) {
     log.info("webhook_duplicate_skipped", { ticketId });
     return res.status(200).json({ success: true, duplicate: true });
   }
@@ -784,8 +823,7 @@ app.post("/api/zendesk/webhook", async (req, res) => {
       if (knowledge?.context) {
         const relevance = await aiService.gradeContextRelevance(maskedMsg, knowledge.context);
         if (relevance.relevant) {
-          const enrichedContext = `${aiService.REFERENTNE_CINJENICE}\n\n--- RELEVANTNI DOKUMENTI ---\n\n${knowledge.context}`;
-          answer = await aiService.generateGroundedAnswer(maskedMsg, enrichedContext, { channelType: normalizedChannel, conversationSummary });
+          answer = await aiService.generateGroundedAnswer(maskedMsg, knowledge.context, { channelType: normalizedChannel, conversationSummary });
         }
       }
 
@@ -812,6 +850,9 @@ app.post("/api/zendesk/webhook", async (req, res) => {
         await zendeskService.updateConversationState(ticketId, "awaiting_human", ["ai_escalated"]);
         await zendeskService.addInternalNote(ticketId, "AI nije mogao generirati pouzdan odgovor. Eskalacija na tim.");
       }
+
+      // Sync with in-memory session so /api/chat/restore returns current state
+      syncWebhookMessageToSession(ticketId, latestMessage, answer || null);
     }
 
     return res.status(200).json({ success: true });

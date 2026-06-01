@@ -39,6 +39,10 @@ function getConfiguredModels() {
     env.OPENROUTER_MODEL,
     env.OPENROUTER_FALLBACK_MODEL
   ].filter(Boolean);
+  if (models.length === 0) {
+    log.warn("no_models_configured", "Using default fallback model. Set OPENROUTER_MODEL env var.");
+    models.push("openai/gpt-4.1-mini");
+  }
   return [...new Set(models)];
 }
 
