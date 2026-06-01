@@ -478,7 +478,7 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
       }
     : {
         type: "escalate_no_answer",
-        customerMessage: "Hvala na pitanju! Nažalost, nemam dovoljno informacija da vam odgovorim. Proslijedit ću vaš upit našem timu koji će vam se javiti.",
+        customerMessage: "Hvala na pitanju! Proslijedit ću vaš upit našem timu koji će vam se javiti.",
         stateTag: "awaiting_human", reason: "no_grounded_answer",
         links, extraTags: ["ai_escalated"]
       };
