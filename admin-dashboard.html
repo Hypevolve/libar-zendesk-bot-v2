@@ -72,7 +72,7 @@
 
     <!-- Key Metrics -->
     <div class="grid" id="metrics-grid">
-      <div class="card"><h3>Ukupno upita</h3><div class="value" id="m-total">—</div><div class="sub">Od pokretanja</div></div>
+      <div class="card"><h3>Ukupno upita</h3><div class="value" id="m-total">—</div><div class="sub" id="m-total-breakdown">Od pokretanja</div></div>
       <div class="card green"><h3>Odgovoreno</h3><div class="value" id="m-answered">—</div><div class="sub" id="m-answered-pct">—</div></div>
       <div class="card red"><h3>Eskalirano</h3><div class="value" id="m-escalated">—</div><div class="sub" id="m-escalated-pct">—</div></div>
       <div class="card"><h3>Prosječna latencija</h3><div class="value" id="m-latency">—</div><div class="sub" id="m-latency-p95">—</div></div>
@@ -223,8 +223,11 @@ function updateMetrics(metrics) {
   const decisions = metrics.decisions || {};
   const answered = decisions.safe_answer || 0;
   const escalated = decisions.escalate_no_answer || 0;
+  const webchatTotal = (metrics.totalChatStarts || 0) + (metrics.totalChatMessages || 0);
+  const webhookTotal = metrics.totalWebhooks || 0;
 
   document.getElementById('m-total').textContent = total;
+  document.getElementById('m-total-breakdown').textContent = `Webchat: ${formatNumber(webchatTotal)} | Webhook: ${formatNumber(webhookTotal)}`;
   document.getElementById('m-answered').textContent = answered;
   document.getElementById('m-answered-pct').textContent = total ? ((answered/total)*100).toFixed(0) + '% uspješnost' : '—';
   document.getElementById('m-escalated').textContent = escalated;

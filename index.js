@@ -812,6 +812,7 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
     let maskedMsg = "";
     let piiMappings = [];
     let knowledge = null;
+    let safeAnswerSent = false;
 
     // Spam filter for email
     if (normalizedChannel === "email" && latestMessage) {
@@ -867,6 +868,9 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
         return res.status(200).json({ success: true, escalated: true, reason: "user_uploaded_attachments" });
       }
 
+      // Metrics parity with webchat: count every request that reaches AI work
+      metricsService.increment("totalRequests");
+
       // Fetch conversation history for multi-turn context
       let conversationSummary = "";
       try {
@@ -884,6 +888,7 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
 
       knowledge = await knowledgeService.searchKnowledgeDetailed(maskedMsg);
       let answer = null;
+      safeAnswerSent = false;
 
       // Use web_chat channel for LLM generation parity — the real channel is still
       // recorded in Zendesk metadata. This prevents the email prompt from producing
@@ -913,6 +918,8 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
           if (raceCheck.takenOver) {
             log.info("webhook_race_condition_agent", { ticketId, reason: raceCheck.reason });
             metricsService.increment("agentTakeoversSkipped");
+            metricsService.recordDecision("escalate_no_answer");
+            metricsService.recordLatency(Date.now() - webhookStart);
             await zendeskService.updateConversationState(ticketId, "human_active", ["agent_detected_race"]);
             return res.status(200).json({ success: true, skipped: "agent_took_over_race" });
           }
@@ -921,6 +928,7 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
           const finalAnswer = piiService.unmaskPII(answer, piiMappings);
           await zendeskService.addBotReplyToTicket(ticketId, finalAnswer, { channelType: normalizedChannel });
           await zendeskService.updateConversationState(ticketId, "ai_active", ["ai_replied"]);
+          safeAnswerSent = true;
         } else {
           log.warn("webhook_output_validation_failed", { ticketId, reason: validation.reason });
           // Fallback to reference facts (parity with webchat path)
@@ -937,6 +945,7 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
                 await zendeskService.addBotReplyToTicket(ticketId, finalFb, { channelType: normalizedChannel });
                 await zendeskService.updateConversationState(ticketId, "ai_active", ["ai_replied"]);
                 answer = fallbackAnswer;
+                safeAnswerSent = true;
               } else {
                 log.warn("webhook_fallback_validation_failed", { ticketId, reason: fbValidation.reason });
                 await zendeskService.updateConversationState(ticketId, "awaiting_human", ["ai_escalated"]);
@@ -958,6 +967,10 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
 
       // Sync with in-memory session so /api/chat/restore returns current state
       syncWebhookMessageToSession(ticketId, latestMessage, answer || null);
+
+      // Record decision and latency for admin panel parity with webchat
+      metricsService.recordDecision(safeAnswerSent ? "safe_answer" : "escalate_no_answer");
+      metricsService.recordLatency(Date.now() - webhookStart);
     }
 
     // Trace email/facebook interactions for admin dashboard parity with webchat
@@ -965,7 +978,7 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
       sessionId: ticketId ? String(ticketId) : null,
       input: maskedMsg || latestMessage,
       llmOutput: answer || null,
-      decision: answer ? "safe_answer" : "escalate_no_answer",
+      decision: safeAnswerSent ? "safe_answer" : "escalate_no_answer",
       retrieval: knowledge ? { source: knowledge.primarySource, topScore: knowledge.topScore, articleCount: knowledge.totalMatches } : null,
       latencyMs: Date.now() - webhookStart
     });
