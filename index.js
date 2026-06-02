@@ -807,6 +807,7 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
   }
 
   try {
+    const webhookStart = Date.now();
     const normalizedChannel = aiService.normalizeChannelType(channelType || "email");
 
     // Spam filter for email
@@ -922,6 +923,16 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
       // Sync with in-memory session so /api/chat/restore returns current state
       syncWebhookMessageToSession(ticketId, latestMessage, answer || null);
     }
+
+    // Trace email/facebook interactions for admin dashboard parity with webchat
+    tracingService.createTrace({
+      sessionId: ticketId ? String(ticketId) : null,
+      input: maskedMsg || latestMessage,
+      llmOutput: answer || null,
+      decision: answer ? "safe_answer" : "escalate_no_answer",
+      retrieval: knowledge ? { source: knowledge.primarySource, topScore: knowledge.topScore, articleCount: knowledge.totalMatches } : null,
+      latencyMs: Date.now() - webhookStart
+    });
 
     return res.status(200).json({ success: true });
   } catch (error) {
