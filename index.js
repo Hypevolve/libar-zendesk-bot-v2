@@ -755,19 +755,9 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
     return res.status(200).json({ success: true, duplicate: true });
   }
 
-  // Human-takeover guard: if an agent has taken over (human_active / awaiting_human)
-  // or the ticket is resolved, the bot stays silent so it never talks over an agent.
-  if (latestMessage) {
-    const handoff = await zendeskService.isTicketHumanHandled(ticketId);
-    if (handoff.handled) {
-      log.info("webhook_skipped_human_handled", { ticketId, tags: handoff.tags });
-      metricsService.increment("webhooksSkippedHumanHandled");
-      return res.status(200).json({ success: true, skipped: "human_handled" });
-    }
-  }
-
-  // Agent-intervention guard: checks the actual latest comment author.
-  // Catches cases where an agent replied but forgot to update tags.
+  // Agent-intervention guard: checks the actual latest comment author FIRST.
+  // If the customer just messaged, bot proceeds (even if stale human_active tag exists).
+  // If an agent commented, bot stays silent and updates tags.
   if (latestMessage) {
     const agentCheck = await zendeskService.checkForAgentIntervention(ticketId);
     if (agentCheck.takenOver) {
@@ -775,6 +765,19 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
       metricsService.increment("agentTakeoversSkipped");
       await zendeskService.updateConversationState(ticketId, "human_active", ["agent_detected"]);
       return res.status(200).json({ success: true, skipped: "agent_took_over" });
+    }
+  }
+
+  // Tag-based guard: resolved / awaiting_human tickets stay silent.
+  // human_active is NOT checked here — that is handled by checkForAgentIntervention above.
+  if (latestMessage) {
+    const handoff = await zendeskService.isTicketHumanHandled(ticketId);
+    // Only block for resolved or awaiting_human. human_active is determined by actual comment author.
+    const blockedByTag = handoff.tags.some((t) => ["resolved", "awaiting_human"].includes(t));
+    if (blockedByTag) {
+      log.info("webhook_skipped_human_handled", { ticketId, tags: handoff.tags });
+      metricsService.increment("webhooksSkippedHumanHandled");
+      return res.status(200).json({ success: true, skipped: "human_handled" });
     }
   }
 
