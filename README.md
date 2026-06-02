@@ -318,7 +318,7 @@ open http://localhost:3000
 
 **Email (simulacija):**
 ```bash
-curl -X POST http://localhost:3000/api/webhook \
+curl -X POST http://localhost:3000/api/zendesk/webhook \
   -H "Content-Type: application/json" \
   -d '{
     "ticketId": 12345,
@@ -326,21 +326,21 @@ curl -X POST http://localhost:3000/api/webhook \
     "requesterName": "Test User",
     "requesterEmail": "test@example.com",
     "subject": "Pitanje o dostavi",
-    "body": "Koliko košta dostava?",
+    "latestMessage": "Koliko košta dostava?",
     "channelType": "email"
   }'
 ```
 
 **Facebook (simulacija):**
 ```bash
-curl -X POST http://localhost:3000/api/webhook \
+curl -X POST http://localhost:3000/api/zendesk/webhook \
   -H "Content-Type: application/json" \
   -d '{
     "ticketId": 12345,
     "requesterId": 67890,
     "requesterName": "Test User",
     "requesterEmail": "test@example.com",
-    "body": "Koliko košta dostava?",
+    "latestMessage": "Koliko košta dostava?",
     "channelType": "facebook"
   }'
 ```

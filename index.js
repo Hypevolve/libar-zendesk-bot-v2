@@ -748,8 +748,24 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
 
   metricsService.increment("totalWebhooks");
 
-  const { ticketId, channelType, latestMessage, timestamp: webhookTimestamp } = req.body || {};
+  let { ticketId, channelType, latestMessage, timestamp: webhookTimestamp } = req.body || {};
   if (!ticketId) return res.status(400).json({ success: false, error: "ticketId required." });
+
+  // Normalize message: Zendesk {{ticket.latest_comment}} returns a full comment object.
+  // Extract body/html_body, or convert to string if it's already text.
+  if (typeof latestMessage === "object" && latestMessage !== null) {
+    latestMessage = latestMessage.body || latestMessage.html_body || "";
+  } else if (latestMessage !== undefined && latestMessage !== null) {
+    latestMessage = String(latestMessage);
+  } else {
+    latestMessage = "";
+  }
+
+  log.info("webhook_received", { ticketId, channelType, hasMessage: Boolean(latestMessage), messageLength: latestMessage.length });
+
+  if (!latestMessage) {
+    log.warn("webhook_no_message_field", { ticketId, bodyKeys: Object.keys(req.body || {}) });
+  }
 
   // Idempotency: skip duplicate webhook deliveries for the same message
   if (latestMessage && isWebhookDuplicate(ticketId, latestMessage, webhookTimestamp)) {
