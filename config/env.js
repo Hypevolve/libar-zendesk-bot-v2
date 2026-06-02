@@ -30,6 +30,10 @@ module.exports = {
   ZENDESK_EMAIL: envStr("ZENDESK_EMAIL"),
   ZENDESK_API_TOKEN: envStr("ZENDESK_API_TOKEN"),
   ZENDESK_WEBHOOK_TOKEN: envStr("ZENDESK_WEBHOOK_TOKEN"),
+  // Bot user ID in Zendesk. Set this to the numeric user ID the bot uses when
+  // posting comments via the API. When configured, agent-intervention detection
+  // becomes 100% precise (no false negatives from ai_active tag heuristic).
+  ZENDESK_BOT_USER_ID: envInt("ZENDESK_BOT_USER_ID", 0),
 
   // --- OpenRouter / LLM ---
   OPENROUTER_API_KEY: envStr("OPENROUTER_API_KEY"),

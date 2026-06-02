@@ -444,18 +444,18 @@ async function ping() {
 
 /**
  * Detects whether a human agent has intervened in the conversation.
- * Fetches the latest public comments and compares the author with the requester.
+ * Fetches the latest public comment and compares the author with the requester
+ * and (when configured) the bot's own Zendesk user ID.
+ *
  * Returns { takenOver: boolean, reason: string }.
  *
- * Heuristic:
- *   1. If the latest comment is from the requester → proceed (customer just messaged).
- *   2. If the latest comment is NOT from the requester:
- *      a. If ticket has "ai_active" tag → likely the bot's own reply → proceed.
- *      b. Otherwise → an agent (or someone else) commented → skip.
- *
- * This catches both:
- *   • Delayed webhooks where an agent already replied before the bot starts.
- *   • Race conditions when checked right before posting a reply.
+ * Logic:
+ *   1. If the latest comment is from the requester → proceed.
+ *   2. If ZENDESK_BOT_USER_ID is configured:
+ *      a. If latest author === bot user ID → it's our own reply → proceed.
+ *      b. Otherwise → agent (or admin) commented → skip.
+ *   3. Fallback (no bot user ID): if ticket has "ai_active" tag → assume it's
+ *      our own reply → proceed. Otherwise → skip.
  */
 async function checkForAgentIntervention(ticketId) {
   try {
@@ -472,16 +472,21 @@ async function checkForAgentIntervention(ticketId) {
     }
 
     // Latest comment is NOT from the requester
-    const tags = summary.tags || [];
-    if (tags.includes("ai_active")) {
-      // Bot was the last active party; this non-requester comment is likely
-      // the bot's own previous reply (or an agent who didn't change tags).
-      // We give the benefit of the doubt and allow the bot to proceed,
-      // but the caller should do a final check right before posting.
-      return { takenOver: false };
+    const botUserId = env.ZENDESK_BOT_USER_ID || 0;
+    if (botUserId > 0) {
+      // Precise mode: we know exactly who the bot is in Zendesk
+      if (latest.author_id === botUserId) {
+        return { takenOver: false };
+      }
+      // Not requester, not bot → must be an agent (or admin)
+      return { takenOver: true, reason: "agent_comment_detected" };
     }
 
-    // No ai_active tag and latest comment is not from requester → agent took over
+    // Fallback mode: use ai_active tag heuristic (less precise)
+    const tags = summary.tags || [];
+    if (tags.includes("ai_active")) {
+      return { takenOver: false };
+    }
     return { takenOver: true, reason: "agent_comment_detected" };
   } catch (error) {
     log.warn("agent_intervention_check_failed", { ticketId, message: error.message });
