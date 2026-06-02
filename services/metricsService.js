@@ -2,10 +2,12 @@
  * Metrics Service (Skill §12 — Observability)
  *
  * Tracks request counts, response times, cache hits, decisions.
- * All in-memory — swap for Prometheus/Datadog in multi-instance.
+ * Persists counters to Supabase so they survive restarts / deploys.
  */
 const tokenBudget = require("./tokenBudgetService");
 const responseCache = require("./responseCacheService");
+const supabaseMetrics = require("./supabaseMetricsService");
+const log = require("../config/logger");
 
 const counters = {
   totalRequests: 0,
@@ -20,6 +22,50 @@ const counters = {
   agentTakeoversSkipped: 0,
   latencies: []
 };
+
+// ─── Load persisted metrics on startup ──────────────────────────
+
+(async function hydrateFromSupabase() {
+  const persisted = await supabaseMetrics.load();
+  if (persisted && typeof persisted === "object") {
+    counters.totalRequests = persisted.totalRequests || 0;
+    counters.totalWebhooks = persisted.totalWebhooks || 0;
+    counters.totalChatStarts = persisted.totalChatStarts || 0;
+    counters.totalChatMessages = persisted.totalChatMessages || 0;
+    counters.decisions = persisted.decisions || {};
+    counters.errors = persisted.errors || 0;
+    counters.handoffs = persisted.handoffs || 0;
+    counters.botDisabledEscalations = persisted.botDisabledEscalations || 0;
+    counters.webhooksSkippedHumanHandled = persisted.webhooksSkippedHumanHandled || 0;
+    counters.agentTakeoversSkipped = persisted.agentTakeoversSkipped || 0;
+    counters.latencies = Array.isArray(persisted.latencies) ? persisted.latencies.slice(-1000) : [];
+    log.info("metrics_hydrated", { totalRequests: counters.totalRequests, totalWebhooks: counters.totalWebhooks });
+  }
+})();
+
+// ─── Auto-save every 30 seconds ────────────────────────────────
+
+function serializeCounters() {
+  return {
+    totalRequests: counters.totalRequests,
+    totalWebhooks: counters.totalWebhooks,
+    totalChatStarts: counters.totalChatStarts,
+    totalChatMessages: counters.totalChatMessages,
+    decisions: counters.decisions,
+    errors: counters.errors,
+    handoffs: counters.handoffs,
+    botDisabledEscalations: counters.botDisabledEscalations,
+    webhooksSkippedHumanHandled: counters.webhooksSkippedHumanHandled,
+    agentTakeoversSkipped: counters.agentTakeoversSkipped,
+    latencies: counters.latencies
+  };
+}
+
+setInterval(() => {
+  supabaseMetrics.save(serializeCounters());
+}, 30000);
+
+// ─── Public API ────────────────────────────────────────────────
 
 function increment(key) {
   if (typeof counters[key] === "number") counters[key]++;
@@ -47,7 +93,7 @@ function getMetrics() {
   };
 }
 
-function reset() {
+async function reset() {
   counters.totalRequests = 0;
   counters.totalWebhooks = 0;
   counters.totalChatStarts = 0;
@@ -61,6 +107,7 @@ function reset() {
   counters.latencies = [];
   tokenBudget.resetUsage();
   responseCache.clear();
+  await supabaseMetrics.save(serializeCounters());
 }
 
 module.exports = { increment, recordDecision, recordLatency, getMetrics, reset };
