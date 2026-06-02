@@ -164,6 +164,11 @@ function normalizeDedupText(text) {
     .slice(0, 200);
 }
 
+function markMessageProcessed(ticketId, message) {
+  const key = `${ticketId}:${normalizeDedupText(message)}`;
+  webhookProcessed.set(key, { ts: Date.now() });
+}
+
 function isWebhookDuplicate(ticketId, message, timestamp = null) {
   // Prefer timestamp-based dedup if available (Zendesk trigger can send created_at)
   if (timestamp) {
@@ -541,6 +546,9 @@ app.post("/api/chat/start", rateLimiter, inputSanitizer, chatUpload.array("attac
       uploadTokens
     });
 
+    // Mark as processed so the webhook (fired by ticket creation) skips this message
+    markMessageProcessed(ticketId, message);
+
     const session = createSession({
       ticketId, requesterId,
       requesterName: name || "Korisnik",
@@ -625,6 +633,9 @@ app.post("/api/chat/message", rateLimiter, inputSanitizer, chatUpload.array("att
     await zendeskService.addCustomerMessageToTicket(
       session.ticketId, session.requesterId, message || "Šaljem privitak.", uploadTokens
     );
+
+    // Mark as processed so the webhook (fired by the new comment) skips this message
+    markMessageProcessed(session.ticketId, message || "Šaljem privitak.");
 
     session.messages.push({ role: "user", content: message || "Šaljem privitak.", ts: new Date().toISOString() });
 
