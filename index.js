@@ -809,6 +809,9 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
   try {
     const webhookStart = Date.now();
     const normalizedChannel = aiService.normalizeChannelType(channelType || "email");
+    let maskedMsg = "";
+    let piiMappings = [];
+    let knowledge = null;
 
     // Spam filter for email
     if (normalizedChannel === "email" && latestMessage) {
@@ -833,7 +836,9 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
       // Mask PII BEFORE it reaches the LLM or knowledge search (parity with the
       // web-chat path). The model only ever sees masked tokens; we unmask the
       // final answer just before it goes back to the customer.
-      const { masked: maskedMsg, mappings: piiMappings } = piiService.maskPII(cleanMessage);
+      const maskedResult = piiService.maskPII(cleanMessage);
+      maskedMsg = maskedResult.masked;
+      piiMappings = maskedResult.mappings;
 
       // Intent-based escalation check (before any LLM calls)
       const normWebhookMsg = normalizeForComparison(cleanMessage);
@@ -877,7 +882,7 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
         log.warn("webhook_history_fetch_failed", { ticketId, message: err.message });
       }
 
-      const knowledge = await knowledgeService.searchKnowledgeDetailed(maskedMsg);
+      knowledge = await knowledgeService.searchKnowledgeDetailed(maskedMsg);
       let answer = null;
 
       // Use web_chat channel for LLM generation parity — the real channel is still

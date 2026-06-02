@@ -49,6 +49,8 @@ async function load() {
   }
 }
 
+let tableMissingLogged = false;
+
 /**
  * Save current metrics snapshot to Supabase.
  * Uses upsert (merge on id=1) so we always keep exactly one row.
@@ -63,7 +65,13 @@ async function save(data) {
       { headers: { Prefer: "resolution=merge-duplicates,return=minimal" } }
     );
   } catch (error) {
-    log.warn("metrics_save_failed", { message: error.message });
+    const is404 = error.response?.status === 404 || error.message?.includes("404");
+    if (is404 && !tableMissingLogged) {
+      tableMissingLogged = true;
+      log.warn("metrics_table_missing", { table: "bot_metrics", hint: "Run SQL in Supabase: CREATE TABLE bot_metrics (id int PRIMARY KEY, data jsonb, updated_at timestamptz DEFAULT now());" });
+    } else if (!is404) {
+      log.warn("metrics_save_failed", { message: error.message });
+    }
   }
 }
 
