@@ -786,6 +786,13 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
     }
   }
 
+  // Prevent trigger loop: skip if the latest message is our own reply.
+  // (When the bot posts a comment, Zendesk fires the trigger again.)
+  if (latestMessage && String(latestMessage).includes("Vaš Libar Asistent")) {
+    log.info("webhook_skipped_own_reply", { ticketId });
+    return res.status(200).json({ success: true, skipped: "own_reply" });
+  }
+
   // Tag-based guard: resolved / awaiting_human tickets stay silent.
   // human_active is NOT checked here — that is handled by checkForAgentIntervention above.
   if (latestMessage) {
