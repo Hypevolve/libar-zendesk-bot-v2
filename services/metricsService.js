@@ -17,6 +17,7 @@ const counters = {
   handoffs: 0,
   botDisabledEscalations: 0,
   webhooksSkippedHumanHandled: 0,
+  agentTakeoversSkipped: 0,
   latencies: []
 };
 
@@ -56,6 +57,7 @@ function reset() {
   counters.handoffs = 0;
   counters.botDisabledEscalations = 0;
   counters.webhooksSkippedHumanHandled = 0;
+  counters.agentTakeoversSkipped = 0;
   counters.latencies = [];
   tokenBudget.resetUsage();
   responseCache.clear();

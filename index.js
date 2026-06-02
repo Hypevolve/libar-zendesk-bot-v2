@@ -766,6 +766,18 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
     }
   }
 
+  // Agent-intervention guard: checks the actual latest comment author.
+  // Catches cases where an agent replied but forgot to update tags.
+  if (latestMessage) {
+    const agentCheck = await zendeskService.checkForAgentIntervention(ticketId);
+    if (agentCheck.takenOver) {
+      log.info("webhook_skipped_agent_intervention", { ticketId, reason: agentCheck.reason });
+      metricsService.increment("agentTakeoversSkipped");
+      await zendeskService.updateConversationState(ticketId, "human_active", ["agent_detected"]);
+      return res.status(200).json({ success: true, skipped: "agent_took_over" });
+    }
+  }
+
   try {
     const normalizedChannel = aiService.normalizeChannelType(channelType || "email");
 
@@ -857,6 +869,15 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
       if (answer) {
         const validation = outputValidator.validateAnswerQuality(answer, { knowledgeContext: knowledge?.context || "", userMessage: maskedMsg });
         if (validation.valid) {
+          // Race-condition guard: re-check if an agent commented while we were generating.
+          const raceCheck = await zendeskService.checkForAgentIntervention(ticketId);
+          if (raceCheck.takenOver) {
+            log.info("webhook_race_condition_agent", { ticketId, reason: raceCheck.reason });
+            metricsService.increment("agentTakeoversSkipped");
+            await zendeskService.updateConversationState(ticketId, "human_active", ["agent_detected_race"]);
+            return res.status(200).json({ success: true, skipped: "agent_took_over_race" });
+          }
+
           // Restore any masked PII (e.g. customer's own order email) before replying.
           const finalAnswer = piiService.unmaskPII(answer, piiMappings);
           await zendeskService.addBotReplyToTicket(ticketId, finalAnswer, { channelType: normalizedChannel });
@@ -971,8 +992,8 @@ app.post("/admin/sync/vector", requireAdmin, async (req, res) => {
   }
 });
 
-// Admin Dashboard HTML UI
-app.get("/admin/dashboard", requireAdmin, (req, res) => {
+// Admin Dashboard HTML UI (public — auth handled by JS API calls)
+app.get("/admin/dashboard", (req, res) => {
   const dashboardPath = path.join(__dirname, "admin-dashboard.html");
   try {
     const html = fs.readFileSync(dashboardPath, "utf8");

@@ -442,8 +442,56 @@ async function ping() {
   }
 }
 
+/**
+ * Detects whether a human agent has intervened in the conversation.
+ * Fetches the latest public comments and compares the author with the requester.
+ * Returns { takenOver: boolean, reason: string }.
+ *
+ * Heuristic:
+ *   1. If the latest comment is from the requester → proceed (customer just messaged).
+ *   2. If the latest comment is NOT from the requester:
+ *      a. If ticket has "ai_active" tag → likely the bot's own reply → proceed.
+ *      b. Otherwise → an agent (or someone else) commented → skip.
+ *
+ * This catches both:
+ *   • Delayed webhooks where an agent already replied before the bot starts.
+ *   • Race conditions when checked right before posting a reply.
+ */
+async function checkForAgentIntervention(ticketId) {
+  try {
+    const summary = await getTicketSummary(ticketId);
+    const comments = await getPublicTicketComments(ticketId);
+    if (comments.length === 0) {
+      return { takenOver: false };
+    }
+
+    const latest = comments[comments.length - 1];
+    if (latest.author_id === summary.requesterId) {
+      // Latest comment is from the customer → normal flow
+      return { takenOver: false };
+    }
+
+    // Latest comment is NOT from the requester
+    const tags = summary.tags || [];
+    if (tags.includes("ai_active")) {
+      // Bot was the last active party; this non-requester comment is likely
+      // the bot's own previous reply (or an agent who didn't change tags).
+      // We give the benefit of the doubt and allow the bot to proceed,
+      // but the caller should do a final check right before posting.
+      return { takenOver: false };
+    }
+
+    // No ai_active tag and latest comment is not from requester → agent took over
+    return { takenOver: true, reason: "agent_comment_detected" };
+  } catch (error) {
+    log.warn("agent_intervention_check_failed", { ticketId, message: error.message });
+    return { takenOver: false };
+  }
+}
+
 module.exports = {
   addInternalNote, addTagAndNote, addBotReplyToTicket, addCustomerMessageToTicket,
+  checkForAgentIntervention,
   createChatTicket, fetchAllHelpCenterArticles, getZendeskConfigSummary,
   getPublicTicketComments, getRequesterProfile, getTicketAudits, getTicketSummary,
   ping, replyToTicket, resetHelpCenterCache, searchHelpCenter, searchHelpCenterDetailed,
