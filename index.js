@@ -880,15 +880,20 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
       const knowledge = await knowledgeService.searchKnowledgeDetailed(maskedMsg);
       let answer = null;
 
+      // Use web_chat channel for LLM generation parity — the real channel is still
+      // recorded in Zendesk metadata. This prevents the email prompt from producing
+      // longer/formal answers that fail the overlap validator more often.
+      const generationOpts = { channelType: "web_chat", conversationSummary };
+
       if (knowledge?.context) {
         const relevance = await aiService.gradeContextRelevance(maskedMsg, knowledge.context);
         if (relevance.relevant) {
-          answer = await aiService.generateGroundedAnswer(maskedMsg, knowledge.context, { channelType: normalizedChannel, conversationSummary });
+          answer = await aiService.generateGroundedAnswer(maskedMsg, knowledge.context, generationOpts);
         }
       }
 
       if (!answer) {
-        answer = await aiService.generateGroundedAnswer(maskedMsg, aiService.REFERENTNE_CINJENICE, { channelType: normalizedChannel, conversationSummary });
+        answer = await aiService.generateGroundedAnswer(maskedMsg, aiService.REFERENTNE_CINJENICE, generationOpts);
         if (answer) {
           const norm = normalizeForComparison(answer);
           if (/(ne mogu|nisam siguran|nemam informacij|pouzdano potvrditi)/.test(norm)) answer = null;
@@ -912,8 +917,34 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
           await zendeskService.addBotReplyToTicket(ticketId, finalAnswer, { channelType: normalizedChannel });
           await zendeskService.updateConversationState(ticketId, "ai_active", ["ai_replied"]);
         } else {
-          await zendeskService.updateConversationState(ticketId, "awaiting_human", ["ai_escalated"]);
-          await zendeskService.addInternalNote(ticketId, `AI output validation failed: ${validation.reason}`);
+          log.warn("webhook_output_validation_failed", { ticketId, reason: validation.reason });
+          // Fallback to reference facts (parity with webchat path)
+          const fallbackAnswer = await aiService.generateGroundedAnswer(maskedMsg, aiService.REFERENTNE_CINJENICE, generationOpts);
+          if (fallbackAnswer) {
+            const fbNorm = normalizeForComparison(fallbackAnswer);
+            const fbUncertain = /(ne mogu|nisam siguran|nemam informacij|pouzdano potvrditi)/.test(fbNorm);
+            if (!fbUncertain) {
+              const fbValidation = outputValidator.validateAnswerQuality(fallbackAnswer, {
+                knowledgeContext: aiService.REFERENTNE_CINJENICE, userMessage: maskedMsg
+              });
+              if (fbValidation.valid) {
+                const finalFb = piiService.unmaskPII(fallbackAnswer, piiMappings);
+                await zendeskService.addBotReplyToTicket(ticketId, finalFb, { channelType: normalizedChannel });
+                await zendeskService.updateConversationState(ticketId, "ai_active", ["ai_replied"]);
+                answer = fallbackAnswer;
+              } else {
+                log.warn("webhook_fallback_validation_failed", { ticketId, reason: fbValidation.reason });
+                await zendeskService.updateConversationState(ticketId, "awaiting_human", ["ai_escalated"]);
+                await zendeskService.addInternalNote(ticketId, `AI output validation failed: ${validation.reason} (fallback also failed: ${fbValidation.reason})`);
+              }
+            } else {
+              await zendeskService.updateConversationState(ticketId, "awaiting_human", ["ai_escalated"]);
+              await zendeskService.addInternalNote(ticketId, `AI output validation failed: ${validation.reason}`);
+            }
+          } else {
+            await zendeskService.updateConversationState(ticketId, "awaiting_human", ["ai_escalated"]);
+            await zendeskService.addInternalNote(ticketId, `AI output validation failed: ${validation.reason}`);
+          }
         }
       } else {
         await zendeskService.updateConversationState(ticketId, "awaiting_human", ["ai_escalated"]);
