@@ -271,8 +271,13 @@ function resolveBotReplyOrigin(channelType = "web_chat") {
   return "zendesk_ai";
 }
 
+// Signature marker appended to every bot reply. Used for precise agent-intervention
+// detection (checkForAgentIntervention looks for this text in the latest comment).
+const BOT_SIGNATURE = "\n\n---\n*Vaš Libar Asistent*";
+
 async function addBotReplyToTicket(ticketId, replyText, options = {}) {
-  return replyToTicket(ticketId, replyText, true, {
+  const signedReply = replyText + BOT_SIGNATURE;
+  return replyToTicket(ticketId, signedReply, true, {
     additionalTags: [...new Set(["ai_replied", ...(options.additionalTags || [])])],
     metadata: { ...(options.metadata || {}), libar_message_role: "assistant", libar_message_origin: resolveBotReplyOrigin(options.channelType) }
   });
@@ -444,18 +449,17 @@ async function ping() {
 
 /**
  * Detects whether a human agent has intervened in the conversation.
- * Fetches the latest public comment and compares the author with the requester
- * and (when configured) the bot's own Zendesk user ID.
+ * Every bot reply ends with the signature "Vaš Libar Asistent".
+ * By checking whether the latest comment contains this signature we can
+ * reliably distinguish bot replies from agent replies — no extra Zendesk
+ * user seat needed.
  *
  * Returns { takenOver: boolean, reason: string }.
  *
  * Logic:
  *   1. If the latest comment is from the requester → proceed.
- *   2. If ZENDESK_BOT_USER_ID is configured:
- *      a. If latest author === bot user ID → it's our own reply → proceed.
- *      b. Otherwise → agent (or admin) commented → skip.
- *   3. Fallback (no bot user ID): if ticket has "ai_active" tag → assume it's
- *      our own reply → proceed. Otherwise → skip.
+ *   2. If latest comment body includes BOT_SIGNATURE → bot's own reply → proceed.
+ *   3. Otherwise → agent (or admin) commented → skip.
  */
 async function checkForAgentIntervention(ticketId) {
   try {
@@ -472,21 +476,13 @@ async function checkForAgentIntervention(ticketId) {
     }
 
     // Latest comment is NOT from the requester
-    const botUserId = env.ZENDESK_BOT_USER_ID || 0;
-    if (botUserId > 0) {
-      // Precise mode: we know exactly who the bot is in Zendesk
-      if (latest.author_id === botUserId) {
-        return { takenOver: false };
-      }
-      // Not requester, not bot → must be an agent (or admin)
-      return { takenOver: true, reason: "agent_comment_detected" };
-    }
-
-    // Fallback mode: use ai_active tag heuristic (less precise)
-    const tags = summary.tags || [];
-    if (tags.includes("ai_active")) {
+    const latestBody = String(latest.body || "");
+    if (latestBody.includes(BOT_SIGNATURE)) {
+      // It's our own reply (signature marker is present)
       return { takenOver: false };
     }
+
+    // Not requester, not bot → must be an agent (or admin)
     return { takenOver: true, reason: "agent_comment_detected" };
   } catch (error) {
     log.warn("agent_intervention_check_failed", { ticketId, message: error.message });

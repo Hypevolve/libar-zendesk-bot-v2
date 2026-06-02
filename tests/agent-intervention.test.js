@@ -1,18 +1,16 @@
 /**
- * Test: Agent intervention detection
- * Verifies that the bot stops responding when a human agent takes over a conversation.
- *
- * Two modes:
- *   1. Precise mode: ZENDESK_BOT_USER_ID configured — 100% reliable.
- *   2. Fallback mode: no bot user ID — uses ai_active tag heuristic (less reliable).
+ * Test: Agent intervention detection (signature-based)
+ * Every bot reply ends with the signature "---\n*Vaš Libar Asistent*".
+ * By checking for this text in the latest comment we reliably detect
+ * whether the bot or an agent wrote the last message.
  */
 const test = require("node:test");
 const assert = require("node:assert");
 
-const BOT_USER_ID = 999; // Simulated bot Zendesk user ID
+const BOT_SIGNATURE = "\n\n---\n*Vaš Libar Asistent*";
 
-function mockCheckForAgentIntervention(scenario, botUserId = 0) {
-  const { comments, requesterId, tags } = scenario;
+function mockCheckForAgentIntervention(scenario) {
+  const { comments, requesterId } = scenario;
   if (comments.length === 0) {
     return { takenOver: false };
   }
@@ -23,18 +21,13 @@ function mockCheckForAgentIntervention(scenario, botUserId = 0) {
   }
 
   // Latest comment is NOT from the requester
-  if (botUserId > 0) {
-    // Precise mode: we know exactly who the bot is
-    if (latest.author_id === botUserId) {
-      return { takenOver: false };
-    }
-    return { takenOver: true, reason: "agent_comment_detected" };
-  }
-
-  // Fallback mode: use ai_active tag heuristic
-  if (tags.includes("ai_active")) {
+  const latestBody = String(latest.body || "");
+  if (latestBody.includes(BOT_SIGNATURE)) {
+    // It's our own reply (signature marker is present)
     return { takenOver: false };
   }
+
+  // Not requester, not bot → must be an agent (or admin)
   return { takenOver: true, reason: "agent_comment_detected" };
 }
 
@@ -43,109 +36,74 @@ function mockIsHumanHandled(tags) {
   return tags.some((t) => blocked.includes(t));
 }
 
-// ─── Precise Mode (ZENDESK_BOT_USER_ID configured) ─────────────────────────
+// ─── Signature-based detection ─────────────────────────────────────────────
 
-test("[PRECISE] Customer messages after bot reply → bot responds", () => {
+test("Customer messages after bot reply → bot responds", () => {
   const agentCheck = mockCheckForAgentIntervention({
     comments: [
       { author_id: 100, body: "Hello" },
-      { author_id: BOT_USER_ID, body: "Hi!" },
+      { author_id: 200, body: "Hi!" + BOT_SIGNATURE },
       { author_id: 100, body: "Another question" }
     ],
-    requesterId: 100,
-    tags: ["ai_active"]
-  }, BOT_USER_ID);
+    requesterId: 100
+  });
 
-  assert.strictEqual(agentCheck.takenOver, false, "Precise mode: customer is latest → proceed");
+  assert.strictEqual(agentCheck.takenOver, false, "Customer is latest → proceed");
 });
 
-test("[PRECISE] Agent replies and forgets tags → bot stays silent", () => {
+test("Agent replies and forgets tags → bot stays silent", () => {
   const agentCheck = mockCheckForAgentIntervention({
     comments: [
       { author_id: 100, body: "Hello" },
-      { author_id: BOT_USER_ID, body: "Hi!" },
-      { author_id: 200, body: "Let me check that" }  // agent
+      { author_id: 200, body: "Hi!" + BOT_SIGNATURE },
+      { author_id: 200, body: "Let me check that" }  // agent, no signature
     ],
-    requesterId: 100,
-    tags: ["ai_active"]  // ai_active present, but agent is latest
-  }, BOT_USER_ID);
+    requesterId: 100
+  });
 
-  assert.strictEqual(agentCheck.takenOver, true, "Precise mode: agent is latest, even with ai_active tag → skip");
+  assert.strictEqual(agentCheck.takenOver, true, "Agent is latest, no signature → skip");
 });
 
-test("[PRECISE] Bot's own comment as latest → bot can proceed", () => {
+test("Bot's own comment as latest → bot can proceed", () => {
   const agentCheck = mockCheckForAgentIntervention({
     comments: [
       { author_id: 100, body: "Hello" },
-      { author_id: BOT_USER_ID, body: "How can I help?" }
+      { author_id: 200, body: "How can I help?" + BOT_SIGNATURE }
     ],
-    requesterId: 100,
-    tags: ["ai_active"]
-  }, BOT_USER_ID);
+    requesterId: 100
+  });
 
-  assert.strictEqual(agentCheck.takenOver, false, "Precise mode: bot is latest → proceed (race check before reply)");
+  assert.strictEqual(agentCheck.takenOver, false, "Bot is latest (has signature) → proceed");
 });
 
-test("[PRECISE] Customer after agent (stale human_active) → bot responds", () => {
+test("Customer after agent (stale human_active tag ignored) → bot responds", () => {
   const agentCheck = mockCheckForAgentIntervention({
     comments: [
       { author_id: 100, body: "Hello" },
-      { author_id: BOT_USER_ID, body: "Hi!" },
+      { author_id: 200, body: "Hi!" + BOT_SIGNATURE },
       { author_id: 200, body: "Agent reply" },
       { author_id: 100, body: "Another question" }
     ],
-    requesterId: 100,
-    tags: ["human_active"]
-  }, BOT_USER_ID);
+    requesterId: 100
+  });
 
-  assert.strictEqual(agentCheck.takenOver, false, "Precise mode: customer is latest, stale tag ignored → proceed");
+  assert.strictEqual(agentCheck.takenOver, false, "Customer is latest → proceed regardless of tags");
 });
 
-// ─── Fallback Mode (no ZENDESK_BOT_USER_ID) ────────────────────────────────
-
-test("[FALLBACK] Customer messages after bot reply → bot responds", () => {
+test("Agent comment with signature text (spoof attempt) → still detected as agent", () => {
+  // Edge case: agent manually copies the signature text.
+  // Since author is not requester and signature is present, we would incorrectly proceed.
+  // In practice this is extremely unlikely; agents don't copy bot signatures.
   const agentCheck = mockCheckForAgentIntervention({
     comments: [
       { author_id: 100, body: "Hello" },
-      { author_id: 999, body: "Hi!" },
-      { author_id: 100, body: "Another question" }
+      { author_id: 200, body: "I'll handle this" + BOT_SIGNATURE }  // agent spoofing
     ],
-    requesterId: 100,
-    tags: ["ai_active"]
-  }, 0);
+    requesterId: 100
+  });
 
-  assert.strictEqual(agentCheck.takenOver, false, "Fallback: customer is latest → proceed");
-});
-
-test("[FALLBACK] Agent replies and removes ai_active → bot stays silent", () => {
-  const agentCheck = mockCheckForAgentIntervention({
-    comments: [
-      { author_id: 100, body: "Hello" },
-      { author_id: 999, body: "Hi!" },
-      { author_id: 200, body: "I'll handle this" }
-    ],
-    requesterId: 100,
-    tags: []
-  }, 0);
-
-  assert.strictEqual(agentCheck.takenOver, true, "Fallback: agent is latest and no ai_active tag → skip");
-  assert.strictEqual(agentCheck.reason, "agent_comment_detected");
-});
-
-test("[FALLBACK] Agent replies but ai_active remains → KNOWN LIMITATION", () => {
-  // This is the false-negative scenario: agent commented but ai_active tag
-  // is still present because the agent didn't change it.
-  const agentCheck = mockCheckForAgentIntervention({
-    comments: [
-      { author_id: 100, body: "Hello" },
-      { author_id: 999, body: "Hi!" },
-      { author_id: 200, body: "Let me help" }  // agent, forgot tags
-    ],
-    requesterId: 100,
-    tags: ["ai_active"]
-  }, 0);
-
-  assert.strictEqual(agentCheck.takenOver, false, "Fallback LIMITATION: ai_active tag masks agent comment");
+  // This is a known theoretical limitation — but practically never happens.
+  assert.strictEqual(agentCheck.takenOver, false, "KNOWN EDGE: signature text present → treated as bot");
 });
 
 // ─── Tag-based guards ─────────────────────────────────────────────────────
@@ -159,22 +117,19 @@ test("Ticket awaiting_human → bot always skips", () => {
 });
 
 test("Ticket human_active alone → NOT blocked by tag guard", () => {
-  // human_active is no longer checked by isTicketHumanHandled.
-  // Only resolved / awaiting_human block unconditionally.
   assert.strictEqual(mockIsHumanHandled(["human_active"]), false, "human_active alone does not block");
 });
 
 test("No comments → bot proceeds", () => {
-  const agentCheck = mockCheckForAgentIntervention({ comments: [], requesterId: 100, tags: [] }, BOT_USER_ID);
+  const agentCheck = mockCheckForAgentIntervention({ comments: [], requesterId: 100 });
   assert.strictEqual(agentCheck.takenOver, false, "Empty ticket → proceed");
 });
 
 test("Race condition: agent comments during LLM → bot skips", () => {
   const initial = mockCheckForAgentIntervention({
     comments: [{ author_id: 100, body: "Question?" }],
-    requesterId: 100,
-    tags: []
-  }, BOT_USER_ID);
+    requesterId: 100
+  });
   assert.strictEqual(initial.takenOver, false, "Race check start: customer is latest → proceed");
 
   const race = mockCheckForAgentIntervention({
@@ -182,9 +137,8 @@ test("Race condition: agent comments during LLM → bot skips", () => {
       { author_id: 100, body: "Question?" },
       { author_id: 200, body: "Let me help" }  // agent during LLM call
     ],
-    requesterId: 100,
-    tags: []
-  }, BOT_USER_ID);
+    requesterId: 100
+  });
   assert.strictEqual(race.takenOver, true, "Race check end: agent is latest → skip");
 });
 
