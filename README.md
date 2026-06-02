@@ -25,29 +25,18 @@
 
 ## Pregled
 
+**Libar Asistent** je AI chatbot koji služi kao prva linija korisničke podrške za Antikvarijat Libar. Dostupan je putem web stranice, emaila i Facebook Messengera.
+
 ### Glavne značajke
 
 - **Višekanalni** — web chat widget, email (Zendesk), Facebook Messenger
-- **RAG s embeddings** — pretražuje bazu znanja (OneDrive, Help Center, Supabase vector DB)
-- **Konverzacijska memorija** — pamti kontekst kroz više pitanja
-- **Smart escalation** — prepoznaje hitne situacije i šalje ljudima
+- **Pametan** — pretražuje bazu znanja i daje točne odgovore na temelju dokumenata
+- **Pamti razgovor** — razumije follow-up pitanja bez ponavljanja konteksta
+- **Smart escalation** — automatski šalje složene upite ljudskom timu
 - **Spam filtriranje** — detekcija neželjenih email poruka
-- **PII maskiranje** — štiti osobne podatke prije slanja LLM-u
-- **Kill switch** — emergency stop bez redeploya
-- **Response cache** — brži odgovori na ponovljena pitanja
-- **Token budget** — zaštita od previsokih troškova
-
-### Tehnologije
-
-| Komponenta | Tehnologija |
-|-----------|-------------|
-| Backend | Node.js + Express |
-| LLM | OpenRouter (OpenAI, Google) |
-| Embeddings | OpenRouter / OpenAI text-embedding-3-small |
-| Vector DB | Supabase (pgvector) |
-| Ticketing | Zendesk API |
-| Dokumenti | OneDrive / SharePoint |
-| Deploy | Render (Starter plan) |
+- **Siguran** — maskira osobne podatke prije slanja AI-ju
+- **Kill switch** — emergency stop bez potrebe za tehničkom intervencijom
+- **Admin panel** — pregled svih razgovora, metrika i statusa bota
 
 ---
 
@@ -81,38 +70,6 @@
 
 ### Struktura projekta
 
-```
-libar-zendesk-bot-v2/
-├── index.js                    # Glavna Express aplikacija
-├── config/
-│   ├── env.js                  # Environment konfiguracija
-│   └── logger.js               # Structured logging
-├── services/
-│   ├── aiService.js            # LLM pozivi (OpenRouter)
-│   ├── conversationService.js  # Konverzacijska memorija
-│   ├── knowledgeService.js     # RAG pretraga (hybrid)
-│   ├── vectorKnowledgeService.js  # Vector DB pretraga
-│   ├── zendeskService.js       # Zendesk API wrapper
-│   ├── oneDriveService.js      # OneDrive/SharePoint sync
-│   ├── piiService.js           # PII maskiranje
-│   ├── tokenBudgetService.js   # Token budget kontrola
-│   ├── responseCacheService.js # Response cache
-│   ├── outputValidator.js      # Validacija AI odgovora
-│   ├── metricsService.js       # Interni metrički sustav
-│   └── spamFilter.js           # Email spam detekcija
-├── middleware/
-│   ├── rateLimiter.js          # Rate limiting
-│   └── inputSanitizer.js       # Sanitizacija ulaznih podataka
-├── public/
-│   └── index.html              # Web chat widget (single file)
-├── scripts/
-│   ├── sync-vector-knowledge.js  # OneDrive → Supabase sync
-│   └── generate-tests-from-zendesk.js  # Test generator
-├── tests/                      # Testovi (Node.js native)
-├── .env.example                # Primjer environment datoteke
-├── render.yaml                 # Render deploy konfiguracija
-└── README.md                   # Ovaj dokument
-```
 
 ---
 
@@ -160,18 +117,25 @@ Webhook ruta (`/zendesk/webhook`) prima događaje:
 
 ---
 
+## Admin panel
+
+Admin panel dostupan na `/admin/dashboard`. Prikazuje:
+
+- **Ukupno upita** — webchat + email/Facebook
+- **Odgovoreno / eskalirano** — s postotcima
+- **Prosječna latencija** — brzina odgovora
+- **Token potrošnja** — in/out i procijenjeni trošak
+- **Cache hit rate** — učinkovitost cachea
+- **Posljednji razgovori** — pregled svih upita i odluka
+- **Kill switch** — uključivanje/isključivanje bota jednim klikom
+
+**Pristup**: Unesi `ADMIN_TOKEN` u login formu.
+
+---
+
 ## RAG (Retrieval-Augmented Generation)
 
-### Pipeline
-
-1. **Prepisivanje upita** — follow-up pitanja se pretvaraju u samostalne upite koristeći povijest razgovora
-2. **Vector search** (primarno) — semantic search preko Supabase pgvector
-3. **OneDrive fallback** — ako vektori nisu dovoljno sigurni
-4. **Zendesk Help Center fallback** — pretraga Help Center članaka
-5. **RRF merge** — spajanje rezultata iz više izvora
-6. **Relevance grading** — LLM provjerava je li kontekst relevantan
-7. **Grounded answer** — generiranje odgovora isključivo iz konteksta
-8. **Validacija** — provjera kvalitete, PII detekcija
+Bot koristi RAG tehnologiju — umjesto da "zna" sve napamet, **pretražuje dokumente** i odgovara isključivo na temelju pronađenih informacija.
 
 ### Izvori znanja (prioritetno)
 
@@ -180,7 +144,7 @@ Webhook ruta (`/zendesk/webhook`) prima događaje:
 | **Supabase Vector DB** | 1 | Embedded dokumenti iz OneDrive-a |
 | **OneDrive SharePoint** | 2 | Live dokumenti (Word, Excel) |
 | **Zendesk Help Center** | 3 | Članci pomoći |
-| **Referentne činjenice** | 4 | Hardcoded ključni podaci (cijene, adresa, radno vrijeme) |
+| **Referentne činjenice** | 4 | Ključni podaci (cijene, adresa, radno vrijeme) |
 
 ### Referentne činjenice (hardcoded)
 
@@ -354,7 +318,7 @@ curl http://localhost:3000/health
 
 ## Environment varijable
 
-### Obavezne
+Za pokretanje bota potrebni su sljedeći API ključevi:
 
 | Varijabla | Opis | Primjer |
 |-----------|------|---------|
@@ -366,25 +330,7 @@ curl http://localhost:3000/health
 | `SUPABASE_URL` | Supabase URL | `https://xxxxx.supabase.co` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role ključ | `eyJhbGci...` |
 
-### LLM modeli
-
-| Varijabla | Preporuka | Fallback |
-|-----------|-----------|----------|
-| `OPENROUTER_MODEL` | `openai/gpt-4o` | `openai/gpt-4.1-mini` |
-| `OPENROUTER_FALLBACK_MODEL` | `google/gemini-2.5-flash` | `openai/gpt-4.1-mini` |
-
-### Opcionalne
-
-| Varijabla | Opis | Default |
-|-----------|------|---------|
-| `BOT_ENABLED` | Kill switch — `true` ili `false` | `true` |
-| `EMBED_ALLOWED_ORIGINS` | Dopuštene domene za widget | — |
-| `ADMIN_TOKEN` | Token za admin API | — |
-| `RATE_LIMIT_MAX` | Max zahtjeva/min | `30` |
-| `VECTOR_AUTO_SYNC_ENABLED` | Auto sync s OneDrive | `false` |
-| `ONEDRIVE_*` | OneDrive OAuth podaci | — |
-
-Puni popis varijabli: vidi `.env.example`
+Puni popis varijabli i tehnički detalji: vidi [DEVELOPER.md](DEVELOPER.md).
 
 ---
 
@@ -529,44 +475,26 @@ npm run test:coverage
 
 ## Troubleshooting
 
-### "Cannot GET /"
+### Bot ne odgovara na email
 
-- Provjeri da li je server pokrenut
-- Provjeri da li `index.js` servira `public/index.html` na root path-u
+1. Provjeri Zendesk trigger — URL mora biti `https://tvoj-bot-url.com/api/zendesk/webhook`
+2. Provjeri da li webhook ima Bearer token (`ZENDESK_WEBHOOK_TOKEN`)
+3. Provjeri da li trigger šalje `latestMessage` polje
 
-### Bot odgovara neodgovarajućim informacijama
+### Bot šalje dvostruke odgovore
 
-1. Provjeri OneDrive dokumente — možda imaju zastarjele podatke
-2. Pokreni: `node scripts/sync-vector-knowledge.js --force`
-3. Provjeri referentne činjenice u `services/aiService.js`
+Bot ima zaštitu od petlje — provjeri da li trigger šalje samo korisnikove poruke, a ne i botove.
 
-### "Cannot find module"
+### Bot ne zna odgovor iako je u bazi znanja
 
-```bash
-rm -rf node_modules package-lock.json
-npm install
-```
+1. Pokreni ručni sync: `node scripts/sync-vector-knowledge.js --force`
+2. Provjeri OneDrive dokumente — možda su zastarjeli
 
-### Vector search ne vraća rezultate
+### Metrike se ne spremaju
 
-1. Provjeri da li je Supabase pgvector uključen
-2. Provjeri da li su dokumenti indeksirani:
-   ```bash
-   node scripts/sync-vector-knowledge.js --force
-   ```
-3. Provjeri `VECTOR_MIN_SCORE` — previsok prag može filtrirati sve
+Tablica `bot_metrics` mora postojati u Supabase. SQL za kreiranje nalazi se u [DEVELOPER.md](DEVELOPER.md).
 
-### Follow-up pitanja ne rade
-
-1. Provjeri da li `CONVERSATION_MEMORY_MAX_MESSAGES` nije postavljen na 0
-2. Provjeri logove za `knowledge_fallback_combined_query`
-3. Povećaj `VECTOR_FALLBACK_MIN_SCORE` na 0.50
-
-### LLM timeout
-
-- OpenRouter ima default timeout od 15 sekundi
-- Preporučujemo `OPENROUTER_MODEL=openai/gpt-4o` (brži od GPT-4 Turbo)
-- Ako timeoutovi učestali, prebaci na `openai/gpt-4.1-mini`
+Za detaljno rješavanje problema: vidi [DEVELOPER.md](DEVELOPER.md).
 
 ---
 
