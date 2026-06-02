@@ -739,7 +739,9 @@ function mapAuditsToMessages(audits = [], requesterId, ticketSummary) {
 // ─── POST /api/zendesk/webhook ────────────────────────────────
 
 app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
-  const token = req.headers["x-zendesk-webhook-token"] || req.body?.token;
+  const authHeader = req.headers.authorization || "";
+  const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+  const token = bearerToken || req.headers["x-zendesk-webhook-token"] || req.body?.token;
   if (!zendeskService.verifyWebhookToken(token)) {
     return res.status(401).json({ success: false, error: "Invalid webhook token." });
   }
