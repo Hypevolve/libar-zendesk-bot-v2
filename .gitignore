@@ -33,3 +33,4 @@ Thumbs.db
 
 # Test reports
 tests/e2e-report.json
+.env.render

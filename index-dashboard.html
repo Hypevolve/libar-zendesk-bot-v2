@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Libar Asistent — Admin Panel</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
+  .header { background: #E85D04; color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; }
+  .header h1 { font-size: 22px; font-weight: 600; }
+  .header .badge { background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px 30px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .card h3 { font-size: 12px; text-transform: uppercase; color: #888; margin-bottom: 8px; letter-spacing: 0.5px; }
+  .card .value { font-size: 32px; font-weight: 700; color: #E85D04; }
+  .card .sub { font-size: 13px; color: #666; margin-top: 4px; }
+  .card.green .value { color: #22c55e; }
+  .card.red .value { color: #ef4444; }
+  .section { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 20px; }
+  .section h2 { font-size: 16px; margin-bottom: 16px; color: #333; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px 12px; background: #f8f8f8; color: #666; font-weight: 600; font-size: 11px; text-transform: uppercase; }
+  td { padding: 12px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+  tr:hover td { background: #fafafa; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+  .tag.success { background: #dcfce7; color: #166534; }
+  .tag.escalate { background: #fee2e2; color: #991b1b; }
+  .tag.cache { background: #dbeafe; color: #1e40af; }
+  .trace-input { max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #555; }
+  .trace-output { max-width: 400px; color: #777; font-size: 12px; line-height: 1.4; }
+  .latency { font-family: monospace; font-size: 12px; color: #888; }
+  .progress-bar { height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+  .progress-bar .fill { height: 100%; border-radius: 3px; }
+  .progress-bar .fill.green { background: #22c55e; }
+  .progress-bar .fill.red { background: #ef4444; }
+  .progress-bar .fill.orange { background: #f97316; }
+  .mini-stat { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
+  .mini-stat .label { color: #666; }
+  .mini-stat .val { font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Libar Asistent — Admin Panel</h1>
+  <span class="badge">v2.0 | Live</span>
+</div>
+
+<div class="container">
+
+  <!-- Key Metrics -->
+  <div class="grid">
+    <div class="card green">
+      <h3>Ukupno upita</h3>
+      <div class="value">126</div>
+      <div class="sub">Od pokretanja</div>
+    </div>
+    <div class="card green">
+      <h3>Odgovoreno</h3>
+      <div class="value">60</div>
+      <div class="sub">48% uspješnost</div>
+    </div>
+    <div class="card red">
+      <h3>Eskalirano</h3>
+      <div class="value">58</div>
+      <div class="sub">46% eskalacija</div>
+    </div>
+    <div class="card">
+      <h3>Prosječna latencija</h3>
+      <div class="value">3.5s</div>
+      <div class="sub">P95: 7.1s</div>
+    </div>
+  </div>
+
+  <!-- Decisions Breakdown -->
+  <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="card">
+      <h3>Token potrošnja</h3>
+      <div class="value" style="font-size: 20px; margin-top: 8px;">394K in / 11K out</div>
+      <div class="sub">203 LLM poziva</div>
+    </div>
+    <div class="card">
+      <h3>Cache</h3>
+      <div class="value" style="font-size: 20px; margin-top: 8px;">8.2% hit rate</div>
+      <div class="sub">8 hits / 90 misses</div>
+    </div>
+    <div class="card">
+      <h3>Greške</h3>
+      <div class="value" style="font-size: 20px; margin-top: 8px; color: #22c55e;">0</div>
+      <div class="sub">Nema sustavnih grešaka</div>
+    </div>
+  </div>
+
+  <!-- Progress Bars -->
+  <div class="section">
+    <h2>Pokrivenost po kategorijama (cilj: 70%+)</h2>
+    <div class="mini-stat">
+      <span class="label">Dostava</span>
+      <span class="val">85%</span>
+    </div>
+    <div class="progress-bar"><div class="fill green" style="width: 85%;"></div></div>
+
+    <div class="mini-stat" style="margin-top: 12px;">
+      <span class="label">Otkup</span>
+      <span class="val">65%</span>
+    </div>
+    <div class="progress-bar"><div class="fill green" style="width: 65%;"></div></div>
+
+    <div class="mini-stat" style="margin-top: 12px;">
+      <span class="label">Plaćanje (pouzeće)</span>
+      <span class="val">25%</span>
+    </div>
+    <div class="progress-bar"><div class="fill red" style="width: 25%;"></div></div>
+
+    <div class="mini-stat" style="margin-top: 12px;">
+      <span class="label">Kontakt / Meta</span>
+      <span class="val">40%</span>
+    </div>
+    <div class="progress-bar"><div class="fill orange" style="width: 40%;"></div></div>
+
+    <div class="mini-stat" style="margin-top: 12px;">
+      <span class="label">Povrat / Reklamacije</span>
+      <span class="val">75%</span>
+    </div>
+    <div class="progress-bar"><div class="fill green" style="width: 75%;"></div></div>
+  </div>
+
+  <!-- Recent Traces -->
+  <div class="section">
+    <h2>Posljednji razgovori (traces)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Vrijeme</th>
+          <th>Korisnikov upit</th>
+          <th>Odluka</th>
+          <th>Izvor</th>
+          <th>Latencija</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>22:20:14</td>
+          <td class="trace-input">Koje kategorije knjiga otkupljujete?</td>
+          <td><span class="tag escalate">escalate</span></td>
+          <td>vector (66)</td>
+          <td class="latency">3.2s</td>
+        </tr>
+        <tr>
+          <td>22:17:53</td>
+          <td class="trace-input">Kolika je naknada za plaćanje pouzećem?</td>
+          <td><span class="tag escalate">escalate</span></td>
+          <td>onedrive (117)</td>
+          <td class="latency">9.8s</td>
+        </tr>
+        <tr>
+          <td>22:16:42</td>
+          <td class="trace-input">Otkupljujete li knjige za osnovnu školu?</td>
+          <td><span class="tag success">answered</span></td>
+          <td>vector (70)</td>
+          <td class="latency">3.7s</td>
+        </tr>
+        <tr>
+          <td>22:16:34</td>
+          <td class="trace-input">Koje kategorije knjiga otkupljujete?</td>
+          <td><span class="tag escalate">escalate</span></td>
+          <td>vector (66)</td>
+          <td class="latency">3.3s</td>
+        </tr>
+        <tr>
+          <td>22:16:27</td>
+          <td class="trace-input">Kako se učlaniti u SJEDI 5 program?</td>
+          <td><span class="tag success">answered</span></td>
+          <td>onedrive (684)</td>
+          <td class="latency">6.9s</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Latency Distribution -->
+  <div class="section">
+    <h2>Distribucija latencije (zadnjih 100 upita)</h2>
+    <div style="display: flex; align-items: flex-end; gap: 2px; height: 120px; padding-top: 20px;">
+      <div style="flex: 1; background: #22c55e; height: 15%; border-radius: 2px 2px 0 0;" title="0-1s: 15%"></div>
+      <div style="flex: 1; background: #22c55e; height: 35%; border-radius: 2px 2px 0 0;" title="1-3s: 35%"></div>
+      <div style="flex: 1; background: #f97316; height: 30%; border-radius: 2px 2px 0 0;" title="3-5s: 30%"></div>
+      <div style="flex: 1; background: #f97316; height: 15%; border-radius: 2px 2px 0 0;" title="5-7s: 15%"></div>
+      <div style="flex: 1; background: #ef4444; height: 5%; border-radius: 2px 2px 0 0;" title="7s+: 5%"></div>
+    </div>
+    <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: #888;">
+      <span>0s</span><span>1s</span><span>3s</span><span>5s</span><span>7s</span><span>10s+</span>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

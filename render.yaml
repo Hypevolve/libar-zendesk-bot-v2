@@ -77,6 +77,10 @@ services:
         value: openrouter
       - key: OPENROUTER_EMBEDDING_MODEL
         value: openai/text-embedding-3-small
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_EMBEDDING_MODEL
+        value: text-embedding-3-small
       - key: EMBEDDING_DIMENSIONS
         value: 1536
       - key: EMBEDDING_BATCH_SIZE
@@ -95,7 +99,9 @@ services:
         value: 1200
       - key: VECTOR_CHUNK_OVERLAP_CHARS
         value: 180
-      - key: VECTOR_SYNC_INTERVAL_MS
+      - key: VECTOR_AUTO_SYNC_ENABLED
+        value: "false"
+      - key: VECTOR_AUTO_SYNC_INTERVAL_MS
         value: 1800000
       - key: TOKEN_BUDGET_MAX_INPUT
         value: 12000
@@ -113,3 +119,5 @@ services:
         value: "true"
       - key: MAX_TRACE_BUFFER
         value: 200
+      - key: BOT_ENABLED
+        value: "true"
