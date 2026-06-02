@@ -41,7 +41,7 @@ function getConfiguredModels() {
   ].filter(Boolean);
   if (models.length === 0) {
     log.warn("no_models_configured", "Using default fallback model. Set OPENROUTER_MODEL env var.");
-    models.push("openai/gpt-4.1-mini");
+    models.push("openai/gpt-4o-mini");
   }
   return [...new Set(models)];
 }
@@ -375,7 +375,7 @@ async function gradeContextRelevance(userMessage, context, { conversationSummary
         "NE = kontekst govori o nečem drugom."
       ].filter(Boolean).join("\n"),
       `PITANJE: ${String(userMessage).slice(0, 300)}${historyBlock}\n\nKONTEKST:\n${String(context).slice(0, 1500)}`,
-      { purpose: "context_relevance_grading", maxTokens: 10, maxAttemptsPerModel: 1 }
+      { purpose: "context_relevance_grading", maxTokens: 50, maxAttemptsPerModel: 1 }
     );
 
     const isRelevant = reply.toUpperCase().startsWith("DA");

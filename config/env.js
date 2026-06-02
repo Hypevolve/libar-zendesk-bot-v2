@@ -37,7 +37,7 @@ module.exports = {
 
   // --- OpenRouter / LLM ---
   OPENROUTER_API_KEY: envStr("OPENROUTER_API_KEY"),
-  OPENROUTER_MODEL: envStr("OPENROUTER_MODEL", "openai/gpt-4.1-mini"),
+  OPENROUTER_MODEL: envStr("OPENROUTER_MODEL", "openai/gpt-4o-mini"),
   OPENROUTER_FALLBACK_MODEL: envStr("OPENROUTER_FALLBACK_MODEL", "google/gemini-2.5-flash"),
   OPENROUTER_SITE_URL: envStr("OPENROUTER_SITE_URL"),
   OPENROUTER_SITE_NAME: envStr("OPENROUTER_SITE_NAME", "Antikvarijat Libar Bot"),
