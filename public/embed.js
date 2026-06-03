@@ -28,7 +28,7 @@
   `;
   fab.setAttribute('aria-label', 'Otvori Libar Asistent');
   fab.style.cssText = `
-    position:fixed;bottom:24px;right:24px;width:60px;height:60px;border-radius:50%;
+    position:fixed;bottom:24px;left:24px;width:60px;height:60px;border-radius:50%;
     background:#f26a35;color:#fff;border:none;cursor:pointer;z-index:99999;
     display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,0.25);
     transition:transform .2s ease,box-shadow .2s ease;
@@ -40,7 +40,7 @@
   const panel = document.createElement('div');
   panel.id = 'libar-chat-panel';
   panel.style.cssText = `
-    position:fixed;bottom:96px;right:24px;width:400px;max-width:calc(100vw - 32px);
+    position:fixed;bottom:96px;left:24px;width:400px;max-width:calc(100vw - 32px);
     height:580px;max-height:calc(100vh - 120px);border-radius:20px;
     box-shadow:0 12px 40px rgba(0,0,0,0.2);overflow:hidden;border:1px solid #e5e7eb;
     background:#fff;z-index:99998;transform:translateY(20px) scale(0.95);opacity:0;
