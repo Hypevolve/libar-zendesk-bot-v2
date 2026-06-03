@@ -18,13 +18,17 @@
     return;
   }
 
+  // Load Phosphor icons (same as widget) for identical FAB appearance
+  const phosphorScript = document.createElement('script');
+  phosphorScript.src = 'https://unpkg.com/@phosphor-icons/web';
+  document.head.appendChild(phosphorScript);
+
   // ── Floating Button ──
   const fab = document.createElement('button');
   fab.id = 'libar-chat-fab';
   fab.innerHTML = `
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-    </svg>
+    <i class="ph ph-chat-circle-text" style="font-size:28px; display:block;"></i>
+    <i class="ph ph-x" style="font-size:24px; display:none;"></i>
   `;
   fab.setAttribute('aria-label', 'Otvori Libar Asistent');
   fab.style.cssText = `
@@ -58,22 +62,21 @@
   let isOpen = false;
   function toggle() {
     isOpen = !isOpen;
+    const chatIcon = fab.querySelector('.ph-chat-circle-text');
+    const closeIcon = fab.querySelector('.ph-x');
     if (isOpen) {
       panel.style.transform = 'translateY(0) scale(1)';
       panel.style.opacity = '1';
       panel.style.pointerEvents = 'all';
-      fab.querySelector('svg').innerHTML = `
-        <line x1="18" y1="6" x2="6" y2="18"/>
-        <line x1="6" y1="6" x2="18" y2="18"/>
-      `;
+      if (chatIcon) chatIcon.style.display = 'none';
+      if (closeIcon) closeIcon.style.display = 'block';
       fab.setAttribute('aria-label', 'Zatvori Libar Asistent');
     } else {
       panel.style.transform = 'translateY(20px) scale(0.95)';
       panel.style.opacity = '0';
       panel.style.pointerEvents = 'none';
-      fab.querySelector('svg').innerHTML = `
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-      `;
+      if (chatIcon) chatIcon.style.display = 'block';
+      if (closeIcon) closeIcon.style.display = 'none';
       fab.setAttribute('aria-label', 'Otvori Libar Asistent');
     }
   }
