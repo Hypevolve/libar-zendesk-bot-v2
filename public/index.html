@@ -200,7 +200,7 @@
     /* ─── Pre-Chat Form ─── */
     #pre-chat {
       flex: 1; overflow-y: auto; padding: 24px;
-      display: flex; flex-direction: column;
+      display: none; flex-direction: column;
     }
     #pre-chat .welcome { text-align: center; margin-bottom: 24px; }
     #pre-chat .welcome h3 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
@@ -227,6 +227,28 @@
     }
     #pre-chat button:hover { background: var(--accent-hover); }
     #pre-chat button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ─── Email Prompt ─── */
+    #email-prompt {
+      display: none; padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--bg); gap: 10px; align-items: flex-end;
+    }
+    #email-prompt.visible { display: flex; }
+    #email-prompt input {
+      flex: 1; padding: 12px 14px;
+      border: 1px solid var(--border-light); border-radius: var(--radius-sm);
+      background: var(--surface); color: var(--text);
+      font-size: 14px; font-family: inherit; outline: none;
+    }
+    #email-prompt input:focus { border-color: var(--accent); }
+    #email-prompt button {
+      padding: 12px 20px; background: var(--accent); color: #fff;
+      border: none; border-radius: var(--radius-sm);
+      font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    #email-prompt button:hover { background: var(--accent-hover); }
+    #email-prompt button:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* ─── Error ─── */
     .error-msg {
@@ -301,6 +323,11 @@
       <textarea id="msg-input" rows="1" placeholder="Napišite poruku…"></textarea>
       <button id="msg-send"><i class="ph ph-paper-plane-right"></i></button>
     </div>
+
+    <div id="email-prompt">
+      <input id="email-input" type="email" placeholder="Vaša email adresa…">
+      <button id="email-submit">Pošalji</button>
+    </div>
   </div>
 
   <script>
@@ -308,6 +335,7 @@
     let sessionId = null;
     let ticketId = null;
     let isOpen = false;
+    let emailIsPlaceholder = false;
 
     const $ = (sel) => document.querySelector(sel);
     const fab = $("#fab");
@@ -317,6 +345,9 @@
     const inputBar = $("#input-bar");
     const typingEl = $("#typing");
     const scrollBtn = $("#scroll-bottom");
+    const emailPrompt = $("#email-prompt");
+    const emailInput = $("#email-input");
+    const emailSubmit = $("#email-submit");
 
     function formatTime() {
       return new Date().toLocaleTimeString("hr-HR", { hour: "2-digit", minute: "2-digit" });
@@ -367,6 +398,33 @@
       $("#msg-input").focus();
     }
 
+    async function initSession() {
+      messagesEl.innerHTML = "";
+      preChat.style.display = "none";
+      messagesEl.style.display = "flex";
+      inputBar.style.display = "flex";
+      emailPrompt.classList.remove("visible");
+      $("#msg-input").disabled = false;
+      $("#msg-send").disabled = false;
+
+      try {
+        const res = await fetch(`${API}/api/chat/start`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: "Web Chat Visitor", email: null, message: null })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || "Start failed");
+        sessionId = data.sessionId;
+        ticketId = data.ticketId;
+        emailIsPlaceholder = data.emailIsPlaceholder || false;
+        (data.messages || []).forEach((m) => addMessage(m.role, m.content));
+        $("#msg-input").focus();
+      } catch (e) {
+        showError("Nije moguće započeti razgovor. <br><small>" + e.message + "</small>", initSession);
+      }
+    }
+
     function togglePanel() {
       isOpen = !isOpen;
       fab.classList.toggle("open", isOpen);
@@ -387,42 +445,8 @@
       btn.textContent = loading ? "…" : (btn.id === "pc-submit" ? "Pošalji" : "➤");
     }
 
-    $("#pc-submit").addEventListener("click", async () => {
-      const name = $("#pc-name").value.trim();
-      const email = $("#pc-email").value.trim();
-      const message = $("#pc-message").value.trim();
-      if (!email || !message) return alert("Email i poruka su obavezni.");
-
-      const btn = $("#pc-submit");
-      setLoading(btn, true);
-
-      try {
-        const res = await fetch(`${API}/api/chat/start`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, message })
-        });
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error || "Start failed");
-        sessionId = data.sessionId;
-        ticketId = data.ticketId;
-        showChat();
-        (data.messages || []).forEach((m) => addMessage(m.role, m.content));
-        if (data.links?.length) {
-          const last = messagesEl.lastElementChild;
-          if (last) {
-            const ld = document.createElement("div");
-            ld.className = "links";
-            data.links.forEach((l) => { const a = document.createElement("a"); a.href = l.url; a.target = "_blank"; a.rel = "noopener"; a.textContent = l.label; ld.appendChild(a); });
-            last.querySelector(".msg").appendChild(ld);
-          }
-        }
-      } catch (e) {
-        showError("Nije moguće započeti razgovor. <br><small>" + e.message + "</small>", () => $("#pc-submit").click());
-      } finally {
-        setLoading(btn, false);
-      }
-    });
+    // Pre-chat form is hidden; session auto-initializes on load.
+    $("#pc-submit").addEventListener("click", () => {});
 
     async function sendMessage() {
       const input = $("#msg-input");
@@ -450,6 +474,13 @@
         const botMsgs = (data.messages || []).filter((m) => m.role === "assistant");
         const last = botMsgs[botMsgs.length - 1];
         if (last) addMessage("assistant", last.content, data.links);
+
+        if (data.needEmail) {
+          input.disabled = true;
+          $("#msg-send").disabled = true;
+          emailPrompt.classList.add("visible");
+          emailInput.focus();
+        }
       } catch (e) {
         typingEl.classList.remove("visible");
         showError("Veza s poslužiteljem je prekinuta. <br><small>Pokušajte ponovno.</small>", () => { input.value = msgText; sendMessage(); });
@@ -462,6 +493,44 @@
     $("#msg-send").addEventListener("click", sendMessage);
     $("#msg-input").addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+
+    async function submitEmail() {
+      const email = emailInput.value.trim();
+      if (!email || !sessionId) return alert("Email adresa je obavezna.");
+      const btn = emailSubmit;
+      btn.disabled = true;
+      btn.textContent = "…";
+
+      try {
+        const res = await fetch(`${API}/api/chat/update-profile`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId, email })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || "Update failed");
+
+        emailIsPlaceholder = false;
+        emailPrompt.classList.remove("visible");
+        $("#msg-input").disabled = false;
+        $("#msg-send").disabled = false;
+        $("#msg-input").focus();
+
+        if (data.pendingMessage) {
+          addMessage("assistant", data.pendingMessage);
+        }
+      } catch (e) {
+        showError("Nije moguće poslati email. <br><small>" + e.message + "</small>", submitEmail);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Pošalji";
+      }
+    }
+
+    emailSubmit.addEventListener("click", submitEmail);
+    emailInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); submitEmail(); }
     });
 
     function endChat() {
@@ -479,17 +548,19 @@
       // Show thank you in chat
       addMessage("assistant", "Hvala što ste koristili Libar Asistent! Ako imate dodatnih pitanja, slobodno se javite.");
 
-      // Reset after delay
+      // Reset after delay and start fresh anonymous session
       setTimeout(() => {
         sessionId = null;
         ticketId = null;
+        emailIsPlaceholder = false;
         messagesEl.innerHTML = "";
-        preChat.style.display = "flex";
-        messagesEl.style.display = "none";
-        inputBar.style.display = "none";
-        $("#pc-name").value = "";
-        $("#pc-email").value = "";
-        $("#pc-message").value = "";
+        preChat.style.display = "none";
+        messagesEl.style.display = "flex";
+        inputBar.style.display = "flex";
+        emailPrompt.classList.remove("visible");
+        $("#msg-input").disabled = false;
+        $("#msg-send").disabled = false;
+        initSession();
         togglePanel();
       }, 2500);
     }
@@ -506,6 +577,9 @@
     if (window.self !== window.top) {
       document.body.classList.add("iframe-mode");
     }
+
+    // Start anonymous session immediately
+    initSession();
   </script>
 </body>
 </html>

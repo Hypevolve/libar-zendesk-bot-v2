@@ -193,6 +193,19 @@ async function getRequesterProfile(requesterId) {
   }
 }
 
+async function updateRequester(requesterId, { name, email }) {
+  if (!requesterId) throw new Error("requesterId is required.");
+  try {
+    validateZendeskConfig();
+    const res = await zendeskClient.put(`/api/v2/users/${requesterId}.json`, {
+      user: { name, email }
+    });
+    return res.data?.user || {};
+  } catch (error) {
+    throw buildApiError("updateRequester", error, { requesterId });
+  }
+}
+
 async function replyToTicket(ticketId, replyText, isPublic = false, options = {}) {
   try {
     validateZendeskConfig();
@@ -497,6 +510,7 @@ module.exports = {
   getPublicTicketComments, getRequesterProfile, getTicketAudits, getTicketSummary,
   ping, replyToTicket, resetHelpCenterCache, searchHelpCenter, searchHelpCenterDetailed,
   setTicketTags, solveTicket, testZendeskTicketAccess, updateConversationState,
+  updateRequester,
   uploadAttachments, verifyWebhookToken,
   isHumanHandled, isTicketHumanHandled, HUMAN_OWNED_TAGS
 };

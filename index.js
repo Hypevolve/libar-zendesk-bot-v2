@@ -80,6 +80,7 @@ function serializeSession(s) {
   return {
     sessionId: s.sessionId, ticketId: s.ticketId, requesterId: s.requesterId,
     requesterName: s.requesterName, requesterEmail: s.requesterEmail,
+    emailIsPlaceholder: s.emailIsPlaceholder || false,
     messages: (s.messages || []).slice(-30),
     conversationState: s.conversationState, entryIntent: s.entryIntent,
     createdAt: s.createdAt, updatedAt: s.updatedAt
@@ -93,6 +94,8 @@ function createSession(opts) {
     requesterId: opts.requesterId,
     requesterName: opts.requesterName || "",
     requesterEmail: opts.requesterEmail || "",
+    emailIsPlaceholder: opts.emailIsPlaceholder || false,
+    pendingEscalation: null,
     messages: opts.messages || [],
     conversationState: { tone: "ai-active", badge: "AI Asistent", subtitle: "" },
     entryIntent: opts.entryIntent || null,
@@ -233,7 +236,7 @@ function normalizeMessage(msg) {
 }
 
 function buildChatSubject(name) {
-  return `Webshop chat: ${name || "Korisnik"}`;
+  return `Webshop chat: ${name || "Web Chat Visitor"}`;
 }
 
 function isClosedTicketStatus(status) {
@@ -242,24 +245,40 @@ function isClosedTicketStatus(status) {
 
 // ─── AI Outcome Resolution ───────────────────────────────────
 
+function interceptEscalationIfPlaceholder(session, outcome) {
+  if (outcome.type === "escalate_no_answer" && session.emailIsPlaceholder) {
+    session.pendingEscalation = { ...outcome };
+    return {
+      type: "need_email",
+      customerMessage: "Kako bih Vas mogao proslijediti našem agentu, molim Vas da navedete Vašu email adresu.",
+      stateTag: "awaiting_email", reason: "email_needed_before_escalation",
+      links: [], extraTags: []
+    };
+  }
+  return outcome;
+}
+
 async function resolveAutomatedOutcome(session, userMessage, opts = {}) {
   const start = Date.now();
   metricsService.increment("totalRequests");
 
   try {
-    return await _resolveAutomatedOutcome(session, userMessage, opts);
+    const result = await _resolveAutomatedOutcome(session, userMessage, opts);
+    result.outcome = interceptEscalationIfPlaceholder(session, result.outcome);
+    return result;
   } catch (error) {
     log.error("automated_outcome_failed", { message: error.message, stack: error.stack });
     metricsService.recordDecision("escalate_no_answer");
     metricsService.recordLatency(Date.now() - start);
+    const fallbackOutcome = {
+      type: "escalate_no_answer",
+      customerMessage: "Nažalost, trenutno imam tehničkih poteškoća. Prosljeđujem Vaš upit našem timu koji će Vam se javiti u najkraćem mogućem roku.",
+      stateTag: "awaiting_human", reason: "pipeline_error",
+      links: [], extraTags: ["ai_escalated"]
+    };
     return {
       knowledge: null,
-      outcome: {
-        type: "escalate_no_answer",
-        customerMessage: "Nažalost, trenutno imam tehničkih poteškoća. Prosljeđujem Vaš upit našem timu koji će Vam se javiti u najkraćem mogućem roku.",
-        stateTag: "awaiting_human", reason: "pipeline_error",
-        links: [], extraTags: ["ai_escalated"]
-      }
+      outcome: interceptEscalationIfPlaceholder(session, fallbackOutcome)
     };
   }
 }
@@ -476,7 +495,7 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
 
   const links = buildDirectWebsiteLinks(userMessage, { knowledge });
 
-  const outcome = customerMessage
+  let outcome = customerMessage
     ? {
         type: "safe_answer", customerMessage, stateTag: "ai_active",
         reason: "grounded_answer", source: knowledge ? "knowledge" : "reference_facts",
@@ -521,9 +540,9 @@ app.post("/api/chat/start", rateLimiter, inputSanitizer, chatUpload.array("attac
   const message = normalizeMessage(rawMessage);
   const files = req.files || [];
 
-  if (!message || !email) {
-    return res.status(400).json({ success: false, error: "message and email are required." });
-  }
+  const isAnonymous = !email;
+  const placeholderEmail = isAnonymous ? `webchat-${crypto.randomUUID().slice(0, 8)}@guest.libar.hr` : email;
+  const requesterName = name || "Web Chat Visitor";
 
   try {
     metricsService.increment("totalChatStarts");
@@ -538,23 +557,44 @@ app.post("/api/chat/start", rateLimiter, inputSanitizer, chatUpload.array("attac
       }
     }
 
+    const initialMessage = message || "[Korisnik je započeo razgovor]";
     const { ticketId, requesterId } = await zendeskService.createChatTicket({
-      requesterName: name || "Korisnik",
-      requesterEmail: email,
-      initialMessage: message,
-      subject: buildChatSubject(name),
+      requesterName,
+      requesterEmail: placeholderEmail,
+      initialMessage,
+      subject: buildChatSubject(requesterName),
       uploadTokens
     });
 
-    // Mark as processed so the webhook (fired by ticket creation) skips this message
-    markMessageProcessed(ticketId, message);
+    if (message) {
+      markMessageProcessed(ticketId, message);
+    }
 
     const session = createSession({
       ticketId, requesterId,
-      requesterName: name || "Korisnik",
-      requesterEmail: email,
+      requesterName,
+      requesterEmail: placeholderEmail,
+      emailIsPlaceholder: isAnonymous,
       entryIntent: entryIntent || null
     });
+
+    // Anonymous start without message: return welcome immediately, skip AI
+    if (!message) {
+      const welcome = "Pozdrav! Dobrodošli u Antikvarijat Libar. Kako vam mogu pomoći?";
+      session.messages.push(
+        { role: "assistant", content: welcome, ts: new Date().toISOString() }
+      );
+      session.updatedAt = new Date().toISOString();
+      scheduleRuntimePersist();
+
+      return res.status(200).json({
+        success: true, sessionId: session.sessionId, ticketId,
+        emailIsPlaceholder: true,
+        messages: session.messages,
+        conversationState: session.conversationState,
+        links: []
+      });
+    }
 
     const { knowledge, outcome } = await resolveAutomatedOutcome(session, message, { hasAttachments: files.length > 0, channelType: "web_chat" });
 
@@ -582,7 +622,7 @@ app.post("/api/chat/start", rateLimiter, inputSanitizer, chatUpload.array("attac
 
     return res.status(200).json({
       success: true, sessionId: session.sessionId, ticketId,
-      session: serializeSession(session),
+      emailIsPlaceholder: session.emailIsPlaceholder,
       messages: session.messages,
       conversationState: session.conversationState,
       links: outcome.links || [],
@@ -657,7 +697,8 @@ app.post("/api/chat/message", rateLimiter, inputSanitizer, chatUpload.array("att
       await zendeskService.addTagAndNote(session.ticketId, "hitno_slike", "Korisnik je poslao privitke.");
     }
 
-    if (outcome.type !== "safe_answer") {
+    // Only mark escalation for real escalations, not email-collection pauses
+    if (outcome.type !== "safe_answer" && outcome.type !== "need_email") {
       await zendeskService.addInternalNote(session.ticketId, `[ESKALACIJA] ${outcome.reason}`);
     }
 
@@ -675,6 +716,7 @@ app.post("/api/chat/message", rateLimiter, inputSanitizer, chatUpload.array("att
     return res.status(200).json({
       success: true, ticketId: session.ticketId,
       messages: session.messages, conversationState: session.conversationState,
+      needEmail: outcome.type === "need_email",
       links: outcome.links || []
     });
   } catch (error) {
@@ -731,6 +773,63 @@ app.post("/api/chat/restore", async (req, res) => {
   } catch (error) {
     log.error("chat_restore_failed", { ticketId, message: error.message });
     return res.status(500).json({ success: false, error: "Unable to restore chat session." });
+  }
+});
+
+// ─── POST /api/chat/update-profile ───────────────────────────
+
+app.post("/api/chat/update-profile", rateLimiter, inputSanitizer, async (req, res) => {
+  const { sessionId, email } = req.body || {};
+  const session = getSession(sessionId);
+
+  if (!session) return res.status(404).json({ success: false, error: "Chat session not found." });
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email))) {
+    return res.status(400).json({ success: false, error: "Valid email is required." });
+  }
+
+  try {
+    session.requesterEmail = String(email).trim().toLowerCase();
+    session.emailIsPlaceholder = false;
+
+    // Update Zendesk requester
+    if (session.requesterId) {
+      try {
+        await zendeskService.updateRequester(session.requesterId, { name: session.requesterName, email: session.requesterEmail });
+      } catch (err) {
+        log.warn("update_requester_failed", { requesterId: session.requesterId, message: err.message });
+      }
+    }
+
+    let pendingMessage = null;
+    if (session.pendingEscalation) {
+      const escalation = session.pendingEscalation;
+      session.pendingEscalation = null;
+
+      try {
+        await zendeskService.addInternalNote(session.ticketId, `[ESKALACIJA] ${escalation.reason}`);
+        await zendeskService.updateConversationState(session.ticketId, escalation.stateTag, escalation.extraTags || []);
+        await zendeskService.addBotReplyToTicket(session.ticketId, escalation.customerMessage, { channelType: "web_chat" });
+      } catch (err) {
+        log.warn("zendesk_write_degraded", { ticketId: session.ticketId, message: err.message });
+      }
+
+      session.messages.push({ role: "assistant", content: escalation.customerMessage, ts: new Date().toISOString() });
+      session.conversationState = { tone: "human-active", badge: "Agent", subtitle: "" };
+      pendingMessage = escalation.customerMessage;
+    }
+
+    session.updatedAt = new Date().toISOString();
+    scheduleRuntimePersist();
+
+    return res.status(200).json({
+      success: true, updated: true,
+      requesterEmail: session.requesterEmail,
+      pendingMessage,
+      conversationState: session.conversationState
+    });
+  } catch (error) {
+    log.error("update_profile_failed", { sessionId, message: error.message });
+    return res.status(500).json({ success: false, error: "Unable to update profile." });
   }
 });
 
