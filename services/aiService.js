@@ -125,7 +125,7 @@ async function llmCall(systemPrompt, userMessage, { purpose, temperature = 0, ma
     // Record usage (Skill §9)
     const usage = completion.usage;
     if (usage) {
-      tokenBudget.recordUsage(usage.prompt_tokens || 0, usage.completion_tokens || 0);
+      tokenBudget.recordUsage(usage.prompt_tokens || 0, usage.completion_tokens || 0, model);
     }
 
     const content = completion.choices?.[0]?.message?.content?.trim();

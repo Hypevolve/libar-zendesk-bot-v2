@@ -16,6 +16,7 @@ let totalInputTokens = 0;
 let totalOutputTokens = 0;
 let totalRequests = 0;
 let rejectedRequests = 0;
+let lastUsedModel = null;
 
 /**
  * Rough token estimate — word count × 1.3 (standard heuristic).
@@ -80,10 +81,11 @@ function trimContextToBudget(context, reservedTokens = 0) {
 /**
  * Record actual token usage from API response.
  */
-function recordUsage(inputTokens, outputTokens) {
+function recordUsage(inputTokens, outputTokens, model) {
   totalInputTokens += inputTokens || 0;
   totalOutputTokens += outputTokens || 0;
   totalRequests++;
+  if (model) lastUsedModel = model;
 }
 
 function getUsageStats() {
@@ -93,7 +95,8 @@ function getUsageStats() {
     totalRequests,
     rejectedRequests,
     avgInputPerRequest: totalRequests > 0 ? Math.round(totalInputTokens / totalRequests) : 0,
-    avgOutputPerRequest: totalRequests > 0 ? Math.round(totalOutputTokens / totalRequests) : 0
+    avgOutputPerRequest: totalRequests > 0 ? Math.round(totalOutputTokens / totalRequests) : 0,
+    model: lastUsedModel
   };
 }
 
@@ -102,6 +105,7 @@ function resetUsage() {
   totalOutputTokens = 0;
   totalRequests = 0;
   rejectedRequests = 0;
+  lastUsedModel = null;
 }
 
 module.exports = {

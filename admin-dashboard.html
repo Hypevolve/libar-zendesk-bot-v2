@@ -268,18 +268,17 @@ function updateDecisionBreakdown(decisions, total) {
 
 // Approximate OpenRouter pricing per model (USD per 1M tokens)
 const MODEL_PRICING = {
-  'openai/gpt-5': { input: 2.50, output: 10.00 },
   'openai/gpt-4.1-mini': { input: 0.40, output: 1.60 },
   'openai/gpt-4o': { input: 2.50, output: 10.00 },
   'google/gemini-2.5-flash': { input: 0.15, output: 0.60 },
   'anthropic/claude-3.5-sonnet': { input: 3.00, output: 15.00 },
-  'default': { input: 2.50, output: 10.00 }
+  'default': { input: 0.40, output: 1.60 }
 };
 
 function updateTokenCost(tokenUsage) {
   const input = tokenUsage.totalInputTokens || 0;
   const output = tokenUsage.totalOutputTokens || 0;
-  const model = tokenUsage.model || 'openai/gpt-5';
+  const model = tokenUsage.model || 'openai/gpt-4.1-mini';
 
   // Try exact match, then provider prefix, then default
   let pricing = MODEL_PRICING[model];
