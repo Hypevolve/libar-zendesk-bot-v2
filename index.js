@@ -801,18 +801,25 @@ app.post("/api/chat/update-profile", rateLimiter, inputSanitizer, async (req, re
     }
     session.messages.push({ role: "user", content: cleanEmail, ts: new Date().toISOString() });
 
-    // Update Zendesk requester
-    if (session.requesterId) {
-      try {
-        await zendeskService.updateRequester(session.requesterId, { name: session.requesterName, email: session.requesterEmail });
-      } catch (err) {
-        log.warn("update_requester_failed", { requesterId: session.requesterId, message: err.message });
-        // If email already exists in Zendesk, add an internal note with the real email
-        try {
-          await zendeskService.addInternalNote(session.ticketId, `Korisnik je naveo email: ${cleanEmail}. Ažuriranje requester profila nije uspjelo: ${err.message}`);
-        } catch (noteErr) {
-          log.warn("email_note_failed", { ticketId: session.ticketId, message: noteErr.message });
+    // Update Zendesk requester — handle duplicate email by switching ticket requester
+    try {
+      const existingUsers = await zendeskService.searchUsersByEmail(cleanEmail);
+      if (existingUsers.length > 0) {
+        const existing = existingUsers[0];
+        if (String(existing.id) !== String(session.requesterId)) {
+          await zendeskService.updateTicketRequester(session.ticketId, existing.id);
+          session.requesterId = existing.id;
+          log.info("ticket_requester_switched", { ticketId: session.ticketId, oldRequesterId: session.requesterId, newRequesterId: existing.id, email: cleanEmail });
         }
+      } else if (session.requesterId) {
+        await zendeskService.updateRequester(session.requesterId, { name: session.requesterName, email: session.requesterEmail });
+      }
+    } catch (err) {
+      log.warn("update_requester_failed", { requesterId: session.requesterId, email: cleanEmail, message: err.message });
+      try {
+        await zendeskService.addInternalNote(session.ticketId, `Korisnik je naveo email: ${cleanEmail}. Ažuriranje requester profila nije uspjelo: ${err.message}`);
+      } catch (noteErr) {
+        log.warn("email_note_failed", { ticketId: session.ticketId, message: noteErr.message });
       }
     }
 

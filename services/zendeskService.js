@@ -193,6 +193,19 @@ async function getRequesterProfile(requesterId) {
   }
 }
 
+async function searchUsersByEmail(email) {
+  if (!email) return [];
+  try {
+    validateZendeskConfig();
+    const res = await zendeskClient.get(`/api/v2/users/search.json?query=${encodeURIComponent(email)}`);
+    const users = res.data?.users || [];
+    return users.filter((u) => (u.email || "").toLowerCase() === email.toLowerCase());
+  } catch (error) {
+    log.error("search_users_failed", { email, message: error.message });
+    return [];
+  }
+}
+
 async function updateRequester(requesterId, { name, email }) {
   if (!requesterId) throw new Error("requesterId is required.");
   try {
@@ -203,6 +216,19 @@ async function updateRequester(requesterId, { name, email }) {
     return res.data?.user || {};
   } catch (error) {
     throw buildApiError("updateRequester", error, { requesterId });
+  }
+}
+
+async function updateTicketRequester(ticketId, requesterId) {
+  if (!ticketId || !requesterId) throw new Error("ticketId and requesterId are required.");
+  try {
+    validateZendeskConfig();
+    const res = await zendeskClient.put(`/api/v2/tickets/${ticketId}.json`, {
+      ticket: { requester_id: requesterId }
+    });
+    return res.data?.ticket || {};
+  } catch (error) {
+    throw buildApiError("updateTicketRequester", error, { ticketId });
   }
 }
 
@@ -509,8 +535,9 @@ module.exports = {
   createChatTicket, fetchAllHelpCenterArticles, getZendeskConfigSummary,
   getPublicTicketComments, getRequesterProfile, getTicketAudits, getTicketSummary,
   ping, replyToTicket, resetHelpCenterCache, searchHelpCenter, searchHelpCenterDetailed,
+  searchUsersByEmail,
   setTicketTags, solveTicket, testZendeskTicketAccess, updateConversationState,
-  updateRequester,
+  updateRequester, updateTicketRequester,
   uploadAttachments, verifyWebhookToken,
   isHumanHandled, isTicketHumanHandled, HUMAN_OWNED_TAGS
 };
