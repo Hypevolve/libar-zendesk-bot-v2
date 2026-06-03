@@ -197,9 +197,12 @@ async function searchUsersByEmail(email) {
   if (!email) return [];
   try {
     validateZendeskConfig();
-    const res = await zendeskClient.get(`/api/v2/users/search.json?query=${encodeURIComponent(email)}`);
+    // Use Zendesk search operator email:"value" for exact match
+    const query = `email:"${email}"`;
+    const res = await zendeskClient.get(`/api/v2/users/search.json?query=${encodeURIComponent(query)}`);
     const users = res.data?.users || [];
-    return users.filter((u) => (u.email || "").toLowerCase() === email.toLowerCase());
+    log.info("search_users_result", { email, count: users.length, ids: users.map((u) => u.id) });
+    return users.filter((u) => (u.email || "").trim().toLowerCase() === email.toLowerCase());
   } catch (error) {
     log.error("search_users_failed", { email, message: error.message });
     return [];
