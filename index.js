@@ -788,8 +788,18 @@ app.post("/api/chat/update-profile", rateLimiter, inputSanitizer, async (req, re
   }
 
   try {
-    session.requesterEmail = String(email).trim().toLowerCase();
+    const cleanEmail = String(email).trim().toLowerCase();
+    session.requesterEmail = cleanEmail;
     session.emailIsPlaceholder = false;
+
+    // Post email as public comment so agent can see it in the conversation
+    try {
+      await zendeskService.addCustomerMessageToTicket(session.ticketId, session.requesterId, `Email adresa korisnika: ${cleanEmail}`);
+      markMessageProcessed(session.ticketId, `Email adresa korisnika: ${cleanEmail}`);
+    } catch (err) {
+      log.warn("email_comment_failed", { ticketId: session.ticketId, message: err.message });
+    }
+    session.messages.push({ role: "user", content: cleanEmail, ts: new Date().toISOString() });
 
     // Update Zendesk requester
     if (session.requesterId) {
@@ -797,6 +807,12 @@ app.post("/api/chat/update-profile", rateLimiter, inputSanitizer, async (req, re
         await zendeskService.updateRequester(session.requesterId, { name: session.requesterName, email: session.requesterEmail });
       } catch (err) {
         log.warn("update_requester_failed", { requesterId: session.requesterId, message: err.message });
+        // If email already exists in Zendesk, add an internal note with the real email
+        try {
+          await zendeskService.addInternalNote(session.ticketId, `Korisnik je naveo email: ${cleanEmail}. Ažuriranje requester profila nije uspjelo: ${err.message}`);
+        } catch (noteErr) {
+          log.warn("email_note_failed", { ticketId: session.ticketId, message: noteErr.message });
+        }
       }
     }
 

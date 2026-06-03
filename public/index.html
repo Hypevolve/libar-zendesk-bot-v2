@@ -502,6 +502,9 @@
       btn.disabled = true;
       btn.textContent = "…";
 
+      // Show email in chat immediately
+      addMessage("user", email);
+
       try {
         const res = await fetch(`${API}/api/chat/update-profile`, {
           method: "POST",
