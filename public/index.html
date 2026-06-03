@@ -406,23 +406,14 @@
       emailPrompt.classList.remove("visible");
       $("#msg-input").disabled = false;
       $("#msg-send").disabled = false;
+      sessionId = null;
+      ticketId = null;
+      emailIsPlaceholder = false;
 
-      try {
-        const res = await fetch(`${API}/api/chat/start`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: "Web Chat Visitor", email: null, message: null })
-        });
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error || "Start failed");
-        sessionId = data.sessionId;
-        ticketId = data.ticketId;
-        emailIsPlaceholder = data.emailIsPlaceholder || false;
-        (data.messages || []).forEach((m) => addMessage(m.role, m.content));
-        $("#msg-input").focus();
-      } catch (e) {
-        showError("Nije moguće započeti razgovor. <br><small>" + e.message + "</small>", initSession);
-      }
+      // Hardcoded welcome — no API call, no ticket created yet
+      const welcome = "Pozdrav! Dobrodošli u Antikvarijat Libar. Kako vam mogu pomoći?";
+      addMessage("assistant", welcome);
+      $("#msg-input").focus();
     }
 
     function togglePanel() {
@@ -451,13 +442,45 @@
     async function sendMessage() {
       const input = $("#msg-input");
       const message = input.value.trim();
-      if (!message || !sessionId) return;
+      if (!message) return;
       const msgText = message;
 
       input.value = "";
       addMessage("user", message);
       typingEl.classList.add("visible");
       $("#msg-send").disabled = true;
+
+      // Lazy session start on first message
+      if (!sessionId) {
+        try {
+          const res = await fetch(`${API}/api/chat/start`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: "Web Chat Visitor", email: null, message: msgText })
+          });
+          const data = await res.json();
+          if (!data.success) throw new Error(data.error || "Start failed");
+          sessionId = data.sessionId;
+          ticketId = data.ticketId;
+          emailIsPlaceholder = data.emailIsPlaceholder || false;
+          typingEl.classList.remove("visible");
+          (data.messages || []).forEach((m) => addMessage(m.role, m.content));
+
+          if (data.needEmail) {
+            input.disabled = true;
+            $("#msg-send").disabled = true;
+            emailPrompt.classList.add("visible");
+            emailInput.focus();
+          } else {
+            $("#msg-send").disabled = false;
+          }
+          return;
+        } catch (e) {
+          typingEl.classList.remove("visible");
+          showError("Nije moguće započeti razgovor. <br><small>" + e.message + "</small>", () => sendMessage());
+          return;
+        }
+      }
 
       try {
         const res = await fetch(`${API}/api/chat/message`, {
