@@ -1119,9 +1119,9 @@ async function runVectorSync() {
   }
 }
 
-// ─── Static Widget ────────────────────────────────────────────
+// ─── Static files (embed.js, index.html, etc.) ──────────────
 
-app.use("/widget", express.static("public"));
+app.use(express.static("public"));
 
 // ─── Server Startup ───────────────────────────────────────────
 
