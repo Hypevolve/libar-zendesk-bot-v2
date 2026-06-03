@@ -55,6 +55,14 @@
     }
     #chat-panel.open { transform: translateY(0) scale(1); opacity: 1; pointer-events: all; }
 
+    /* ─── Iframe mode (embedded via embed.js) ─── */
+    body.iframe-mode #fab { display: none !important; }
+    body.iframe-mode #chat-panel {
+      transform: translateY(0) scale(1); opacity: 1; pointer-events: all;
+      position: static; width: 100%; height: 100%; max-width: none; max-height: none;
+      border-radius: 0; border: none; box-shadow: none;
+    }
+
     /* ─── Header ─── */
     #chat-header {
       background: var(--surface); padding: 18px 20px;
@@ -492,6 +500,11 @@
       this.style.height = "auto";
       this.style.height = Math.min(this.scrollHeight, 120) + "px";
     });
+
+    // Detect iframe embedding and switch to iframe mode
+    if (window.self !== window.top) {
+      document.body.classList.add("iframe-mode");
+    }
   </script>
 </body>
 </html>
