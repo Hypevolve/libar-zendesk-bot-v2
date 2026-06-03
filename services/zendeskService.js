@@ -197,11 +197,13 @@ async function searchUsersByEmail(email) {
   if (!email) return [];
   try {
     validateZendeskConfig();
-    // Use direct email filter on users.json — returns exact matches, no fuzzy search
-    const res = await zendeskClient.get(`/api/v2/users.json?email=${encodeURIComponent(email)}`);
+    // Plain text search — more reliable than email: operator
+    const res = await zendeskClient.get(`/api/v2/users/search.json?query=${encodeURIComponent(email)}`);
     const users = res.data?.users || [];
-    log.info("search_users_result", { email, count: users.length, ids: users.map((u) => u.id) });
-    return users;
+    // Defensive: only return users whose email actually matches
+    const exactMatches = users.filter((u) => (u.email || "").trim().toLowerCase() === email.toLowerCase());
+    log.info("search_users_result", { email, rawCount: users.length, exactCount: exactMatches.length, exactIds: exactMatches.map((u) => u.id) });
+    return exactMatches;
   } catch (error) {
     log.error("search_users_failed", { email, message: error.message });
     return [];

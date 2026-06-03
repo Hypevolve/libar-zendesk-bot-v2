@@ -459,12 +459,19 @@
             body: JSON.stringify({ name: "Web Chat Visitor", email: null, message: msgText })
           });
           const data = await res.json();
-          if (!data.success) throw new Error(data.error || "Start failed");
+          if (!data.success) {
+        typingEl.classList.remove("visible");
+        showError(data.error || "Start failed", () => sendMessage());
+        return;
+      }
           sessionId = data.sessionId;
           ticketId = data.ticketId;
           emailIsPlaceholder = data.emailIsPlaceholder || false;
           typingEl.classList.remove("visible");
-          (data.messages || []).forEach((m) => addMessage(m.role, m.content));
+          // Only add assistant messages from response; user message is already in DOM
+          (data.messages || []).forEach((m) => {
+            if (m.role === "assistant") addMessage(m.role, m.content);
+          });
 
           if (data.needEmail) {
             input.disabled = true;
