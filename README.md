@@ -87,10 +87,25 @@ Moderni floating chat widget serviran na root path-u. Značajke:
 - **End chat** — gumb za završetak razgovora
 - **Pre-chat form** — prikuplja ime i email prije početka
 
-**Widget se ugrađuje** na web stranicu iframe-om:
+**Embed na WordPress / bilo koju web stranicu:**
+
+Najlakši način je umetnuti ovaj `<script>` u footer web stranice:
 
 ```html
-<iframe src="https://tvoj-bot-url.com" style="width:380px;height:600px;border:none;"></iframe>
+<!-- Zamijeni TV-RENDER-URL stvarnim URL-om bota (npr. https://libar-bot.onrender.com) -->
+<script src="https://TV-RENDER-URL.com/embed.js" async></script>
+```
+
+**WordPress** — ubaci preko plugina *"Insert Headers and Footers"*:
+1. Idi na **Settings → Insert Headers and Footers**
+2. U polje *"Scripts in Footer"* zalijepi gornji `<script>` tag
+3. Zamijeni `TV-RENDER-URL` stvarnim URL-om s Rendera
+4. Spremi
+
+**Alternativa — iframe** (ako želiš embeddati u određeni dio stranice):
+
+```html
+<iframe src="https://TV-RENDER-URL.com" style="width:400px;height:580px;border:none;"></iframe>
 ```
 
 ### 2. Email (Zendesk Ticketing)
