@@ -804,14 +804,25 @@ app.post("/api/chat/update-profile", rateLimiter, inputSanitizer, async (req, re
     // Update Zendesk requester — handle duplicate email by switching ticket requester
     try {
       const existingUsers = await zendeskService.searchUsersByEmail(cleanEmail);
+      log.info("update_profile_users", { ticketId: session.ticketId, count: existingUsers.length, sessionRequesterId: session.requesterId });
       if (existingUsers.length > 0) {
         const existing = existingUsers[0];
+        log.info("update_profile_existing", { ticketId: session.ticketId, existingId: existing.id, existingEmail: existing.email, sessionRequesterId: session.requesterId });
         if (String(existing.id) !== String(session.requesterId)) {
-          await zendeskService.updateTicketRequester(session.ticketId, existing.id);
-          session.requesterId = existing.id;
-          log.info("ticket_requester_switched", { ticketId: session.ticketId, oldRequesterId: session.requesterId, newRequesterId: existing.id, email: cleanEmail });
+          try {
+            await zendeskService.updateTicketRequester(session.ticketId, existing.id);
+            const oldId = session.requesterId;
+            session.requesterId = existing.id;
+            log.info("ticket_requester_switched", { ticketId: session.ticketId, oldRequesterId: oldId, newRequesterId: existing.id, email: cleanEmail });
+          } catch (switchErr) {
+            log.warn("ticket_requester_switch_failed", { ticketId: session.ticketId, existingId: existing.id, message: switchErr.message });
+            await zendeskService.addInternalNote(session.ticketId, `Korisnik je naveo email: ${cleanEmail}. Prebacivanje requestera nije uspjelo: ${switchErr.message}`);
+          }
+        } else {
+          log.info("ticket_requester_already_correct", { ticketId: session.ticketId, requesterId: session.requesterId });
         }
       } else if (session.requesterId) {
+        log.info("update_profile_no_existing", { ticketId: session.ticketId, requesterId: session.requesterId });
         await zendeskService.updateRequester(session.requesterId, { name: session.requesterName, email: session.requesterEmail });
       }
     } catch (err) {
