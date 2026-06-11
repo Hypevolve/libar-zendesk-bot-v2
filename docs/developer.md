@@ -462,7 +462,12 @@ libar-zendesk-bot-v2/
 ├── .env.example                # Primjer environment datoteke
 ├── render.yaml                 # Render deploy konfiguracija
 ├── README.md                   # Klijentska dokumentacija
-└── DEVELOPER.md                # Ova datoteka
+├── CLAUDE.md                   # Operativni vodič za Claude Code
+└── docs/
+    ├── developer.md            # Ova datoteka
+    ├── user-guide.md
+    ├── production-readiness.md
+    └── decisions/              # Arhitekturne odluke (ADR)
 ```
 
 ---

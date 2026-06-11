@@ -345,7 +345,7 @@ Za pokretanje bota potrebni su sljedeći API ključevi:
 | `SUPABASE_URL` | Supabase URL | `https://xxxxx.supabase.co` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role ključ | `eyJhbGci...` |
 
-Puni popis varijabli i tehnički detalji: vidi [DEVELOPER.md](DEVELOPER.md).
+Puni popis varijabli i tehnički detalji: vidi [docs/developer.md](docs/developer.md).
 
 ---
 
@@ -507,9 +507,9 @@ Bot ima zaštitu od petlje — provjeri da li trigger šalje samo korisnikove po
 
 ### Metrike se ne spremaju
 
-Tablica `bot_metrics` mora postojati u Supabase. SQL za kreiranje nalazi se u [DEVELOPER.md](DEVELOPER.md).
+Tablica `bot_metrics` mora postojati u Supabase. SQL za kreiranje nalazi se u [docs/developer.md](docs/developer.md).
 
-Za detaljno rješavanje problema: vidi [DEVELOPER.md](DEVELOPER.md).
+Za detaljno rješavanje problema: vidi [docs/developer.md](docs/developer.md).
 
 ---
 
