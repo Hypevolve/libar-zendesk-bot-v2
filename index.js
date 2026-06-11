@@ -957,10 +957,11 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
     let piiMappings = [];
     let knowledge = null;
     let safeAnswerSent = false;
+    let ticketSummary = null;
 
     // Spam filter for email
     if (normalizedChannel === "email" && latestMessage) {
-      const ticketSummary = await zendeskService.getTicketSummary(ticketId);
+      ticketSummary = await zendeskService.getTicketSummary(ticketId);
       const spam = await spamFilterService.evaluateIncomingMessage({ channelType: normalizedChannel, message: latestMessage, ticketSummary });
       if (spam.shouldBlock) {
         await zendeskService.addInternalNote(ticketId, spamFilterService.buildSpamFilterNote(spam, normalizedChannel), ["spam_blocked"]);
@@ -1017,20 +1018,30 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
 
       // Fetch conversation history for multi-turn context
       let conversationSummary = "";
+      let conversationTerms = [];
       try {
+        // requesterId distinguishes the customer from bot/agent replies (all Zendesk
+        // comments carry an author_id). Fetch once for all channels; the email path
+        // may already have it from the spam block above.
+        if (!ticketSummary) ticketSummary = await zendeskService.getTicketSummary(ticketId);
+        const requesterId = ticketSummary?.requesterId;
         const comments = await zendeskService.getPublicTicketComments(ticketId);
         if (comments.length > 1) {
           const recent = comments.slice(-6, -1); // exclude the latest (current) message
           conversationSummary = recent.map(c => {
-            const role = c.author_id ? "Korisnik" : "Asistent";
+            const role = String(c.author_id) === String(requesterId) ? "Korisnik" : "Asistent";
             return `${role}: ${String(c.body || "").slice(0, 200)}`;
           }).join("\n");
         }
+        // Boost knowledge search with multi-turn terms (parity with web-chat path).
+        conversationTerms = conversationService.extractConversationTerms(
+          comments.map(c => ({ content: c.body }))
+        );
       } catch (err) {
         log.warn("webhook_history_fetch_failed", { ticketId, message: err.message });
       }
 
-      knowledge = await knowledgeService.searchKnowledgeDetailed(maskedMsg);
+      knowledge = await knowledgeService.searchKnowledgeDetailed(maskedMsg, { conversationTerms });
       let answer = null;
       safeAnswerSent = false;
 

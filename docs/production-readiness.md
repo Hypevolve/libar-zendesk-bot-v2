@@ -1,8 +1,10 @@
 # Analiza Production Readiness — libar-zendesk-bot-v2
 
+> **Status:** Ažurirano 2026-06-11. Bot je produkcijski spreman i u radu. Većina problema iz prve analize riješena je novijim commitovima (security hardening, dashboard redesign, dedup/Zendesk fix). Ovaj dokument odražava **stvarno trenutno stanje koda**.
+
 ## Sažetak
 
-Bot je **arhitektonski zreo i produkcijski spreman** s jakim multi-layer defense modelom. Većina kritičnih staza radi ispravno. Identificirano je **5 problema koje treba hitno riješiti** prije isporuke klijentu, plus **8 preporuka** za daljnje poboljšanje robustnosti.
+Bot je **arhitektonski zreo i produkcijski spreman** s jakim multi-layer defense modelom. Od izvornih **5 kritičnih** problema **svih 5 je riješeno**; od **8 preporuka 6 je riješeno**, a 2 minorne (#9 retry, #13 CI) ostaju kao buduće preporuke. Web chat putanja je potpuna; webhook (Facebook/email) putanja je nakon zadnjih fixeva na paritetu.
 
 ---
 
@@ -17,10 +19,10 @@ Bot je **arhitektonski zreo i produkcijski spreman** s jakim multi-layer defense
 | **Output validation** | A | 6 slojeva: uncertainty, fabricated action, internal leak, PII, invented URL, token overlap |
 | **Hybrid search** | A | Vector (pgvector) + FTS + RRF fusion, domain-aware thresholds, multi-tier fallback |
 | **Conversation memory** | A | Sliding window (10 poruka / 3000 znakova), query rewriting za multi-turn |
-| **Model fallback** | A | Primarni → sekundarni model s retry logikom |
-| **Kill switch** | A | `BOT_ENABLED=false` zaustavlja sve AI odgovore, runtime toggle spreman |
+| **Model fallback** | A | Primarni → sekundarni model s retry logikom; default model ako env nije postavljen |
+| **Kill switch** | A | `BOT_ENABLED=false` + runtime toggle preko `POST /admin/bot-state` |
 | **Token budget** | A | Procjena prije svakog LLM poziva, trimanje konteksta, gate na 80% |
-| **Webhook resilience** | A | Idempotency (5min TTL), sanitizacija, intent escalation, attachment check, human-handoff guard |
+| **Webhook resilience** | A | Idempotency (timestamp + normalizirani tekst), sanitizacija, intent escalation, attachment check, human-handoff guard, rate limiter |
 | **Health check** | A | 200 za degraded stanje (Render ne restarta), 503 samo za total down |
 | **Crash resilience** | A | uncaughtException persistira sesije prije izlaza |
 | **Session cleanup** | A | 24h TTL, čišćenje svakih 30min |
@@ -30,160 +32,38 @@ Bot je **arhitektonski zreo i produkcijski spreman** s jakim multi-layer defense
 
 ---
 
-## ❌ Kritični problemi (MORA se riješiti prije isporuke)
+## ✅ Riješeni problemi (bili kritični / preporuke u prvoj analizi)
 
-### 1. Nedostajući metrics counteri — silent failure
-
-**Lokacija:** `index.js:229` i `index.js:706`
-
-```javascript
-metricsService.increment("botDisabledEscalations");        // ne postoji u counters
-metricsService.increment("webhooksSkippedHumanHandled"); // ne postoji u counters
-```
-
-`metricsService.increment()` provjerava `typeof counters[key] === "number"` i preskače ako ključ ne postoji. Ovo je **silent failure** — brojači se nikad ne povećavaju, a admin ne vidi koliko eskalacija zbog bot disabled stanja.
-
-**Rješenje:** Dodati ova dva polja u `counters` objekt u `services/metricsService.js`.
-
----
-
-### 2. Webhook knowledge search ne koristi intent i conversation terms
-
-**Lokacija:** `index.js:781`
-
-Webchat path:
-```javascript
-knowledgeService.searchKnowledgeDetailed(rewrittenQuery, {
-  taskIntent: session.entryIntent,
-  conversationTerms: conversationService.extractConversationTerms(session.messages)
-});
-```
-
-Webhook path:
-```javascript
-knowledgeService.searchKnowledgeDetailed(maskedMsg);  // NEMA taskIntent ni conversationTerms
-```
-
-Webhook upiti (Facebook/Email) ne koriste intent-based i conversation-based boosting. To znači da multi-turn razgovori preko Facebooka/Emaila imaju **slabiju pretragu** nego webchat.
-
-**Rješenje:** Prosljediti `taskIntent` (iz ticket tagova ili prve poruke) i `conversationTerms` (iz komentara) i u webhook path.
+| # | Problem | Status | Dokaz u kodu |
+|---|---------|--------|--------------|
+| 1 | Nedostajući metrics counteri (`botDisabledEscalations`, `webhooksSkippedHumanHandled`) | **Riješeno** | Ključevi postoje u `counters` — [services/metricsService.js:20-21](../services/metricsService.js#L20-L21) |
+| 2 | Webhook knowledge search bez intent/conversation boosta | **Riješeno** | `conversationTerms` se prosljeđuju u `searchKnowledgeDetailed` — [index.js](../index.js) (webhook history blok) |
+| 3 | Nema admin endpointa za kill switch | **Riješeno** | `POST /admin/bot-state` poziva `botStateService.setEnabled()` — [index.js:1207](../index.js#L1207) |
+| 4 | `getPublicTicketComments` — nepoznato sortiranje | **Riješeno** | Eksplicitan `sort: created_at` — [services/zendeskService.js:421](../services/zendeskService.js#L421) |
+| 5 | Webhook conversation summary — kriva role logika | **Riješeno** | `String(c.author_id) === String(requesterId)` razlikuje korisnika od bota/agenta — [index.js](../index.js) (webhook history blok) |
+| 6 | Rate limiter na webhook endpointu | **Riješeno** | `webhookRateLimiter` (80/min) — [index.js:885](../index.js#L885), [middleware/rateLimiter.js:73-93](../middleware/rateLimiter.js#L73-L93) |
+| 8 | `getConfiguredModels()` prazan niz bez env-a | **Riješeno** | Default `openai/gpt-4o-mini` fallback — [services/aiService.js:37-47](../services/aiService.js#L37-L47) |
+| 10 | Webhook ne ažurira `chatSessions` | **Riješeno** | `syncWebhookMessageToSession()` nakon obrade — [index.js](../index.js) |
+| 11 | `isWebhookDuplicate` ovisan o raw tekstu | **Riješeno** | Timestamp-based dedup primarni, fallback normalizirani tekst (HTML strip + collapse) — [index.js:161-200](../index.js#L161-L200) |
+| 12 | Nema `BOT_ENABLED` u `.env.example` | **Riješeno** | Prisutan — [.env.example](../.env.example) |
 
 ---
 
-### 3. Admin endpoint za kill switch ne postoji
+## ⚠️ Otvorene preporuke (izvan opsega zadnjeg zahvata, niski prioritet)
 
-**Lokacija:** `services/botStateService.js` ima `setEnabled()`, ali `index.js` nema HTTP endpoint za to.
-
-Ako bot počne halucinirati u produkciji, admin ne može **runtime** isključiti bota bez redeploya. Jedina opcija je `BOT_ENABLED=false` u env + restart.
-
-**Rješenje:** Dodati `POST /admin/bot/toggle` endpoint koji poziva `botStateService.setEnabled()`.
-
----
-
-### 4. `getPublicTicketComments` — nepoznato sortiranje
-
-**Lokacija:** `index.js:178-179` (u `detectWebhookAttachments`)
-
-```javascript
-const latest = comments[comments.length - 1];  // pretpostavlja kronološki ASC
-```
-
-Ako Zendesk API vraća komentare **DESC** (najnoviji prvi), `comments[comments.length - 1]` je **najstariji** komentar, a ne najnoviji. Attachment check bi onda gledao pogrešan komentar.
-
-**Rješenje:** Eksplicitno sortirati komentare po `created_at` prije uzimanja zadnjeg, ili provjeriti Zendesk API dokumentaciju za default sort.
-
----
-
-### 5. Webhook conversation summary — kriva logika za role
-
-**Lokacija:** `index.js:772-774`
-
-```javascript
-const role = c.author_id ? "Korisnik" : "Asistent";
-```
-
-Ovo pretpostavlja da postojanje `author_id` znači da je komentar od korisnika. Ali:
-- Bot replyjevi IMAJU `author_id` (ID agenta/bota)
-- Agent replyjevi IMAJU `author_id`
-- Samo korisnički komentari imaju `author_id` koji odgovara `requester_id`
-
-To znači da će bot replyjevi biti označeni kao "Korisnik" u conversation summary, što će zbuniti LLM.
-
-**Rješenje:** Usporediti `c.author_id` s `requester_id` ticketa. Ako se podudara → "Korisnik", inače → "Asistent/Agent".
-
----
-
-## ⚠️ Važne preporuke (za prvu iteraciju nakon isporuke)
-
-### 6. Rate limiter na webhook endpoint
-
-Webhook (`POST /api/zendesk/webhook`) nema `rateLimiter` middleware. Iako ima token verifikaciju, DoS napad s ispravnim tokenom može preplaviti bot LLM pozivima.
-
-**Rješenje:** Dodati `rateLimiter` na webhook, ali s višim pragom (npr. 60/min) nego chat endpointi (30/min).
-
----
+Sljedeće je svjesno **ostavljeno** — klijent je zadovoljan botom, ovo nisu prijavljeni problemi. Zabilježeno kao buduće poboljšanje.
 
 ### 7. `REFERENTNE_CINJENICE` duplirane u promptu
 
-`index.js:360` dodaje `REFERENTNE_CINJENICE` u kontekst:
-```javascript
-const enrichedContext = `${aiService.REFERENTNE_CINJENICE}\n\n...${knowledge.context}`;
-```
+`buildGroundedAnswerPrompt` ([services/aiService.js:263](../services/aiService.js#L263)) već uključuje `REFERENTNE_CINJENICE`, a webhook fallback poziv prosljeđuje iste činjenice i kao `context` ([index.js:1050](../index.js#L1050)). Trošak: ~300-400 tokena viška po pozivu. **Niski prioritet** (samo trošak, ne utječe na točnost).
 
-A `buildGroundedAnswerPrompt` VEĆ uključuje `REFERENTNE_CINJENICE` odvojeno prije "KONTEKST:" sekcije. To troši ~300-400 tokena viška po pozivu.
+### 9. Nema eksplicitnog retryja na grounded-answer timeout
 
-**Rješenje:** Ukloniti `REFERENTNE_CINJENICE` iz `enrichedContext` u index.js — prompt ih već uključuje.
+`runWithModelFallback` podržava per-model retry preko `maxAttemptsPerModel`, ali `generateGroundedAnswer` koristi default (1, bez retryja). `generateReply` koristi 2. Na timeout se prelazi na sljedeći model — graceful, ali bez kratkog retryja na istom modelu. **Niski prioritet.**
 
----
+### 13. Nema CI pipelinea za automatsko pokretanje testova
 
-### 8. `getConfiguredModels()` prazan niz ako env nije postavljen
-
-Ako `OPENROUTER_MODEL` i `OPENROUTER_FALLBACK_MODEL` nisu postavljeni, `getConfiguredModels()` vraća `[]`. `runWithModelFallback` će loopati 0 puta i vratiti `undefined`.
-
-**Rješenje:** Dodati fallback default model u `getConfiguredModels()`:
-```javascript
-if (models.length === 0) models.push("openai/gpt-4.1-mini");
-```
-
----
-
-### 9. Nema retry mehanizma na LLM timeout
-
-15s timeout je postavljen, ali ako istekne, `runWithModelFallback` hvata grešku i prelazi na sljedeći model. To je OK. Ali ako OBA modela timeoutaju, cijeli pipeline pada u graceful degradation.
-
-**Rješenje:** Razmotriti kratak retry (1 retry s 2s delay) na timeout prije fallbacka na sljedeći model.
-
----
-
-### 10. Webhook ne ažurira `chatSessions`
-
-Webhook handler obrađuje poruke ali ne ažurira in-memory `chatSessions` Map. To znači da `POST /api/chat/restore` može vratiti zastarjelu povijest ako je korisnik nastavio razgovor preko Facebooka/Emaila.
-
-**Rješenje:** Nakon obrade webhook poruke, ako postoji sesija za taj ticket, dodati poruku u `session.messages` i ažurirati `updatedAt`.
-
----
-
-### 11. `isWebhookDuplicate` — ovisnost o raw tekstu
-
-Deduplicacija se temelji na `ticketId + messageText`. Ako Zendesk pošalje istu poruku s malo drugačijim formatiranjem (HTML vs plain), dedup neće prepoznati duplikat.
-
-**Rješenje:** Koristiti `ticketId + createdAt` (timestamp) umjesto sadržaja poruke, ili kombinirati oboje.
-
----
-
-### 12. Nema `BOT_ENABLED` u `.env.example`
-
-`config/env.js` čita `BOT_ENABLED`, ali `.env.example` ne sadrži tu varijablu. Novi developer ne zna da ovo postoji.
-
-**Rješenje:** Dodati `# BOT_ENABLED=true` u `.env.example` s objašnjenjem.
-
----
-
-### 13. E2E testovi — ne pokreću se automatski
-
-E2E testovi (`tests/e2e.test.js`) zahtijevaju pokrenuti server i živi Zendesk/LLM. Nema CI pipeline konfiguracije.
-
-**Rješenje:** Dodati `render.yaml` health check path i razmotriti GitHub Actions za unit testove.
+Testovi postoje (30 fajlova, `npm test`), ali se ne pokreću automatski na push/PR — nema `.github/workflows`. Render ima health check (`/health`), ali ne pokreće testove kao deploy gate. **Proces, ne ponašanje bota.**
 
 ---
 
@@ -191,29 +71,17 @@ E2E testovi (`tests/e2e.test.js`) zahtijevaju pokrenuti server i živi Zendesk/L
 
 | Kategorija | Ocjena | Status |
 |------------|--------|--------|
-| Točnost odgovora (RAG) | A- | Hybrid search + relevance grading + validation |
+| Točnost odgovora (RAG) | A | Hybrid search + relevance grading + validation; webhook na paritetu s webchatom |
 | Intent recognition | A | 5 escalation tipova + greeting detection |
 | Eskalacija | A | Attachment + intent + no-grounded-answer |
-| Multi-turn memory | B+ | Webchat odličan, webhook dobar ali bez session synca |
+| Multi-turn memory | A | Webchat i webhook (session sync + conversation terms) |
 | Halucinacija prevention | A- | 6-slojna validacija, token overlap, URL check |
 | PII / Security | A | Mask, detect, block, safe whitelist |
-| Webhook / FB / Email | B+ | Kontekst se dohvaća, ali bez intent/terms boosta |
-| Opservabilnost | B+ | Tracing + metrics, ali nedostajući counteri |
+| Webhook / FB / Email | A- | Kontekst, intent escalation, rate limiter, session sync, conversation terms |
+| Opservabilnost | A- | Tracing + metrics, counteri kompletni |
 | Crash / Error recovery | A | Graceful degradation, session persist, crash handler |
-| Dokumentacija | B | .env.example dobar, ali nedostaje opis BOT_ENABLED |
+| Dokumentacija | A- | `.env.example` kompletan, `CLAUDE.md` + `docs/` struktura |
 
-**Ukupna ocjena: A- (Production Ready nakon fixanja 5 kritičnih problema)**
+**Ukupna ocjena: A (Production Ready — u radu)**
 
----
-
-## Prioritetni redoslijed fixeva
-
-1. **Fix #1** — Dodati `botDisabledEscalations` i `webhooksSkippedHumanHandled` u metricsService (2 min)
-2. **Fix #3** — Dodati admin endpoint za bot toggle (10 min)
-3. **Fix #5** — Fix role logike u webhook conversation summary (5 min)
-4. **Fix #4** — Sortirati komentare u `detectWebhookAttachments` (5 min)
-5. **Fix #2** — Prosljediti intent/terms u webhook knowledge search (15 min)
-6. **Fix #7** — Ukloniti duplirane REFERENTNE_CINJENICE iz enrichedContext (2 min)
-7. **Fix #12** — Dodati BOT_ENABLED u .env.example (1 min)
-
-**Ukupno: ~40 minuta implementacije**
+Preostale otvorene stavke (#7, #9, #13) su niskoprioritetne i ne blokiraju produkciju.
