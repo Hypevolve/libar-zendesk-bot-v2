@@ -1,7 +1,7 @@
 # Libar Asistent — Tehnička dokumentacija za developere
 
 > **Verzija**: 2.0.0  
-> **Zadnje ažuriranje**: 2026-06-02
+> **Zadnje ažuriranje**: 2026-06-11
 
 ---
 
@@ -328,11 +328,17 @@ npm test
 npm run test:unit
 ```
 
+Deterministički i offline (52 testa) — selektira samo prave unit testove, bez `e2e*`/`integration` (oni traže živi Zendesk/LLM).
+
 ### E2E testovi
 
 ```bash
 npm run test:e2e
 ```
+
+### CI
+
+GitHub Actions ([.github/workflows/ci.yml](../.github/workflows/ci.yml)) pokreće `npm run test:unit` na svaki push i pull request prema `main` (Node 22). E2E/integration testovi se namjerno **ne** vrte u CI-ju jer traže mrežu i žive servise.
 
 ### Coverage
 
