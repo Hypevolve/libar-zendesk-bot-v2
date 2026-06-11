@@ -1,0 +1,29 @@
+name: CI
+
+# Pokreće unit testove na svaki push i pull request prema main.
+# Namjerno NE pokreće e2e/integration testove — oni traže živi Zendesk/LLM
+# i mrežu, pa ne pripadaju u deterministički CI gate (vidi npm run test:unit).
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Unit testovi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Postavi Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Instaliraj ovisnosti
+        run: npm ci
+
+      - name: Pokreni unit testove
+        run: npm run test:unit

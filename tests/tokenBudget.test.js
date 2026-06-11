@@ -12,9 +12,11 @@ const check = tokenBudget.checkBudget("Short text");
 assert(check.withinBudget === true, "short text within budget");
 assert(check.estimatedTokens > 0, "has estimate");
 
-// trimContextToBudget
+// trimContextToBudget — second arg is RESERVED tokens, subtracted from MAX_INPUT.
+// Reserve almost the entire input budget so only a sliver fits → context must trim.
 const longText = "word ".repeat(5000);
-const trimmed = tokenBudget.trimContextToBudget(longText, 500);
+const reserved = tokenBudget.MAX_INPUT - 50;
+const trimmed = tokenBudget.trimContextToBudget(longText, reserved);
 assert(trimmed.length < longText.length, "context was trimmed");
 
 // recordUsage + getUsageStats
