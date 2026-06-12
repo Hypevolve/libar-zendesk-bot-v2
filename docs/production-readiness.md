@@ -4,7 +4,7 @@
 
 ## Sažetak
 
-Bot je **arhitektonski zreo i produkcijski spreman** s jakim multi-layer defense modelom. Od izvornih **5 kritičnih** problema **svih 5 je riješeno**; od **8 preporuka 6 je riješeno**, a ostaju **#7** (svjesno — vidi napomenu, NIJE čista ušteda) i **#9** (retry, niski prioritet). Web chat putanja je potpuna; webhook (Facebook/email) putanja je nakon zadnjih fixeva na paritetu.
+Bot je **arhitektonski zreo i produkcijski spreman** s jakim multi-layer defense modelom. Od izvornih **5 kritičnih** problema **svih 5 je riješeno**; od **8 preporuka 6 je riješeno**, a ostaju **#7** (svjesno — vidi napomenu, NIJE čista ušteda), **#8b** (origin/CORS provjera — svjesno odgođeno) i **#9** (retry, niski prioritet). Web chat putanja je potpuna; webhook (Facebook/email) putanja je nakon zadnjih fixeva na paritetu.
 
 ---
 
@@ -59,6 +59,11 @@ Sljedeće je svjesno **ostavljeno** — klijent je zadovoljan botom, ovo nisu pr
 Prvotna analiza tvrdila je da je ovo "samo trošak". Detaljnija provjera pokazuje da **nije**: `buildGroundedAnswerPrompt` ([services/aiService.js:263](../services/aiService.js#L263)) uvijek uključuje `REFERENTNE_CINJENICE` kao zaseban blok, a na **fallback** putanji (kad RAG ne nađe ništa) `generateGroundedAnswer(maskedMsg, REFERENTNE_CINJENICE, …)` iste činjenice ubacuje i u `KONTEKST:` slot ([index.js:1061](../index.js#L1061)).
 
 To je **namjerno i nosivo**: prompt kaže "tvoj JEDINI izvor istine je kontekst ispod" ([aiService.js:215](../services/aiService.js#L215)) i da odbije ako odgovor nije podržan *KONTEKSTOM*. Stavljanje činjenica u KONTEKST slot je ono što fallbacku dopušta da uopće odgovori (npr. "koliko košta dostava?" kad pretraga promaši). Uklanjanje "duplikata" riskira češća odbijanja na fallback putanji. **Odluka: ne dirati bez A/B testa na živom botu.** Ušteda (~300-400 tok) javlja se samo na fallback pozivima, ne na svakom.
+
+### 8b. Origin/CORS provjera nije aktivna (dokumentirano, ne implementirano)
+
+`EMBED_ALLOWED_ORIGINS` postoji u [config/env.js](../config/env.js) ali se **nigdje ne primjenjuje** — `/api/chat/*` endpointi nemaju origin-allowlist provjeru, niti postoji `cors` middleware. Budući da sessionId ide u tijelu zahtjeva (ne cookie), browserovo same-origin pravilo ne štiti endpointe. Jedina aktivna zaštita je rate-limiter po IP-u.
+
 
 ### 9. Nema eksplicitnog retryja na grounded-answer timeout
 

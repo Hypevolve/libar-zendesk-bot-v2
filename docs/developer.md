@@ -259,7 +259,7 @@ OPENROUTER_EMBEDDING_MODEL=openai/text-embedding-3-small
 # --- Sigurnost ---
 ADMIN_TOKEN=                   # za admin panel
 ZENDESK_WEBHOOK_TOKEN=         # za webhook verifikaciju
-EMBED_ALLOWED_ORIGINS=         # CORS za widget
+EMBED_ALLOWED_ORIGINS=         # popis dozvoljenih origin domena (još se NE primjenjuje — v. README "Pristup i origin")
 
 # --- Troškovi ---
 TOKEN_BUDGET_MAX_TOKENS=500000

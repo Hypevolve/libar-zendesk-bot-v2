@@ -248,9 +248,13 @@ Bot **automatski eskalira** (šalje ljudskom agentu) u sljedećim slučajevima:
 - **Maksimalna duljina** — 1500 znakova
 - **Dozvoljeni kanali** — webchat, email, facebook, unknown
 
-### CORS
-- Web widget dopušteno samo na `EMBED_ALLOWED_ORIGINS` domenama
+### Pristup i origin (poznato ograničenje)
 - Admin API zaštićen `ADMIN_TOKEN`-om
+- ⚠️ **Origin/CORS provjera trenutno NIJE aktivna.** Varijabla `EMBED_ALLOWED_ORIGINS`
+  postoji u konfiguraciji, ali se još ne primjenjuje — `/api/chat/*` endpointi nemaju
+  origin-allowlist provjeru. Zahtjevi se ne oslanjaju na cookieje (sessionId ide u
+  tijelu), pa ih browserovo same-origin pravilo ne štiti automatski. Jedina aktivna
+  zaštita javnih chat endpointa je **rate-limiter po IP-u** ([middleware/rateLimiter.js](middleware/rateLimiter.js)).
 
 ---
 
