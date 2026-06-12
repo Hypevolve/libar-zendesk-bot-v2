@@ -679,8 +679,15 @@ app.post("/api/chat/message", rateLimiter, inputSanitizer, chatUpload.array("att
 
     session.messages.push({ role: "user", content: message || "Šaljem privitak.", ts: new Date().toISOString() });
 
-    // Human-active pass-through
-    if (session.conversationState?.tone === "human-active") {
+    // Human-active pass-through. Besides the local in-memory flag, re-check the
+    // ticket tags: an agent may have taken over in Zendesk (which sets a human-owned
+    // tag) without this web session ever being flipped to human-active. Parity with
+    // the webhook agent-intervention guard — reuses ticketSummary fetched above, no
+    // extra Zendesk call. Without this the bot can reply on top of a live agent.
+    if (session.conversationState?.tone === "human-active" || zendeskService.isHumanHandled(ticketSummary.tags)) {
+      if (session.conversationState?.tone !== "human-active") {
+        session.conversationState = { tone: "human-active", badge: "Agent", subtitle: "" };
+      }
       session.updatedAt = new Date().toISOString();
       scheduleRuntimePersist();
       return res.status(200).json({
