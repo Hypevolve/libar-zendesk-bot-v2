@@ -83,7 +83,7 @@ body {
 }
 
 .login-card h1 { font-size: 22px; font-weight: 700; color: #F0F2F8; margin-bottom: 6px; }
-.login-card p { font-size: 13px; color: #5A6078; margin-bottom: 28px; }
+.login-card p { font-size: 13px; color: #8B92A8; margin-bottom: 28px; }
 
 .login-input {
   width: 100%; padding: 11px 14px;
@@ -95,7 +95,7 @@ body {
   transition: border-color 0.2s;
 }
 .login-input:focus { border-color: var(--brand); }
-.login-input::placeholder { color: #3A3F52; }
+.login-input::placeholder { color: #7A8194; }
 
 .login-btn {
   width: 100%; padding: 12px;
@@ -140,7 +140,7 @@ body {
 
 .sb-section {
   font-size: 10px; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.09em; color: #3A3F52;
+  letter-spacing: 0.09em; color: #7C8294;
   padding: 0 8px; margin: 14px 0 5px;
 }
 .sb-section:first-child { margin-top: 0; }
@@ -174,7 +174,7 @@ body {
 .sb-logout {
   display: flex; align-items: center; gap: 9px;
   padding: 8px 10px; border-radius: var(--r-sm);
-  color: #4A4F62; font-size: 13px;
+  color: #9CA3AF; font-size: 13px;
   cursor: pointer; border: none; background: none;
   width: 100%; transition: background 0.15s, color 0.15s;
 }
@@ -291,7 +291,7 @@ body {
 .bd-label { font-size: 12.5px; color: var(--text-2); }
 .bd-val { font-size: 12.5px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
 .bar-track { height: 7px; background: var(--border-light); border-radius: 100px; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 100px; transition: width 0.7s cubic-bezier(0.16,1,0.3,1); }
+.bar-fill { height: 100%; width: 100%; transform: scaleX(0); transform-origin: left; transition: transform 0.7s cubic-bezier(0.16,1,0.3,1); }
 .bar-fill.g { background: var(--green); }
 .bar-fill.r { background: var(--red); }
 .bar-fill.a { background: var(--amber); }
@@ -440,6 +440,55 @@ tbody tr:hover td { background: var(--bg); }
 
 .hidden { display: none !important; }
 
+/* ─── A11y utilities ──────────────────────────────── */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
+.login-input:focus-visible { outline-offset: 0; }
+/* Tipkovnički dostupan puni upit (zamjena za title-only tooltip) */
+.tc-input:focus-visible { white-space: normal; overflow: visible; }
+
+/* ─── Mobilni izbornik: hamburger + backdrop (skriveni na desktopu) ── */
+.menu-toggle {
+  display: none; align-items: center; justify-content: center;
+  width: 38px; height: 38px;
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+  background: var(--surface); color: var(--text-2); cursor: pointer;
+}
+#sidebar-backdrop {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45); z-index: 99;
+}
+#sidebar-backdrop.show { display: block; }
+
+/* ─── Responsive ──────────────────────────────── */
+@media (max-width: 1024px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .row.c3 { grid-template-columns: 1fr; }
+  .row.c12 { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  #sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 0 0 40px rgba(0,0,0,0.4);
+  }
+  #sidebar.open { transform: translateX(0); }
+  #main { margin-left: 0; }
+  .menu-toggle { display: flex; }
+  .topbar { padding: 0 16px; }
+  .content { padding: 16px; }
+  /* Touch targeti ≥44px (WCAG 2.5.5) */
+  .sb-item, .sb-logout, .tb-btn, .sync-btn, .bot-btn, .login-btn { min-height: 44px; }
+}
+@media (max-width: 480px) {
+  .kpi-grid { grid-template-columns: 1fr; }
+  .ts-pill { display: none; }
+}
+
 /* Poštuj korisnike koji traže manje animacija */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -452,27 +501,28 @@ tbody tr:hover td { background: var(--bg); }
 </head>
 <body>
 
-<div id="toasts"></div>
+<div id="toasts" role="status" aria-live="polite" aria-atomic="false"></div>
 
 <!-- ─── Login Screen ────────────────────── -->
-<div id="login-screen">
-  <div class="login-card">
+<div id="login-screen" role="dialog" aria-modal="true" aria-labelledby="login-title">
+  <form class="login-card" id="login-form" onsubmit="event.preventDefault(); saveToken();">
     <div class="login-logo">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      <svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
     </div>
-    <h1>Libar Admin</h1>
+    <h1 id="login-title">Libar Admin</h1>
     <p>Prijava u administratorski panel</p>
-    <input type="password" class="login-input" id="admin-token" placeholder="Admin token..." onkeydown="if(event.key==='Enter')saveToken()">
-    <button class="login-btn" id="login-btn" onclick="saveToken()">Prijava</button>
-    <div id="login-err"></div>
-  </div>
+    <label class="sr-only" for="admin-token">Admin token</label>
+    <input type="password" class="login-input" id="admin-token" placeholder="Admin token..." autocomplete="current-password" autofocus>
+    <button type="submit" class="login-btn" id="login-btn">Prijava</button>
+    <div id="login-err" role="alert" aria-live="assertive"></div>
+  </form>
 </div>
 
 <!-- ─── Sidebar ────────────────────── -->
-<nav id="sidebar">
+<nav id="sidebar" aria-label="Glavna navigacija">
   <div class="sb-brand">
     <div class="sb-logo">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
     </div>
     <div>
       <div class="sb-name">Libar Asistent</div>
@@ -482,22 +532,22 @@ tbody tr:hover td { background: var(--bg); }
 
   <div class="sb-nav">
     <div class="sb-section">Pregled</div>
-    <button class="sb-item active" onclick="navTo(this,'sec-metrics')">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    <button class="sb-item active" aria-current="page" onclick="navTo(this,'sec-metrics')">
+      <svg aria-hidden="true" focusable="false" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
       Metrike
     </button>
     <button class="sb-item" onclick="navTo(this,'sec-traces')">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <svg aria-hidden="true" focusable="false" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       Razgovori
     </button>
 
     <div class="sb-section">Upravljanje</div>
     <button class="sb-item" onclick="navTo(this,'sec-bot')">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <svg aria-hidden="true" focusable="false" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       Bot kontrola
     </button>
     <button class="sb-item" onclick="navTo(this,'sec-kb')">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+      <svg aria-hidden="true" focusable="false" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
       KB Sinkronizacija
     </button>
   </div>
@@ -505,59 +555,66 @@ tbody tr:hover td { background: var(--bg); }
   <div class="sb-footer">
     <div class="sb-status">
       <span class="pulse-dot on" id="sb-dot"></span>
-      <span id="sb-status">Povezan</span>
+      <span id="sb-status" aria-live="polite">Povezan</span>
     </div>
     <button class="sb-logout" onclick="logout()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <svg aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       Odjava
     </button>
   </div>
 </nav>
 
+<div id="sidebar-backdrop" onclick="closeSidebar()"></div>
+
 <!-- ─── Main ────────────────────── -->
-<div id="main">
+<main id="main">
 
   <!-- Topbar -->
-  <div class="topbar">
-    <div class="topbar-left">Dashboard</div>
+  <header class="topbar">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button class="menu-toggle" id="menu-toggle" aria-label="Otvori izbornik" aria-expanded="false" aria-controls="sidebar" onclick="toggleSidebar()">
+        <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <h1 class="topbar-left">Dashboard</h1>
+    </div>
     <div class="topbar-right">
       <div class="ts-pill">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span id="last-update">—</span>
+        <svg aria-hidden="true" focusable="false" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span id="last-update" aria-live="polite">—</span>
       </div>
-      <button class="tb-btn" onclick="loadAll()">
-        <svg width="13" height="13" id="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
-        Osvježi
+      <button class="tb-btn" onclick="loadAll()" aria-label="Osvježi podatke">
+        <svg aria-hidden="true" focusable="false" width="13" height="13" id="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+        <span>Osvježi</span>
       </button>
     </div>
-  </div>
+  </header>
 
   <!-- Content -->
   <div class="content">
 
     <!-- KPI Cards -->
-    <div class="kpi-grid" id="sec-metrics">
+    <div class="kpi-grid" id="sec-metrics" role="region" aria-label="Ključne metrike">
       <div class="kpi k-brand">
-        <div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-        <div class="kpi-label">Ukupno upita</div>
+        <div class="kpi-icon"><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        <div class="kpi-label" role="heading" aria-level="3">Ukupno upita</div>
         <div class="kpi-val" id="m-total">—</div>
         <div class="kpi-sub" id="m-total-sub">Od pokretanja</div>
       </div>
       <div class="kpi k-green">
-        <div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div class="kpi-label">Odgovoreno</div>
+        <div class="kpi-icon"><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="kpi-label" role="heading" aria-level="3">Odgovoreno</div>
         <div class="kpi-val" id="m-answered">—</div>
         <div class="kpi-sub" id="m-answered-pct">—</div>
       </div>
       <div class="kpi k-red">
-        <div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
-        <div class="kpi-label">Eskalirano</div>
+        <div class="kpi-icon"><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+        <div class="kpi-label" role="heading" aria-level="3">Eskalirano</div>
         <div class="kpi-val" id="m-escalated">—</div>
         <div class="kpi-sub" id="m-escalated-pct">—</div>
       </div>
       <div class="kpi k-indigo">
-        <div class="kpi-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-        <div class="kpi-label">Prosj. latencija</div>
+        <div class="kpi-icon"><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="kpi-label" role="heading" aria-level="3">Prosj. latencija</div>
         <div class="kpi-val" id="m-latency">—</div>
         <div class="kpi-sub" id="m-latency-p95">—</div>
       </div>
@@ -569,8 +626,8 @@ tbody tr:hover td { background: var(--bg); }
       <div class="card">
         <div class="card-hd">
           <div>
-            <div class="card-title">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <div class="card-title" role="heading" aria-level="2">
+              <svg aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               Bot Status
             </div>
             <div class="card-sub">Kill switch — AI odgovori</div>
@@ -586,15 +643,15 @@ tbody tr:hover td { background: var(--bg); }
           </div>
           <button class="bot-btn off-btn" id="bot-btn" onclick="toggleBot()">Isključi</button>
         </div>
-        <div class="bot-msg" id="bot-msg"></div>
+        <div class="bot-msg" id="bot-msg" role="status" aria-live="polite"></div>
       </div>
 
       <!-- Decision Breakdown -->
       <div class="card">
         <div class="card-hd">
           <div>
-            <div class="card-title">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <div class="card-title" role="heading" aria-level="2">
+              <svg aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
               Breakdown odluka
             </div>
             <div class="card-sub">Raspodjela AI odluka</div>
@@ -603,15 +660,15 @@ tbody tr:hover td { background: var(--bg); }
         <div class="breakdown">
           <div class="bd-item">
             <div class="bd-meta"><span class="bd-label">✓ Odgovoreno (safe_answer)</span><span class="bd-val" id="d-answered">—</span></div>
-            <div class="bar-track"><div class="bar-fill g" id="d-answered-bar" style="width:0%"></div></div>
+            <div class="bar-track"><div class="bar-fill g" id="d-answered-bar"></div></div>
           </div>
           <div class="bd-item">
             <div class="bd-meta"><span class="bd-label">↑ Eskalirano (escalate)</span><span class="bd-val" id="d-escalated">—</span></div>
-            <div class="bar-track"><div class="bar-fill r" id="d-escalated-bar" style="width:0%"></div></div>
+            <div class="bar-track"><div class="bar-fill r" id="d-escalated-bar"></div></div>
           </div>
           <div class="bd-item">
             <div class="bd-meta"><span class="bd-label">· Ostalo</span><span class="bd-val" id="d-other">—</span></div>
-            <div class="bar-track"><div class="bar-fill a" id="d-other-bar" style="width:0%"></div></div>
+            <div class="bar-track"><div class="bar-fill a" id="d-other-bar"></div></div>
           </div>
         </div>
       </div>
@@ -620,19 +677,19 @@ tbody tr:hover td { background: var(--bg); }
     <!-- Token / Cost / Cache -->
     <div class="row c3">
       <div class="msc">
-        <div class="msc-label">Token potrošnja</div>
+        <div class="msc-label" role="heading" aria-level="3">Token potrošnja</div>
         <div class="msc-val" id="m-tokens">—</div>
         <div class="msc-sub" id="m-tokens-req">—</div>
         <div class="msc-detail">Model: <span id="m-model">—</span></div>
       </div>
       <div class="msc">
-        <div class="msc-label">Procijenjeni trošak</div>
+        <div class="msc-label" role="heading" aria-level="3">Procijenjeni trošak</div>
         <div class="msc-val" id="m-cost">—</div>
         <div class="msc-sub">Na temelju OpenRouter cijena</div>
         <div class="msc-detail">$<span id="m-cost-in">—</span>/1M input · $<span id="m-cost-out">—</span>/1M output</div>
       </div>
       <div class="msc">
-        <div class="msc-label">Cache hit rate</div>
+        <div class="msc-label" role="heading" aria-level="3">Cache hit rate</div>
         <div class="msc-val" id="m-cache">—</div>
         <div class="msc-sub" id="m-cache-detail">—</div>
         <div class="msc-detail" id="m-cache-extra">&nbsp;</div>
@@ -643,31 +700,31 @@ tbody tr:hover td { background: var(--bg); }
     <div class="card" style="margin-bottom: 20px;" id="sec-kb">
       <div class="card-hd">
         <div>
-          <div class="card-title">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+          <div class="card-title" role="heading" aria-level="2">
+            <svg aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
             Knowledge Base Sinkronizacija
           </div>
           <div class="card-sub">OneDrive → vektorska baza</div>
         </div>
         <div class="sync-actions">
           <button class="sync-btn primary" id="sync-btn" onclick="triggerSync(false)">
-            <svg width="13" height="13" id="sync-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+            <svg aria-hidden="true" focusable="false" width="13" height="13" id="sync-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
             Sinkroniziraj
           </button>
           <button class="sync-btn secondary" id="sync-force-btn" onclick="triggerSync(true)">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+            <svg aria-hidden="true" focusable="false" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
             Force sync
           </button>
         </div>
       </div>
-      <div class="sync-res" id="sync-res"></div>
+      <div class="sync-res" id="sync-res" role="status" aria-live="polite"></div>
     </div>
 
     <!-- Traces -->
     <div class="card" id="sec-traces">
       <div class="card-hd" style="margin-bottom: 0;">
         <div>
-          <div class="card-title">Posljednji razgovori</div>
+          <div class="card-title" role="heading" aria-level="2">Posljednji razgovori</div>
           <div class="card-sub">Zadnjih 20 AI interakcija</div>
         </div>
         <div class="live-badge"><div class="live-dot"></div>LIVE</div>
@@ -692,7 +749,7 @@ tbody tr:hover td { background: var(--bg); }
     </div>
 
   </div><!-- /content -->
-</div><!-- /main -->
+</main><!-- /main -->
 
 <script>
 const API = '';
@@ -726,7 +783,9 @@ function fmt(n) {
 }
 
 function fmtTime(iso) {
-  return new Date(iso).toLocaleTimeString('hr-HR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleTimeString('hr-HR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 
 function toast(msg, type='info') {
@@ -773,11 +832,30 @@ function logout() {
   $('login-btn').textContent = 'Prijava';
 }
 
-function navTo(el, sectionId) {
-  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+function setActiveNav(el) {
+  document.querySelectorAll('.sb-item').forEach(i => { i.classList.remove('active'); i.removeAttribute('aria-current'); });
   el.classList.add('active');
-  $(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  el.setAttribute('aria-current', 'page');
 }
+
+function navTo(el, sectionId) {
+  setActiveNav(el);
+  $(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  closeSidebar(); // zatvori drawer na mobitelu nakon odabira
+}
+
+// ─── Mobilni sidebar (off-canvas) ────────────────
+function toggleSidebar() {
+  const open = $('sidebar').classList.toggle('open');
+  $('sidebar-backdrop').classList.toggle('show', open);
+  $('menu-toggle').setAttribute('aria-expanded', String(open));
+}
+function closeSidebar() {
+  $('sidebar').classList.remove('open');
+  $('sidebar-backdrop').classList.remove('show');
+  $('menu-toggle')?.setAttribute('aria-expanded', 'false');
+}
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSidebar(); });
 
 // ─── API ──────────────────────────────────────
 async function api(path, opts = {}) {
@@ -811,11 +889,11 @@ function renderMetrics(m) {
 
   if (total > 0) {
     $('d-answered').textContent = `${fmt(answered)} (${((answered/total)*100).toFixed(0)}%)`;
-    $('d-answered-bar').style.width = `${(answered/total)*100}%`;
+    $('d-answered-bar').style.transform = `scaleX(${answered/total})`;
     $('d-escalated').textContent = `${fmt(escalated)} (${((escalated/total)*100).toFixed(0)}%)`;
-    $('d-escalated-bar').style.width = `${(escalated/total)*100}%`;
+    $('d-escalated-bar').style.transform = `scaleX(${escalated/total})`;
     $('d-other').textContent = `${fmt(other)} (${((other/total)*100).toFixed(0)}%)`;
-    $('d-other-bar').style.width = `${(other/total)*100}%`;
+    $('d-other-bar').style.transform = `scaleX(${other/total})`;
   }
 
   const tok = m.tokenUsage || {};
@@ -921,7 +999,7 @@ function renderTraces(traces) {
     const inp = esc(t.input || '—');
     return `<tr>
       <td class="tc-time">${fmtTime(t.ts)}</td>
-      <td class="tc-input" title="${inp}">${inp}</td>
+      <td class="tc-input" tabindex="0" title="${inp}">${inp}</td>
       <td><span class="badge ${cls}">${lbl}</span></td>
       <td class="tc-mono">${src}</td>
       <td class="tc-mono">${score}</td>
@@ -1004,6 +1082,20 @@ document.addEventListener('visibilitychange', () => {
     loadAll();                        // odmah osvježi pri povratku
     scheduleNext();
   }
+});
+
+// ─── Scroll-spy: aktivna nav stavka prati vidljivu sekciju ──
+const navButtonFor = (id) =>
+  [...document.querySelectorAll('.sb-item')].find(b => (b.getAttribute('onclick') || '').includes(`'${id}'`));
+const spyObserver = new IntersectionObserver((entries) => {
+  for (const e of entries) {
+    if (!e.isIntersecting) continue;
+    const btn = navButtonFor(e.target.id);
+    if (btn && !btn.classList.contains('active')) setActiveNav(btn);
+  }
+}, { rootMargin: '-45% 0px -50% 0px' });
+['sec-metrics', 'sec-bot', 'sec-kb', 'sec-traces'].forEach(id => {
+  const el = $(id); if (el) spyObserver.observe(el);
 });
 
 // ─── Init ──────────────────────────────────────
