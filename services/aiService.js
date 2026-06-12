@@ -73,6 +73,10 @@ async function runWithModelFallback(execute, { purpose = "AI request", maxAttemp
           message: error.message,
           status: error.status
         });
+        // Auth/validation errors (400/401/403) will never succeed on retry or on
+        // another model — fail fast instead of burning latency + tokens across the
+        // whole fallback chain. 429/5xx stay retryable and fall through.
+        if ([400, 401, 403].includes(error.status)) throw error;
         if (attempt < maxAttemptsPerModel) await wait(1000 * attempt);
       }
     }
@@ -112,7 +116,10 @@ async function llmCall(systemPrompt, userMessage, { purpose, temperature = 0, ma
           response_format: { type: "json_object" }
         });
       } catch (err) {
-        if (err?.status === 400 || /response_format|json_object/i.test(err?.message || "")) {
+        // Only retry without JSON mode when the error is actually about
+        // response_format support — not for every 400, which would issue a second
+        // full (billed) completion on unrelated bad requests.
+        if (/response_format|json_object/i.test(err?.message || "")) {
           completion = await client.chat.completions.create(request);
         } else {
           throw err;
