@@ -13,6 +13,7 @@ logs/
 *.log
 
 # Runtime
+.runtime/
 pids/
 *.pid
 *.seed
