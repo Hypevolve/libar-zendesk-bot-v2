@@ -17,7 +17,7 @@
   --sidebar-border: rgba(255,255,255,0.07);
   --sidebar-hover: rgba(255,255,255,0.05);
   --sidebar-active: rgba(232,93,4,0.14);
-  --sidebar-text: #7A7F8E;
+  --sidebar-text: #9CA3AF;
   --sidebar-text-hi: #E8EAF0;
   --bg: #F4F5F7;
   --surface: #FFFFFF;
@@ -25,7 +25,7 @@
   --border-light: #F0F2F5;
   --text: #0D0F14;
   --text-2: #4B5162;
-  --text-3: #8A90A0;
+  --text-3: #6B7280;
   --green: #16A34A;
   --green-bg: #F0FDF4;
   --green-border: #BBF7D0;
@@ -439,6 +439,15 @@ tbody tr:hover td { background: var(--bg); }
 .spin { animation: spin 0.8s linear infinite; }
 
 .hidden { display: none !important; }
+
+/* Poštuj korisnike koji traže manje animacija */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -687,12 +696,27 @@ tbody tr:hover td { background: var(--bg); }
 
 <script>
 const API = '';
-const POLL = 10000;
-let timer = null;
+const POLL = 10000;       // bazni interval
+const POLL_MAX = 60000;   // gornja granica nakon uzastopnih grešaka (backoff)
+let pollTimer = null;
+let pollDelay = POLL;
 
 // ─── Helpers ──────────────────────────────────────
 const $ = id => document.getElementById(id);
-const getToken = () => localStorage.getItem('libar_admin_token') || '';
+// sessionStorage (ne localStorage): token nestaje po zatvaranju taba i manje je
+// izložen ako bi se ikad provukao XSS.
+const getToken = () => sessionStorage.getItem('libar_admin_token') || '';
+
+// HTML-escape za sve što se umeće u markup (korisnikov upit je napadački kontroliran).
+// Mora escapeati i " jer se vrijednost koristi u title="..." atributu.
+function esc(s) {
+  return String(s ?? '—')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 function fmt(n) {
   n = Number(n) || 0;
@@ -725,7 +749,7 @@ async function saveToken() {
   try {
     const r = await fetch(`${API}/admin/metrics`, { headers: { 'x-admin-token': token } });
     if (!r.ok) throw new Error('Pogrešan token.');
-    localStorage.setItem('libar_admin_token', token);
+    sessionStorage.setItem('libar_admin_token', token);
     const ls = $('login-screen');
     ls.classList.add('fade-out');
     setTimeout(() => ls.classList.add('hidden'), 300);
@@ -739,8 +763,8 @@ async function saveToken() {
 }
 
 function logout() {
-  localStorage.removeItem('libar_admin_token');
-  clearInterval(timer);
+  sessionStorage.removeItem('libar_admin_token');
+  clearTimeout(pollTimer);
   const ls = $('login-screen');
   ls.classList.remove('hidden', 'fade-out');
   $('admin-token').value = '';
@@ -887,10 +911,10 @@ function renderTraces(traces) {
     const other = !['escalate_no_answer','safe_answer'].includes(t.decision);
     const cls = esc ? 'escalated' : other ? 'other' : 'answered';
     const lbl = esc ? '↑ Eskalirano' : other ? '· Ostalo' : '✓ Odgovoreno';
-    const src = t.retrieval?.source || '—';
+    const src = esc(t.retrieval?.source || '—');
     const score = t.retrieval?.topScore != null ? t.retrieval.topScore : '—';
     const lat = t.latencyMs ? `${(t.latencyMs/1000).toFixed(1)}s` : '—';
-    const inp = (t.input||'—').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const inp = esc(t.input || '—');
     return `<tr>
       <td class="tc-time">${fmtTime(t.ts)}</td>
       <td class="tc-input" title="${inp}">${inp}</td>
@@ -946,18 +970,37 @@ async function loadAll() {
     if (botState !== null) renderBot(botState);
     $('last-update').textContent = new Date().toLocaleTimeString('hr-HR');
     $('sb-dot').className = 'pulse-dot on';
+    pollDelay = POLL;                                 // uspjeh → reset backoffa
   } catch(e) {
     $('sb-dot').className = 'pulse-dot off';
     $('sb-status').textContent = 'Greška';
+    pollDelay = Math.min(pollDelay * 2, POLL_MAX);    // greška → uspori (ne hameraj server)
   } finally {
     icon.classList.remove('spin');
   }
 }
 
-function startPoll() {
-  clearInterval(timer);
-  timer = setInterval(loadAll, POLL);
+// setTimeout-lanac umjesto setInterval: dopušta promjenjiv interval (backoff) i
+// pauzu kad je tab skriven.
+function scheduleNext() {
+  clearTimeout(pollTimer);
+  if (document.hidden || !getToken()) return;
+  pollTimer = setTimeout(async () => { await loadAll(); scheduleNext(); }, pollDelay);
 }
+
+function startPoll() {
+  pollDelay = POLL;
+  scheduleNext();
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    clearTimeout(pollTimer);          // pauza u pozadini
+  } else if (getToken()) {
+    loadAll();                        // odmah osvježi pri povratku
+    scheduleNext();
+  }
+});
 
 // ─── Init ──────────────────────────────────────
 const saved = getToken();
