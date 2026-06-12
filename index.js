@@ -407,19 +407,20 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
 
   let knowledge = await knowledgeService.searchKnowledgeDetailed(rewrittenQuery || maskedMsg, {
     taskIntent: session.entryIntent,
-    conversationTerms: conversationService.extractConversationTerms(session.messages)
+    conversationTerms: maskedConversationTerms(session.messages)
   });
 
   // Fallback: if no results and this is a follow-up, combine previous user query with current one
   if (!knowledge?.context && hasHistory) {
     const userMsgs = (session.messages || []).filter((m) => m.role === "user");
-    const prevQuery = userMsgs.length >= 2 ? String(userMsgs[userMsgs.length - 2].content || "").trim() : "";
+    // Mask prevQuery: it is raw session content and gets embedded as the search query.
+    const prevQuery = userMsgs.length >= 2 ? piiService.maskPII(String(userMsgs[userMsgs.length - 2].content || "")).masked.trim() : "";
     if (prevQuery && prevQuery !== maskedMsg) {
       const combinedQuery = `${prevQuery} ${maskedMsg}`.trim();
       log.info("knowledge_fallback_combined_query", { original: rewrittenQuery || maskedMsg, combined: combinedQuery });
       knowledge = await knowledgeService.searchKnowledgeDetailed(combinedQuery, {
         taskIntent: session.entryIntent,
-        conversationTerms: conversationService.extractConversationTerms(session.messages)
+        conversationTerms: maskedConversationTerms(session.messages)
       });
     }
   }
@@ -874,6 +875,18 @@ app.post("/api/chat/update-profile", rateLimiter, inputSanitizer, async (req, re
   }
 });
 
+// Extract knowledge-search boost terms with PII masked out first. session.messages
+// and Zendesk comment bodies are stored RAW; only maskedMsg is masked, so without
+// this the conversation-term boost would leak customer email/OIB/IBAN/phone from
+// earlier turns straight into the embedding provider. Redaction placeholders are
+// stripped so they don't pollute the search as bogus terms.
+function maskedConversationTerms(messages) {
+  const masked = (messages || []).map((m) => ({
+    content: piiService.maskPII(String(m.content || "")).masked.replace(/\[\w*REDACTED\w*\]/gi, " ")
+  }));
+  return conversationService.extractConversationTerms(masked);
+}
+
 function mapAuditsToMessages(audits = [], requesterId, ticketSummary) {
   const messages = [];
   for (const audit of audits) {
@@ -1041,7 +1054,8 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
           }).join("\n");
         }
         // Boost knowledge search with multi-turn terms (parity with web-chat path).
-        conversationTerms = conversationService.extractConversationTerms(
+        // Masked: Zendesk comment bodies are raw customer text.
+        conversationTerms = maskedConversationTerms(
           comments.map(c => ({ content: c.body }))
         );
       } catch (err) {
