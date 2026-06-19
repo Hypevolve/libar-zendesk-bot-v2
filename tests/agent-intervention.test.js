@@ -1,34 +1,18 @@
 /**
- * Test: Agent intervention detection (signature-based)
+ * Test: Agent intervention detection (signature-based, STICKY).
  * Every bot reply ends with the signature "---\n*Vaš Libar Asistent*".
- * By checking for this text in the latest comment we reliably detect
- * whether the bot or an agent wrote the last message.
+ * Once ANY public comment in the ticket is from a human agent, the bot must
+ * stay silent for the rest of the conversation — even if the customer messages
+ * again afterwards. We exercise the real pure function (no API).
  */
 const test = require("node:test");
 const assert = require("node:assert");
+const { detectAgentTakeover } = require("../services/zendeskService");
 
 const BOT_SIGNATURE = "\n\n---\n*Vaš Libar Asistent*";
 
 function mockCheckForAgentIntervention(scenario) {
-  const { comments, requesterId } = scenario;
-  if (comments.length === 0) {
-    return { takenOver: false };
-  }
-
-  const latest = comments[comments.length - 1];
-  if (latest.author_id === requesterId) {
-    return { takenOver: false };
-  }
-
-  // Latest comment is NOT from the requester
-  const latestBody = String(latest.body || "");
-  if (latestBody.includes(BOT_SIGNATURE)) {
-    // It's our own reply (signature marker is present)
-    return { takenOver: false };
-  }
-
-  // Not requester, not bot → must be an agent (or admin)
-  return { takenOver: true, reason: "agent_comment_detected" };
+  return detectAgentTakeover(scenario.comments, scenario.requesterId);
 }
 
 function mockIsHumanHandled(tags) {
@@ -76,18 +60,21 @@ test("Bot's own comment as latest → bot can proceed", () => {
   assert.strictEqual(agentCheck.takenOver, false, "Bot is latest (has signature) → proceed");
 });
 
-test("Customer after agent (stale human_active tag ignored) → bot responds", () => {
+test("Customer messages AFTER an agent joined → bot STAYS SILENT (sticky)", () => {
+  // Regression guard: previously the bot only looked at the latest comment, so a
+  // follow-up customer message let it talk over an agent who had already replied.
+  // Now agent intervention is sticky for the whole ticket.
   const agentCheck = mockCheckForAgentIntervention({
     comments: [
       { author_id: 100, body: "Hello" },
-      { author_id: 200, body: "Hi!" + BOT_SIGNATURE },
-      { author_id: 200, body: "Agent reply" },
-      { author_id: 100, body: "Another question" }
+      { author_id: 200, body: "Hi!" + BOT_SIGNATURE },   // bot reply
+      { author_id: 300, body: "Agent reply" },            // human agent joined
+      { author_id: 100, body: "Another question" }        // customer follows up
     ],
     requesterId: 100
   });
 
-  assert.strictEqual(agentCheck.takenOver, false, "Customer is latest → proceed regardless of tags");
+  assert.strictEqual(agentCheck.takenOver, true, "Agent joined earlier → bot must stay silent");
 });
 
 test("Agent comment with signature text (spoof attempt) → still detected as agent", () => {

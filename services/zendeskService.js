@@ -491,42 +491,44 @@ async function ping() {
 }
 
 /**
- * Detects whether a human agent has intervened in the conversation.
- * Every bot reply ends with the signature "Vaš Libar Asistent".
- * By checking whether the latest comment contains this signature we can
- * reliably distinguish bot replies from agent replies — no extra Zendesk
- * user seat needed.
+ * Pure decision: has a human agent taken over this ticket?
  *
- * Returns { takenOver: boolean, reason: string }.
+ * STICKY semantics — once ANY public comment in the ticket is from a human agent,
+ * the bot must stay silent for the rest of the conversation, even if the customer
+ * messages again afterwards. (Previously this only looked at the single latest
+ * comment, so a follow-up customer message let the bot talk over an agent who had
+ * already joined — see tests for the regression this guards against.)
  *
- * Logic:
- *   1. If the latest comment is from the requester → proceed.
- *   2. If latest comment body includes BOT_SIGNATURE → bot's own reply → proceed.
- *   3. Otherwise → agent (or admin) commented → skip.
+ * We only ever receive PUBLIC comments here (getPublicTicketComments filters out
+ * internal notes), so an agent's private note does not silence the bot — only a
+ * public reply to the customer does.
+ *
+ * A comment counts as an agent comment when it is:
+ *   (a) NOT authored by the requester (so not a customer message), AND
+ *   (b) NOT one of the bot's own signed replies (no BOT_SIGNATURE).
+ *
+ * Returns { takenOver: boolean, reason?: string }. Pure function so it can be
+ * unit-tested without hitting the Zendesk API.
+ */
+function detectAgentTakeover(comments = [], requesterId = null) {
+  for (const c of comments) {
+    if (c.author_id === requesterId) continue;                  // customer message
+    if (String(c.body || "").includes(BOT_SIGNATURE)) continue; // bot's own reply
+    return { takenOver: true, reason: "agent_comment_detected" }; // human agent joined
+  }
+  return { takenOver: false };
+}
+
+/**
+ * Fetches the ticket + its public comments and applies detectAgentTakeover.
+ * On API failure we FAIL-OPEN to false so a transient Zendesk error doesn't
+ * permanently mute the bot — but we log it.
  */
 async function checkForAgentIntervention(ticketId) {
   try {
     const summary = await getTicketSummary(ticketId);
     const comments = await getPublicTicketComments(ticketId);
-    if (comments.length === 0) {
-      return { takenOver: false };
-    }
-
-    const latest = comments[comments.length - 1];
-    if (latest.author_id === summary.requesterId) {
-      // Latest comment is from the customer → normal flow
-      return { takenOver: false };
-    }
-
-    // Latest comment is NOT from the requester
-    const latestBody = String(latest.body || "");
-    if (latestBody.includes(BOT_SIGNATURE)) {
-      // It's our own reply (signature marker is present)
-      return { takenOver: false };
-    }
-
-    // Not requester, not bot → must be an agent (or admin)
-    return { takenOver: true, reason: "agent_comment_detected" };
+    return detectAgentTakeover(comments, summary.requesterId);
   } catch (error) {
     log.warn("agent_intervention_check_failed", { ticketId, message: error.message });
     return { takenOver: false };
@@ -535,7 +537,7 @@ async function checkForAgentIntervention(ticketId) {
 
 module.exports = {
   addInternalNote, addTagAndNote, addBotReplyToTicket, addCustomerMessageToTicket,
-  checkForAgentIntervention,
+  checkForAgentIntervention, detectAgentTakeover,
   createChatTicket, fetchAllHelpCenterArticles, getZendeskConfigSummary,
   getPublicTicketComments, getRequesterProfile, getTicketAudits, getTicketSummary,
   ping, replyToTicket, resetHelpCenterCache, searchHelpCenter, searchHelpCenterDetailed,
