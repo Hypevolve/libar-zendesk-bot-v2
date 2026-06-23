@@ -14,9 +14,17 @@
     "test:coverage": "NODE_ENV=test node --no-deprecation --test --experimental-test-coverage",
     "sync:vector": "node scripts/sync-vector-knowledge.js"
   },
-  "keywords": ["zendesk", "openrouter", "express", "customer-support", "chatbot", "rag"],
+  "keywords": [
+    "zendesk",
+    "openrouter",
+    "express",
+    "customer-support",
+    "chatbot",
+    "rag"
+  ],
   "license": "MIT",
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "axios": "^1.8.4",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",

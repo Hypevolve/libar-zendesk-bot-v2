@@ -35,6 +35,8 @@ services:
         sync: false
       - key: ADMIN_TOKEN
         sync: false
+      - key: MCP_TOKEN
+        sync: false
       - key: RATE_LIMIT_MAX
         value: 30
       - key: HELP_CENTER_CACHE_TTL_MS

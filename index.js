@@ -1272,6 +1272,12 @@ app.post("/admin/sync/vector", requireAdmin, async (req, res) => {
   }
 });
 
+// ─── MCP Server (Model Context Protocol) ──────────────────────
+// Read/control/report toolovi za Claude (app + Claude Code). Aditivno: svaki
+// tool zove postojeći servis. Onemogućeno (503) ako MCP_TOKEN nije postavljen.
+const mcpServer = require("./mcp/server");
+app.all("/mcp", mcpServer.mcpAuth, mcpServer.handleMcpRequest);
+
 // Admin Dashboard HTML UI (public — auth handled by JS API calls)
 app.get("/admin/dashboard", (req, res) => {
   const dashboardPath = path.join(__dirname, "admin-dashboard.html");

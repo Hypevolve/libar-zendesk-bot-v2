@@ -61,9 +61,11 @@ function serializeCounters() {
   };
 }
 
+// .unref() — timer i dalje okida dok app radi (server drži proces živim), ali
+// ne sprječava uredan izlazak procesa kad ostane jedini handle (npr. u testovima).
 setInterval(() => {
   supabaseMetrics.save(serializeCounters());
-}, 30000);
+}, 30000).unref();
 
 // ─── Public API ────────────────────────────────────────────────
 

@@ -89,6 +89,9 @@ module.exports = {
 
   // --- Security ---
   ADMIN_TOKEN: envStr("ADMIN_TOKEN"),
+  // Bearer token za MCP endpoint (POST /mcp). Drži odvojeno od ADMIN_TOKEN-a.
+  // Ako nije postavljen, /mcp je onemogućen (503) i toolovi se nikad ne izlažu.
+  MCP_TOKEN: envStr("MCP_TOKEN"),
   RATE_LIMIT_MAX: envInt("RATE_LIMIT_MAX", 30),
   EMBED_ALLOWED_ORIGINS: envStr("EMBED_ALLOWED_ORIGINS")
     .split(",").map(s => s.trim()).filter(Boolean),
