@@ -232,9 +232,16 @@
     #email-prompt {
       display: none; padding: 16px 20px;
       border-top: 1px solid var(--border);
-      background: var(--bg); gap: 10px; align-items: flex-end;
+      background: var(--bg); gap: 10px; align-items: flex-end; flex-wrap: wrap;
     }
     #email-prompt.visible { display: flex; }
+    #email-prompt #email-skip {
+      flex-basis: 100%; padding: 4px 0; margin: 0;
+      background: none; color: var(--text-muted, #888);
+      font-size: 13px; font-weight: 500; text-align: center;
+      text-decoration: underline; cursor: pointer;
+    }
+    #email-prompt #email-skip:hover { background: none; color: var(--accent); }
     #email-prompt input {
       flex: 1; padding: 12px 14px;
       border: 1px solid var(--border-light); border-radius: var(--radius-sm);
@@ -325,8 +332,9 @@
     </div>
 
     <div id="email-prompt">
-      <input id="email-input" type="email" placeholder="Vaša email adresa…">
+      <input id="email-input" type="email" placeholder="Vaša email adresa… (nije obavezno)">
       <button id="email-submit">Pošalji</button>
+      <button id="email-skip" type="button">Nastavi bez e-maila</button>
     </div>
   </div>
 
@@ -348,6 +356,7 @@
     const emailPrompt = $("#email-prompt");
     const emailInput = $("#email-input");
     const emailSubmit = $("#email-submit");
+    const emailSkip = $("#email-skip");
 
     function formatTime() {
       return new Date().toLocaleTimeString("hr-HR", { hour: "2-digit", minute: "2-digit" });
@@ -446,6 +455,7 @@
       const msgText = message;
 
       input.value = "";
+      emailPrompt.classList.remove("visible");
       addMessage("user", message);
       typingEl.classList.add("visible");
       $("#msg-send").disabled = true;
@@ -473,14 +483,13 @@
             if (m.role === "assistant") addMessage(m.role, m.content);
           });
 
+          // Email is optional — show the field but never block the chat. The
+          // visitor can type their email OR just keep chatting.
           if (data.needEmail) {
-            input.disabled = true;
-            $("#msg-send").disabled = true;
             emailPrompt.classList.add("visible");
             emailInput.focus();
-          } else {
-            $("#msg-send").disabled = false;
           }
+          $("#msg-send").disabled = false;
           return;
         } catch (e) {
           typingEl.classList.remove("visible");
@@ -506,10 +515,10 @@
         if (last) addMessage("assistant", last.content, data.links);
 
         if (data.needEmail) {
-          input.disabled = true;
-          $("#msg-send").disabled = true;
           emailPrompt.classList.add("visible");
           emailInput.focus();
+        } else {
+          emailPrompt.classList.remove("visible");
         }
       } catch (e) {
         typingEl.classList.remove("visible");
@@ -564,6 +573,15 @@
     emailSubmit.addEventListener("click", submitEmail);
     emailInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") { e.preventDefault(); submitEmail(); }
+    });
+
+    // "Continue without email" — hide the optional field and let the visitor keep
+    // chatting. The next message proceeds without blocking on an email.
+    emailSkip.addEventListener("click", () => {
+      emailPrompt.classList.remove("visible");
+      $("#msg-input").disabled = false;
+      $("#msg-send").disabled = false;
+      $("#msg-input").focus();
     });
 
     function endChat() {

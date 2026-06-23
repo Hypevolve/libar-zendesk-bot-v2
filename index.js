@@ -45,6 +45,7 @@ const tokenBudget = require("./services/tokenBudgetService");
 const { normalizeForComparison } = require("./services/textUtils");
 const { buildDirectWebsiteLinks } = require("./services/siteLinkService");
 const { detectEscalationIntent } = require("./services/intentEscalationService");
+const { isLikelyEmail, buildSelfServiceFallback, resolveAnonymousEscalation } = require("./services/escalationFlowService");
 
 // ─── Express Setup ────────────────────────────────────────────
 
@@ -95,6 +96,7 @@ function createSession(opts) {
     requesterName: opts.requesterName || "",
     requesterEmail: opts.requesterEmail || "",
     emailIsPlaceholder: opts.emailIsPlaceholder || false,
+    emailAsked: false,
     pendingEscalation: null,
     messages: opts.messages || [],
     conversationState: { tone: "ai-active", badge: "AI Asistent", subtitle: "" },
@@ -245,26 +247,13 @@ function isClosedTicketStatus(status) {
 
 // ─── AI Outcome Resolution ───────────────────────────────────
 
-function interceptEscalationIfPlaceholder(session, outcome) {
-  if (outcome.type === "escalate_no_answer" && session.emailIsPlaceholder) {
-    session.pendingEscalation = { ...outcome };
-    return {
-      type: "need_email",
-      customerMessage: "Kako bih Vas mogao proslijediti našem agentu, molim Vas da navedete Vašu email adresu.",
-      stateTag: "awaiting_email", reason: "email_needed_before_escalation",
-      links: [], extraTags: []
-    };
-  }
-  return outcome;
-}
-
 async function resolveAutomatedOutcome(session, userMessage, opts = {}) {
   const start = Date.now();
   metricsService.increment("totalRequests");
 
   try {
     const result = await _resolveAutomatedOutcome(session, userMessage, opts);
-    result.outcome = interceptEscalationIfPlaceholder(session, result.outcome);
+    result.outcome = resolveAnonymousEscalation(session, result.outcome);
     return result;
   } catch (error) {
     log.error("automated_outcome_failed", { message: error.message, stack: error.stack });
@@ -278,7 +267,7 @@ async function resolveAutomatedOutcome(session, userMessage, opts = {}) {
     };
     return {
       knowledge: null,
-      outcome: interceptEscalationIfPlaceholder(session, fallbackOutcome)
+      outcome: resolveAnonymousEscalation(session, fallbackOutcome)
     };
   }
 }
@@ -496,18 +485,17 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
 
   const links = buildDirectWebsiteLinks(userMessage, { knowledge });
 
+  // When we have no grounded answer, do NOT hand every unknown question to a human
+  // (on web chat that demanded an email and looped). Give a helpful self-service
+  // reply instead. Genuine human-need cases (complaints, returns, legal, attachments)
+  // are escalated earlier by the escalation gates above, so they never reach here.
   let outcome = customerMessage
     ? {
         type: "safe_answer", customerMessage, stateTag: "ai_active",
         reason: "grounded_answer", source: knowledge ? "knowledge" : "reference_facts",
         links, extraTags: []
       }
-    : {
-        type: "escalate_no_answer",
-        customerMessage: "Hvala na pitanju! Proslijedit ću vaš upit našem timu koji će vam se javiti.",
-        stateTag: "awaiting_human", reason: "no_grounded_answer",
-        links, extraTags: ["ai_escalated"]
-      };
+    : buildSelfServiceFallback(userMessage);
 
   metricsService.recordDecision(outcome.type);
   metricsService.recordLatency(Date.now() - start);
@@ -661,6 +649,21 @@ app.post("/api/chat/message", rateLimiter, inputSanitizer, chatUpload.array("att
       });
     }
 
+    // Visitor typed their email straight into the chat box after we asked for one
+    // (instead of using the dedicated email field). Capture it here so it is not
+    // treated as a new question and answered/escalated again. Fixes the loop where
+    // a valid email pasted into the chat was ignored.
+    if (!files.length && session.emailIsPlaceholder && session.emailAsked && isLikelyEmail(message)) {
+      const emailMatch = message.match(/[^\s@]+@[^\s@]+\.[^\s@]+/);
+      await applyEmailToSession(session, emailMatch ? emailMatch[0] : message);
+      return res.status(200).json({
+        success: true, ticketId: session.ticketId,
+        messages: session.messages, conversationState: session.conversationState,
+        needEmail: false,
+        links: []
+      });
+    }
+
     let uploadTokens = [];
     if (files.length) {
       try {
@@ -784,6 +787,85 @@ app.post("/api/chat/restore", async (req, res) => {
   }
 });
 
+// ─── Email capture (shared by the email field and in-chat detection) ─────────
+
+/**
+ * Apply a customer-provided email to a session: persist it, mirror it into the
+ * Zendesk ticket/requester, and flush any pending escalation. Shared by the
+ * dedicated email field (/api/chat/update-profile) and by in-chat detection in
+ * /api/chat/message (a visitor who types their email straight into the chat box).
+ * Returns the pending escalation message, if one was flushed.
+ */
+async function applyEmailToSession(session, email) {
+  const cleanEmail = String(email).trim().toLowerCase();
+  session.requesterEmail = cleanEmail;
+  session.emailIsPlaceholder = false;
+
+  // Post email as public comment so agent can see it in the conversation
+  try {
+    await zendeskService.addCustomerMessageToTicket(session.ticketId, session.requesterId, `Email adresa korisnika: ${cleanEmail}`);
+    markMessageProcessed(session.ticketId, `Email adresa korisnika: ${cleanEmail}`);
+  } catch (err) {
+    log.warn("email_comment_failed", { ticketId: session.ticketId, message: err.message });
+  }
+  session.messages.push({ role: "user", content: cleanEmail, ts: new Date().toISOString() });
+
+  // Update Zendesk requester — handle duplicate email by switching ticket requester
+  try {
+    const existingUsers = await zendeskService.searchUsersByEmail(cleanEmail);
+    log.info("update_profile_users", { ticketId: session.ticketId, count: existingUsers.length, sessionRequesterId: session.requesterId });
+    if (existingUsers.length > 0) {
+      const existing = existingUsers[0];
+      log.info("update_profile_existing", { ticketId: session.ticketId, existingId: existing.id, existingEmail: existing.email, sessionRequesterId: session.requesterId });
+      if (String(existing.id) !== String(session.requesterId)) {
+        try {
+          await zendeskService.updateTicketRequester(session.ticketId, existing.id);
+          const oldId = session.requesterId;
+          session.requesterId = existing.id;
+          log.info("ticket_requester_switched", { ticketId: session.ticketId, oldRequesterId: oldId, newRequesterId: existing.id, email: cleanEmail });
+        } catch (switchErr) {
+          log.warn("ticket_requester_switch_failed", { ticketId: session.ticketId, existingId: existing.id, message: switchErr.message });
+          await zendeskService.addInternalNote(session.ticketId, `Korisnik je naveo email: ${cleanEmail}. Prebacivanje requestera nije uspjelo: ${switchErr.message}`);
+        }
+      } else {
+        log.info("ticket_requester_already_correct", { ticketId: session.ticketId, requesterId: session.requesterId });
+      }
+    } else if (session.requesterId) {
+      log.info("update_profile_no_existing", { ticketId: session.ticketId, requesterId: session.requesterId });
+      await zendeskService.updateRequester(session.requesterId, { name: session.requesterName, email: session.requesterEmail });
+    }
+  } catch (err) {
+    log.warn("update_requester_failed", { requesterId: session.requesterId, email: cleanEmail, message: err.message });
+    try {
+      await zendeskService.addInternalNote(session.ticketId, `Korisnik je naveo email: ${cleanEmail}. Ažuriranje requester profila nije uspjelo: ${err.message}`);
+    } catch (noteErr) {
+      log.warn("email_note_failed", { ticketId: session.ticketId, message: noteErr.message });
+    }
+  }
+
+  let pendingMessage = null;
+  if (session.pendingEscalation) {
+    const escalation = session.pendingEscalation;
+    session.pendingEscalation = null;
+
+    try {
+      await zendeskService.addInternalNote(session.ticketId, `[ESKALACIJA] ${escalation.reason}`);
+      await zendeskService.updateConversationState(session.ticketId, escalation.stateTag, escalation.extraTags || []);
+      await zendeskService.addBotReplyToTicket(session.ticketId, escalation.customerMessage, { channelType: "web_chat" });
+    } catch (err) {
+      log.warn("zendesk_write_degraded", { ticketId: session.ticketId, message: err.message });
+    }
+
+    session.messages.push({ role: "assistant", content: escalation.customerMessage, ts: new Date().toISOString() });
+    session.conversationState = { tone: "human-active", badge: "Agent", subtitle: "" };
+    pendingMessage = escalation.customerMessage;
+  }
+
+  session.updatedAt = new Date().toISOString();
+  scheduleRuntimePersist();
+  return pendingMessage;
+}
+
 // ─── POST /api/chat/update-profile ───────────────────────────
 
 app.post("/api/chat/update-profile", rateLimiter, inputSanitizer, async (req, res) => {
@@ -796,73 +878,7 @@ app.post("/api/chat/update-profile", rateLimiter, inputSanitizer, async (req, re
   }
 
   try {
-    const cleanEmail = String(email).trim().toLowerCase();
-    session.requesterEmail = cleanEmail;
-    session.emailIsPlaceholder = false;
-
-    // Post email as public comment so agent can see it in the conversation
-    try {
-      await zendeskService.addCustomerMessageToTicket(session.ticketId, session.requesterId, `Email adresa korisnika: ${cleanEmail}`);
-      markMessageProcessed(session.ticketId, `Email adresa korisnika: ${cleanEmail}`);
-    } catch (err) {
-      log.warn("email_comment_failed", { ticketId: session.ticketId, message: err.message });
-    }
-    session.messages.push({ role: "user", content: cleanEmail, ts: new Date().toISOString() });
-
-    // Update Zendesk requester — handle duplicate email by switching ticket requester
-    try {
-      const existingUsers = await zendeskService.searchUsersByEmail(cleanEmail);
-      log.info("update_profile_users", { ticketId: session.ticketId, count: existingUsers.length, sessionRequesterId: session.requesterId });
-      if (existingUsers.length > 0) {
-        const existing = existingUsers[0];
-        log.info("update_profile_existing", { ticketId: session.ticketId, existingId: existing.id, existingEmail: existing.email, sessionRequesterId: session.requesterId });
-        if (String(existing.id) !== String(session.requesterId)) {
-          try {
-            await zendeskService.updateTicketRequester(session.ticketId, existing.id);
-            const oldId = session.requesterId;
-            session.requesterId = existing.id;
-            log.info("ticket_requester_switched", { ticketId: session.ticketId, oldRequesterId: oldId, newRequesterId: existing.id, email: cleanEmail });
-          } catch (switchErr) {
-            log.warn("ticket_requester_switch_failed", { ticketId: session.ticketId, existingId: existing.id, message: switchErr.message });
-            await zendeskService.addInternalNote(session.ticketId, `Korisnik je naveo email: ${cleanEmail}. Prebacivanje requestera nije uspjelo: ${switchErr.message}`);
-          }
-        } else {
-          log.info("ticket_requester_already_correct", { ticketId: session.ticketId, requesterId: session.requesterId });
-        }
-      } else if (session.requesterId) {
-        log.info("update_profile_no_existing", { ticketId: session.ticketId, requesterId: session.requesterId });
-        await zendeskService.updateRequester(session.requesterId, { name: session.requesterName, email: session.requesterEmail });
-      }
-    } catch (err) {
-      log.warn("update_requester_failed", { requesterId: session.requesterId, email: cleanEmail, message: err.message });
-      try {
-        await zendeskService.addInternalNote(session.ticketId, `Korisnik je naveo email: ${cleanEmail}. Ažuriranje requester profila nije uspjelo: ${err.message}`);
-      } catch (noteErr) {
-        log.warn("email_note_failed", { ticketId: session.ticketId, message: noteErr.message });
-      }
-    }
-
-    let pendingMessage = null;
-    if (session.pendingEscalation) {
-      const escalation = session.pendingEscalation;
-      session.pendingEscalation = null;
-
-      try {
-        await zendeskService.addInternalNote(session.ticketId, `[ESKALACIJA] ${escalation.reason}`);
-        await zendeskService.updateConversationState(session.ticketId, escalation.stateTag, escalation.extraTags || []);
-        await zendeskService.addBotReplyToTicket(session.ticketId, escalation.customerMessage, { channelType: "web_chat" });
-      } catch (err) {
-        log.warn("zendesk_write_degraded", { ticketId: session.ticketId, message: err.message });
-      }
-
-      session.messages.push({ role: "assistant", content: escalation.customerMessage, ts: new Date().toISOString() });
-      session.conversationState = { tone: "human-active", badge: "Agent", subtitle: "" };
-      pendingMessage = escalation.customerMessage;
-    }
-
-    session.updatedAt = new Date().toISOString();
-    scheduleRuntimePersist();
-
+    const pendingMessage = await applyEmailToSession(session, email);
     return res.status(200).json({
       success: true, updated: true,
       requesterEmail: session.requesterEmail,
