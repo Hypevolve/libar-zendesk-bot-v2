@@ -35,3 +35,10 @@ Thumbs.db
 # Test reports
 tests/e2e-report.json
 .env.render
+
+# Lokalni setup fajlovi (sadrže tajne) - nikad u git
+*.local.md
+*.local.txt
+
+# Interna dizajn dokumentacija (specovi) - samo lokalno
+docs/specs/
