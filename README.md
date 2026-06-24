@@ -143,8 +143,15 @@ Admin panel dostupan na `/admin/dashboard`. Prikazuje:
 - **Cache hit rate** — učinkovitost cachea
 - **Posljednji razgovori** — pregled svih upita i odluka
 - **Kill switch** — uključivanje/isključivanje bota jednim klikom
+- **Analitika ticketa** — pravi podaci iz Zendeska: najčešće teme i rupe u knowledge baseu (vidi [docs/analytics.md](docs/analytics.md))
 
 **Pristup**: Unesi `ADMIN_TOKEN` u login formu.
+
+## MCP (Claude integracija)
+
+Bot je izložen kao MCP server na `POST /mcp` — žive statistike, izvještaji, analitika
+ticketa i upravljanje botom iz Claude aplikacije i Claude Code-a. Vidi
+[docs/mcp.md](docs/mcp.md) i [docs/analytics.md](docs/analytics.md).
 
 ---
 

@@ -16,12 +16,17 @@ Svaki tool samo delegira na postojeći servis - nema duplikata logike.
 | `set_bot_state` | control | Upali/ugasi bota (kill switch) bez redeploya |
 | `sync_vector` | control | Ručno pokreni sync knowledge baze iz OneDrivea |
 | `weekly_report` | report | Sažetak: volumen, eskalacije, odluke, latencija, trošak, top pitanja |
-| `top_questions` | report | Najčešća pitanja iz zadnjih do 200 traceova |
+| `top_questions` | report | Najčešće teme/pitanja. Prave teme iz Zendesk analize ako je Supabase konfiguriran; inače fallback na zadnjih do 200 traceova |
 | `cost_breakdown` | report | Procijenjeni trošak LLM-a u USD (cijene zrcale admin dashboard) |
+| `analyze_tickets` | analitika | Ručno pokreni analizu stvarnih Zendesk ticketa (LLM analiza → Supabase). Vrati sažetak (analizirano, KB rupe, greške) |
+| `kb_gaps` | analitika | Rupe u knowledge baseu iz analiziranih ticketa: teme po učestalosti, primjeri, predloženi KB naslovi |
+| `conversation_insights` | analitika | Pregled analiziranih konverzacija: sažetak, top teme, zadnji razgovori |
 
-> Napomena o povijesti: `weekly_report`/`top_questions` rade nad in-memory trace
-> bufferom (do 200 zadnjih interakcija) + kumulativnim brojačima od zadnjeg
-> deploya. Pravu povijest po danima dodaje budući dnevni snapshot u Supabase.
+> Analitika ticketa (`analyze_tickets`, `kb_gaps`, `conversation_insights` i pravi
+> `top_questions`) radi nad **stvarnim Zendesk ticketima** spremljenima u Supabase.
+> Detalji: [analytics.md](analytics.md). `weekly_report` runtime brojači su i dalje
+> kumulativni od zadnjeg deploya. Bez Supabase konfiguracije analitika-toolovi vraćaju
+> jasnu "not configured" poruku.
 
 ## Sigurnost
 
