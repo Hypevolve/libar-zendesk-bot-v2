@@ -112,6 +112,27 @@ test("run() nastavlja kad LLM padne na jednom ticketu", async () => {
   assert.strictEqual(res.analyzed, 1);
 });
 
+test("run() preskače obrisane tickete (status deleted) i 404, ne broji kao greške", async () => {
+  const store = mockStore();
+  const deps = {
+    store,
+    listTicketsSince: async () => ({ tickets: [
+      { id: 1, status: "deleted", subject: "a" },
+      { id: 2, status: "solved", subject: "b" },
+      { id: 3, status: "open", subject: "c" }
+    ], nextCursorISO: "2026-06-03T00:00:00Z" }),
+    getPublicTicketComments: async (id) => {
+      if (id === 3) throw new Error("getPublicTicketComments failed (404).");
+      return [{ body: "x" }];
+    },
+    llm: async () => JSON.stringify({ topic: "ok" })
+  };
+  const res = await svc.run({}, deps);
+  assert.strictEqual(res.analyzed, 1);  // samo ticket 2
+  assert.strictEqual(res.skipped, 2);   // 1 deleted + 1 (404)
+  assert.strictEqual(res.errors, 0);
+});
+
 test("run() vraća ok:false kad Supabase nije konfiguriran", async () => {
   const res = await svc.run({}, { store: { isConfigured: () => false } });
   assert.strictEqual(res.ok, false);

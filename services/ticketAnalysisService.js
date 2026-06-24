@@ -161,6 +161,8 @@ async function run({ sinceDays, maxTickets } = {}, deps = {}) {
 
   let analyzed = 0, skipped = 0, kbGaps = 0, errors = 0;
   for (const ticket of tickets) {
+    // Incremental Export vraća i obrisane tickete - njima komentari ne postoje (404).
+    if (ticket.status === "deleted") { skipped += 1; continue; }
     try {
       const comments = await getComments(ticket.id);
       const row = await analyzeOne(ticket, comments, deps);
@@ -168,6 +170,8 @@ async function run({ sinceDays, maxTickets } = {}, deps = {}) {
       analyzed += 1;
       if (row.is_kb_gap) kbGaps += 1;
     } catch (error) {
+      // 404 = ticket obrisan/nedostupan → preskoči, nije prava greška.
+      if (/\(404\)/.test(error.message || "")) { skipped += 1; continue; }
       errors += 1;
       log.warn("ticket_analysis_failed", { ticketId: ticket.id, message: error.message });
     }
