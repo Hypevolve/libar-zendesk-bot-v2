@@ -127,8 +127,8 @@ function buildServer() {
   server.registerTool(
     "get_traces",
     {
-      title: "AI traceovi",
-      description: "Vrati zadnjih N AI traceova (input, retrieval, odluka, latencija) i agregiranu trace statistiku. Korisno za uvid u zadnje razgovore.",
+      title: "AI traceovi (niskorazinska dijagnostika)",
+      description: "Niskorazinski dijagnostički traceovi AI pipelinea (input, retrieval, odluka, latencija). Drži se u memoriji i može biti prazan nakon restarta / na free tieru. NIJE popis razgovora s kupcima - za stvarne razgovore i tickete koristi 'recent_conversations'.",
       inputSchema: { limit: z.number().int().min(1).max(200).optional() }
     },
     async ({ limit }) =>
@@ -290,7 +290,7 @@ function buildServer() {
     "recent_conversations",
     {
       title: "Zadnji razgovori (pravi Zendesk ticketi)",
-      description: "Zadnji analizirani Zendesk razgovori sa stvarnim pitanjem kupca, odgovorom, temom, tko je riješio i poveznicom na ticket.",
+      description: "POPIS POSLJEDNJIH/ZADNJIH RAZGOVORA s kupcima iz stvarnih Zendesk ticketa: pitanje kupca, odgovor, tema, tko je riješio (bot/agent) i poveznica na ticket. Koristi OVO kad korisnik traži popis razgovora, zadnje razgovore, tickete ili konverzacije.",
       inputSchema: { limit: z.number().int().min(1).max(100).optional() }
     },
     async ({ limit }) => {
