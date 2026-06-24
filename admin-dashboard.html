@@ -497,6 +497,16 @@ tbody tr:hover td { background: var(--bg); }
     transition-duration: 0.001ms !important;
   }
 }
+/* Analitika ticketa */
+.an-stat { background: var(--sidebar-hover, rgba(0,0,0,0.03)); border: 1px solid var(--sidebar-border, rgba(0,0,0,0.07)); border-radius: var(--r, 10px); padding: 12px 14px; }
+.an-val { font-size: 22px; font-weight: 700; line-height: 1.1; }
+.an-lbl { font-size: 12px; color: var(--muted, #888); margin-top: 4px; }
+.an-list { list-style: none; margin: 0; padding: 0; }
+.an-list li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--sidebar-border, rgba(0,0,0,0.07)); font-size: 13px; }
+.an-list li .an-count { font-weight: 700; color: var(--brand, #f6ad01); white-space: nowrap; }
+.an-list li .an-sugg { display: block; font-size: 11px; color: var(--muted, #888); margin-top: 2px; }
+.an-empty { color: var(--muted, #888); }
+@media (max-width: 720px) { #an-cols { grid-template-columns: 1fr !important; } }
 </style>
 </head>
 <body>
@@ -539,6 +549,10 @@ tbody tr:hover td { background: var(--bg); }
     <button class="sb-item" onclick="navTo(this,'sec-traces')">
       <svg aria-hidden="true" focusable="false" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       Razgovori
+    </button>
+    <button class="sb-item" onclick="navTo(this,'sec-analytics')">
+      <svg aria-hidden="true" focusable="false" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+      Analitika ticketa
     </button>
 
     <div class="sb-section">Upravljanje</div>
@@ -748,6 +762,45 @@ tbody tr:hover td { background: var(--bg); }
       </div>
     </div>
 
+    <!-- Analitika ticketa (pravi Zendesk podaci) -->
+    <div class="card" id="sec-analytics" style="margin-top: 20px;">
+      <div class="card-hd">
+        <div>
+          <div class="card-title" role="heading" aria-level="2">
+            <svg aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+            Analitika ticketa
+          </div>
+          <div class="card-sub">Pravi podaci iz Zendeska (analizirano LLM-om) · teme i rupe u knowledge baseu</div>
+        </div>
+        <div class="sync-actions">
+          <button class="sync-btn primary" id="an-btn" onclick="analyzeTickets()">
+            <svg aria-hidden="true" focusable="false" width="13" height="13" id="an-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10"/></svg>
+            Analiziraj tickete
+          </button>
+        </div>
+      </div>
+      <div class="sync-res" id="an-sync-res" role="status" aria-live="polite"></div>
+
+      <!-- Sažetak -->
+      <div id="an-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin:14px 0;">
+        <div class="an-stat"><div class="an-val" id="an-total">—</div><div class="an-lbl">Analizirano</div></div>
+        <div class="an-stat"><div class="an-val" id="an-bot">—</div><div class="an-lbl">Bot riješio</div></div>
+        <div class="an-stat"><div class="an-val" id="an-human">—</div><div class="an-lbl">Čovjek riješio</div></div>
+        <div class="an-stat"><div class="an-val" id="an-gaps" style="color:var(--red)">—</div><div class="an-lbl">KB rupe</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;" id="an-cols">
+        <div>
+          <div class="card-sub" style="margin-bottom:8px;font-weight:600;">Najčešće teme</div>
+          <ul id="an-top" class="an-list"><li class="an-empty">—</li></ul>
+        </div>
+        <div>
+          <div class="card-sub" style="margin-bottom:8px;font-weight:600;">Rupe u knowledge baseu</div>
+          <ul id="an-gaps-list" class="an-list"><li class="an-empty">—</li></ul>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /content -->
 </main><!-- /main -->
 
@@ -813,6 +866,7 @@ async function saveToken() {
     ls.classList.add('fade-out');
     setTimeout(() => ls.classList.add('hidden'), 300);
     loadAll();
+    loadAnalytics();
     startPoll();
   } catch(e) {
     err.textContent = e.message;
@@ -1037,6 +1091,64 @@ async function triggerSync(force) {
   }
 }
 
+// ─── Analitika ticketa (pravi Zendesk podaci) ──────────────
+function renderAnalytics(summary, top, gaps) {
+  if (summary) {
+    $('an-total').textContent = fmt(summary.total || 0);
+    const hb = summary.byHandledBy || {};
+    $('an-bot').textContent = fmt(hb.bot || 0);
+    $('an-human').textContent = fmt(hb.human || 0);
+    $('an-gaps').textContent = fmt(summary.kbGaps || 0);
+  }
+  const topEl = $('an-top');
+  if (top && top.length) {
+    topEl.innerHTML = top.map(t => `<li><span>${esc(t.topic)}</span><span class="an-count">${t.count}</span></li>`).join('');
+  } else { topEl.innerHTML = '<li class="an-empty">Nema podataka — pokreni „Analiziraj tickete"</li>'; }
+  const gapsEl = $('an-gaps-list');
+  if (gaps && gaps.length) {
+    gapsEl.innerHTML = gaps.map(g => `<li><span>${esc(g.topic)}${g.suggested ? `<span class="an-sugg">Prijedlog: ${esc(g.suggested)}</span>` : ''}</span><span class="an-count">${g.count}</span></li>`).join('');
+  } else { gapsEl.innerHTML = '<li class="an-empty">Nema detektiranih rupa</li>'; }
+}
+
+async function loadAnalytics() {
+  try {
+    const [s, t, g] = await Promise.all([
+      api('/admin/analytics/summary').then(d => d.summary).catch(()=>null),
+      api('/admin/analytics/top-questions?limit=10').then(d => d.topQuestions).catch(()=>null),
+      api('/admin/analytics/kb-gaps?limit=10').then(d => d.kbGaps).catch(()=>null),
+    ]);
+    renderAnalytics(s, t, g);
+  } catch(e) { /* analitika je sekundarna — tiho */ }
+}
+
+async function analyzeTickets() {
+  const btn = $('an-btn'), icon = $('an-icon'), res = $('an-sync-res');
+  btn.disabled = true; icon.classList.add('spin');
+  res.className = 'sync-res show'; res.textContent = 'Analiza ticketa u tijeku... (može potrajati)';
+  try {
+    const d = await api('/admin/analytics/sync', { method:'POST', body: JSON.stringify({}) });
+    const r = d.result || {};
+    if (r.ok === false) {
+      res.className = 'sync-res show err';
+      res.textContent = 'Supabase nije konfiguriran (postavi SUPABASE_URL/KEY i primijeni migraciju ticket_analysis.sql).';
+    } else {
+      res.className = 'sync-res show ok';
+      res.innerHTML = `<div class="sync-stat">✓ Analizirano: <strong>${r.analyzed??0}</strong></div>
+        <div class="sync-stat">⏭ Preskočeno: <strong>${r.skipped??0}</strong></div>
+        <div class="sync-stat">🔍 KB rupe: <strong>${r.kbGaps??0}</strong></div>
+        <div class="sync-stat">⚠ Greške: <strong>${r.errors??0}</strong></div>`;
+      toast(`✓ Analizirano ${r.analyzed??0} ticketa`, 'ok');
+      await loadAnalytics();
+    }
+  } catch(e) {
+    res.className = 'sync-res show err';
+    res.textContent = `Greška: ${e.message}`;
+    toast('Greška pri analizi', 'err');
+  } finally {
+    btn.disabled = false; icon.classList.remove('spin');
+  }
+}
+
 // ─── Load All ──────────────────────────────────────
 async function loadAll() {
   const icon = $('refresh-icon');
@@ -1094,7 +1206,7 @@ const spyObserver = new IntersectionObserver((entries) => {
     if (btn && !btn.classList.contains('active')) setActiveNav(btn);
   }
 }, { rootMargin: '-45% 0px -50% 0px' });
-['sec-metrics', 'sec-bot', 'sec-kb', 'sec-traces'].forEach(id => {
+['sec-metrics', 'sec-bot', 'sec-kb', 'sec-traces', 'sec-analytics'].forEach(id => {
   const el = $(id); if (el) spyObserver.observe(el);
 });
 
@@ -1104,6 +1216,7 @@ if (saved) {
   api('/admin/metrics').then(() => {
     $('login-screen').classList.add('hidden');
     loadAll();
+    loadAnalytics();
     startPoll();
   }).catch(() => {});
 }
