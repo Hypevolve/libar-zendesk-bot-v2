@@ -13,6 +13,12 @@ const { InMemoryTransport } = require("@modelcontextprotocol/sdk/inMemory.js");
 
 const env = require("../config/env");
 const botStateService = require("../services/botStateService");
+
+// Testovi ne smiju gađati Supabasea: očisti env da analyticsStore.isConfigured()
+// bude false → reporti idu na in-memory fallback, novi toolovi vraćaju not-configured.
+env.SUPABASE_URL = "";
+env.SUPABASE_SERVICE_ROLE_KEY = "";
+
 const { buildServer, mcpAuth, handleMcpRequest } = require("../mcp/server");
 
 async function connectedClient() {
@@ -37,8 +43,9 @@ test("svi očekivani toolovi su registrirani", async () => {
   const { tools } = await client.listTools();
   const names = tools.map((t) => t.name).sort();
   assert.deepStrictEqual(names, [
-    "cost_breakdown", "get_bot_state", "get_metrics", "get_traces",
-    "set_bot_state", "sync_vector", "top_questions", "weekly_report"
+    "analyze_tickets", "conversation_insights", "cost_breakdown", "get_bot_state",
+    "get_metrics", "get_traces", "kb_gaps", "set_bot_state", "sync_vector",
+    "top_questions", "weekly_report"
   ]);
   await close();
 });
@@ -92,14 +99,41 @@ test("weekly_report ima volume/escalations/cost sekcije", async () => {
   const { client, close } = await connectedClient();
   const data = parse(await client.callTool({ name: "weekly_report", arguments: {} }));
   assert.ok(data.volume && data.escalations && data.cost);
+  assert.ok(Array.isArray(data.topQuestions.topQuestions));
+  await close();
+});
+
+test("top_questions vraća izvor + niz (fallback bez Supabasea)", async () => {
+  const { client, close } = await connectedClient();
+  const data = parse(await client.callTool({ name: "top_questions", arguments: { limit: 5 } }));
+  assert.strictEqual(data.source, "recent-traces");
   assert.ok(Array.isArray(data.topQuestions));
   await close();
 });
 
-test("top_questions vraća niz", async () => {
+// ─── Pravi-podaci toolovi (bez Supabasea → not-configured) ─────
+
+test("kb_gaps bez Supabasea vraća not-configured", async () => {
   const { client, close } = await connectedClient();
-  const data = parse(await client.callTool({ name: "top_questions", arguments: { limit: 5 } }));
-  assert.ok(Array.isArray(data.topQuestions));
+  const data = parse(await client.callTool({ name: "kb_gaps", arguments: {} }));
+  assert.strictEqual(data.ok, false);
+  assert.strictEqual(data.reason, "supabase_not_configured");
+  await close();
+});
+
+test("conversation_insights bez Supabasea vraća not-configured", async () => {
+  const { client, close } = await connectedClient();
+  const data = parse(await client.callTool({ name: "conversation_insights", arguments: {} }));
+  assert.strictEqual(data.ok, false);
+  assert.strictEqual(data.reason, "supabase_not_configured");
+  await close();
+});
+
+test("analyze_tickets bez Supabasea vraća not-configured", async () => {
+  const { client, close } = await connectedClient();
+  const data = parse(await client.callTool({ name: "analyze_tickets", arguments: {} }));
+  assert.strictEqual(data.ok, false);
+  assert.strictEqual(data.reason, "supabase_not_configured");
   await close();
 });
 

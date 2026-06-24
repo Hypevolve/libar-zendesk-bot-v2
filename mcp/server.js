@@ -19,6 +19,8 @@ const metricsService = require("../services/metricsService");
 const tracingService = require("../services/tracingService");
 const botStateService = require("../services/botStateService");
 const knowledgeService = require("../services/knowledgeService");
+const analyticsStore = require("../services/analyticsStore");
+const ticketAnalysisService = require("../services/ticketAnalysisService");
 const { normalizeForComparison } = require("../services/textUtils");
 
 // Cijene po 1M tokena (USD) — zrcali admin-dashboard.html da prikaz bude isti.
@@ -170,6 +172,7 @@ function buildServer() {
     async () => {
       const m = metricsService.getMetrics();
       const traceStats = tracingService.getTraceStats();
+      const tq = await resolveTopQuestions(10);
       return asText({
         scope: "cumulative-since-deploy + recent-trace-window",
         volume: {
@@ -190,7 +193,7 @@ function buildServer() {
         cost: computeCost(m.tokenUsage || {}),
         cache: m.cache,
         recentTraceStats: traceStats,
-        topQuestions: topQuestions(10)
+        topQuestions: tq
       });
     }
   );
@@ -199,10 +202,10 @@ function buildServer() {
     "top_questions",
     {
       title: "Najčešća pitanja",
-      description: "Najčešća korisnička pitanja/intenti iz zadnjih do 200 traceova (in-memory buffer), grupirana po normaliziranom tekstu.",
+      description: "Najčešća korisnička pitanja/teme. Kad je analitika ticketa (Supabase) konfigurirana, vraća PRAVE teme iz analiziranih Zendesk ticketa; inače fallback na zadnjih do 200 traceova (in-memory).",
       inputSchema: { limit: z.number().int().min(1).max(50).optional() }
     },
-    async ({ limit }) => asText({ topQuestions: topQuestions(limit || 10) })
+    async ({ limit }) => asText(await resolveTopQuestions(limit || 10))
   );
 
   server.registerTool(
@@ -215,7 +218,74 @@ function buildServer() {
     async () => asText(computeCost(metricsService.getMetrics().tokenUsage || {}))
   );
 
+  // ── Pravi Zendesk podaci (analitika ticketa) ────────────────
+  server.registerTool(
+    "analyze_tickets",
+    {
+      title: "Analiziraj Zendesk tickete",
+      description: "Ručno pokreni analizu stvarnih Zendesk ticketa (dohvat od zadnjeg cursora, LLM analiza teme/kvalitete/KB rupe, sprema u Supabase). Vrati sažetak (analizirano, KB rupe, greške).",
+      inputSchema: {
+        sinceDays: z.number().int().min(1).max(365).optional(),
+        maxTickets: z.number().int().min(1).max(1000).optional()
+      }
+    },
+    async ({ sinceDays, maxTickets }) => {
+      if (!analyticsStore.isConfigured()) return notConfigured();
+      const result = await ticketAnalysisService.run({ sinceDays, maxTickets });
+      log.info("analyze_tickets_via_mcp", { analyzed: result.analyzed, kbGaps: result.kbGaps, errors: result.errors });
+      return asText(result);
+    }
+  );
+
+  server.registerTool(
+    "kb_gaps",
+    {
+      title: "Rupe u knowledge baseu",
+      description: "Detektirane rupe u bazi znanja iz analiziranih ticketa: teme grupirane po učestalosti, broj, primjeri ticketa i predloženi KB naslovi.",
+      inputSchema: { limit: z.number().int().min(1).max(50).optional() }
+    },
+    async ({ limit }) => {
+      if (!analyticsStore.isConfigured()) return notConfigured();
+      return asText({ kbGaps: await analyticsStore.getKbGaps({ limit: limit || 10 }) });
+    }
+  );
+
+  server.registerTool(
+    "conversation_insights",
+    {
+      title: "Uvidi iz konverzacija",
+      description: "Pregled analiziranih Zendesk konverzacija: sažetak (ukupno, KB rupe, raspodjela po handled_by i kvaliteti), top teme i zadnji razgovori.",
+      inputSchema: { limit: z.number().int().min(1).max(50).optional() }
+    },
+    async ({ limit }) => {
+      if (!analyticsStore.isConfigured()) return notConfigured();
+      const [summary, topQuestionsReal, conversations] = await Promise.all([
+        analyticsStore.getSummary(),
+        analyticsStore.getTopQuestions({ limit: limit || 10 }),
+        analyticsStore.getConversations({ limit: limit || 10 })
+      ]);
+      return asText({ summary, topQuestions: topQuestionsReal, conversations });
+    }
+  );
+
   return server;
+}
+
+// Top pitanja: prave teme iz Supabasea kad je konfigurirano, inače in-memory traceovi.
+async function resolveTopQuestions(limit) {
+  if (analyticsStore.isConfigured()) {
+    const items = await analyticsStore.getTopQuestions({ limit });
+    return { source: "zendesk-analysis", topQuestions: items };
+  }
+  return { source: "recent-traces", topQuestions: topQuestions(limit) };
+}
+
+function notConfigured() {
+  return asText({
+    ok: false,
+    reason: "supabase_not_configured",
+    hint: "Postavi SUPABASE_URL i SUPABASE_SERVICE_ROLE_KEY te primijeni migrations/ticket_analysis.sql."
+  });
 }
 
 /**
