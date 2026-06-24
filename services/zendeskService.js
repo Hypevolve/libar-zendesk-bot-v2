@@ -461,6 +461,48 @@ async function getTicketSummary(ticketId) {
   }
 }
 
+// Čista funkcija: normalizira sirovi ticket iz Incremental API-ja u oblik za analizu.
+function normalizeIncrementalTicket(raw = {}) {
+  return {
+    id: raw.id,
+    subject: raw.subject || raw.raw_subject || "",
+    status: raw.status || null,
+    channel: raw.via?.channel || "unknown",
+    created_at: raw.created_at || null,
+    requester_id: raw.requester_id || null,
+    tags: Array.isArray(raw.tags) ? raw.tags : []
+  };
+}
+
+/**
+ * Dohvati tickete kreirane/izmijenjene od sinceISO preko Incremental Export API-ja.
+ * Paginirano; staje kad skupi maxTickets ili kad nema više stranica.
+ * Vraća { tickets: normalized[], nextCursorISO } (cursor = zadnji end_time kao ISO).
+ */
+async function listTicketsSince(sinceISO, { maxTickets = 150 } = {}) {
+  validateZendeskConfig();
+  const startTime = Math.floor(new Date(sinceISO || 0).getTime() / 1000) || 0;
+  const tickets = [];
+  let url = `/api/v2/incremental/tickets.json?start_time=${startTime}`;
+  let cursorUnix = startTime;
+  try {
+    while (url && tickets.length < maxTickets) {
+      const res = await zendeskClient.get(url);
+      const batch = Array.isArray(res.data?.tickets) ? res.data.tickets : [];
+      for (const raw of batch) {
+        tickets.push(normalizeIncrementalTicket(raw));
+        if (tickets.length >= maxTickets) break;
+      }
+      if (res.data?.end_time) cursorUnix = res.data.end_time;
+      // Incremental stream je gotov kad count < 1000 (Zendesk konvencija).
+      url = (res.data?.count >= 1000 && tickets.length < maxTickets) ? res.data.next_page : null;
+    }
+    return { tickets, nextCursorISO: new Date(cursorUnix * 1000).toISOString() };
+  } catch (error) {
+    throw buildApiError("listTicketsSince", error, { sinceISO });
+  }
+}
+
 function verifyWebhookToken(token = "") {
   if (!env.ZENDESK_WEBHOOK_TOKEN) return false;
   return String(token).trim() === env.ZENDESK_WEBHOOK_TOKEN;
@@ -545,5 +587,6 @@ module.exports = {
   setTicketTags, solveTicket, testZendeskTicketAccess, updateConversationState,
   updateRequester, updateTicketRequester,
   uploadAttachments, verifyWebhookToken,
-  isHumanHandled, isTicketHumanHandled, HUMAN_OWNED_TAGS
+  isHumanHandled, isTicketHumanHandled, HUMAN_OWNED_TAGS,
+  listTicketsSince, normalizeIncrementalTicket
 };
