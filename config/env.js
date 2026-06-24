@@ -42,6 +42,11 @@ module.exports = {
   OPENROUTER_SITE_URL: envStr("OPENROUTER_SITE_URL"),
   OPENROUTER_SITE_NAME: envStr("OPENROUTER_SITE_NAME", "Antikvarijat Libar Bot"),
 
+  // --- Analitika ticketa (analyze_tickets / KB rupe) ---
+  ANALYSIS_MODEL: envStr("ANALYSIS_MODEL", "google/gemini-2.5-flash"),
+  ANALYSIS_MAX_TICKETS: envInt("ANALYSIS_MAX_TICKETS", 150),
+  ANALYSIS_BACKFILL_DAYS: envInt("ANALYSIS_BACKFILL_DAYS", 90),
+
   // --- Embeddings ---
   EMBEDDING_PROVIDER: envStr("EMBEDDING_PROVIDER", "openrouter"),
   OPENROUTER_EMBEDDING_MODEL: envStr("OPENROUTER_EMBEDDING_MODEL", "openai/text-embedding-3-small"),
