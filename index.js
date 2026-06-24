@@ -1272,6 +1272,58 @@ app.post("/admin/sync/vector", requireAdmin, async (req, res) => {
   }
 });
 
+// ─── Analitika ticketa (pravi Zendesk podaci) ─────────────────
+// Čita iz Supabasea (analyticsStore); sync pokreće ticketAnalysisService.
+const analyticsStore = require("./services/analyticsStore");
+const ticketAnalysisService = require("./services/ticketAnalysisService");
+
+app.post("/admin/analytics/sync", requireAdmin, async (req, res) => {
+  try {
+    const sinceDays = Number(req.body?.sinceDays) || undefined;
+    const maxTickets = Number(req.body?.maxTickets) || undefined;
+    const result = await ticketAnalysisService.run({ sinceDays, maxTickets });
+    res.json({ success: true, result });
+  } catch (error) {
+    log.error("analytics_sync_failed", { message: error.message });
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get("/admin/analytics/summary", requireAdmin, async (req, res) => {
+  try {
+    res.json({ success: true, configured: analyticsStore.isConfigured(), summary: await analyticsStore.getSummary() });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get("/admin/analytics/conversations", requireAdmin, async (req, res) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 20, 200);
+    res.json({ success: true, conversations: await analyticsStore.getConversations({ limit }) });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get("/admin/analytics/kb-gaps", requireAdmin, async (req, res) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 10, 50);
+    res.json({ success: true, kbGaps: await analyticsStore.getKbGaps({ limit }) });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get("/admin/analytics/top-questions", requireAdmin, async (req, res) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 10, 50);
+    res.json({ success: true, topQuestions: await analyticsStore.getTopQuestions({ limit }) });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // ─── MCP Server (Model Context Protocol) ──────────────────────
 // Read/control/report toolovi za Claude (app + Claude Code). Aditivno: svaki
 // tool zove postojeći servis. Onemogućeno (503) ako MCP_TOKEN nije postavljen.
