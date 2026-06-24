@@ -1300,7 +1300,21 @@ app.get("/admin/analytics/summary", requireAdmin, async (req, res) => {
 app.get("/admin/analytics/conversations", requireAdmin, async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 20, 200);
-    res.json({ success: true, conversations: await analyticsStore.getConversations({ limit }) });
+    const rows = await analyticsStore.getConversations({ limit });
+    const conversations = rows.map((r) => ({
+      ticketId: r.ticket_id,
+      createdAt: r.created_at,
+      channel: r.channel,
+      topic: r.topic,
+      handledBy: r.handled_by,
+      botQuality: r.bot_quality,
+      question: r.first_question || null,
+      answer: r.last_reply || null,
+      summary: r.summary || null,
+      isKbGap: r.is_kb_gap,
+      ticketUrl: zendeskService.ticketUrl(r.ticket_id)
+    }));
+    res.json({ success: true, conversations });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

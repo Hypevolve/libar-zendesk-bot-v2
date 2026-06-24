@@ -739,20 +739,19 @@ tbody tr:hover td { background: var(--bg); }
       <div class="card-hd" style="margin-bottom: 0;">
         <div>
           <div class="card-title" role="heading" aria-level="2">Posljednji razgovori</div>
-          <div class="card-sub">Zadnjih 20 AI interakcija</div>
+          <div class="card-sub">Pravi Zendesk ticketi - pitanje kupca i odgovor</div>
         </div>
-        <div class="live-badge"><div class="live-dot"></div>LIVE</div>
       </div>
       <div class="tbl-wrap">
         <table>
           <thead>
             <tr>
               <th>Vrijeme</th>
-              <th>Korisnikov upit</th>
-              <th>Odluka</th>
-              <th>Izvor</th>
-              <th>Score</th>
-              <th>Latencija</th>
+              <th>Pitanje kupca</th>
+              <th>Odgovor</th>
+              <th>Tema</th>
+              <th>Riješio</th>
+              <th>Ticket</th>
             </tr>
           </thead>
           <tbody id="traces-body">
@@ -1035,29 +1034,33 @@ async function toggleBot() {
   }
 }
 
-// ─── Traces ──────────────────────────────────────
-function renderTraces(traces) {
+// ─── Razgovori (pravi Zendesk ticketi) ──────────────────────
+function handledLabel(h) {
+  if (h === 'bot') return { cls: 'answered', lbl: '🤖 Bot' };
+  if (h === 'human') return { cls: 'escalated', lbl: '👤 Agent' };
+  return { cls: 'other', lbl: '· Mješovito' };
+}
+function renderConversations(rows) {
   const tbody = $('traces-body');
-  if (!traces || !traces.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Nema razgovora za prikazati</td></tr>';
+  if (!rows || !rows.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Nema analiziranih razgovora — pokreni „Analiziraj tickete"</td></tr>';
     return;
   }
-  tbody.innerHTML = traces.map(t => {
-    const esc = t.decision === 'escalate_no_answer';
-    const other = !['escalate_no_answer','safe_answer'].includes(t.decision);
-    const cls = esc ? 'escalated' : other ? 'other' : 'answered';
-    const lbl = esc ? '↑ Eskalirano' : other ? '· Ostalo' : '✓ Odgovoreno';
-    const src = esc(t.retrieval?.source || '—');
-    const score = t.retrieval?.topScore != null ? t.retrieval.topScore : '—';
-    const lat = t.latencyMs ? `${(t.latencyMs/1000).toFixed(1)}s` : '—';
-    const inp = esc(t.input || '—');
+  tbody.innerHTML = rows.map(c => {
+    const q = esc(c.question || c.summary || '—');
+    const a = esc(c.answer || '—');
+    const topic = esc(c.topic || '—');
+    const h = handledLabel(c.handledBy);
+    const link = c.ticketUrl
+      ? `<a href="${esc(c.ticketUrl)}" target="_blank" rel="noopener" class="tc-mono">#${c.ticketId} ↗</a>`
+      : `<span class="tc-mono">#${c.ticketId}</span>`;
     return `<tr>
-      <td class="tc-time">${fmtTime(t.ts)}</td>
-      <td class="tc-input" tabindex="0" title="${inp}">${inp}</td>
-      <td><span class="badge ${cls}">${lbl}</span></td>
-      <td class="tc-mono">${src}</td>
-      <td class="tc-mono">${score}</td>
-      <td class="tc-mono">${lat}</td>
+      <td class="tc-time">${fmtTime(c.createdAt)}</td>
+      <td class="tc-input" tabindex="0" title="${q}">${q}</td>
+      <td class="tc-input" tabindex="0" title="${a}">${a}</td>
+      <td>${topic}</td>
+      <td><span class="badge ${h.cls}">${h.lbl}</span></td>
+      <td>${link}</td>
     </tr>`;
   }).join('');
 }
@@ -1112,12 +1115,14 @@ function renderAnalytics(summary, top, gaps) {
 
 async function loadAnalytics() {
   try {
-    const [s, t, g] = await Promise.all([
+    const [s, t, g, conv] = await Promise.all([
       api('/admin/analytics/summary').then(d => d.summary).catch(()=>null),
       api('/admin/analytics/top-questions?limit=10').then(d => d.topQuestions).catch(()=>null),
       api('/admin/analytics/kb-gaps?limit=10').then(d => d.kbGaps).catch(()=>null),
+      api('/admin/analytics/conversations?limit=20').then(d => d.conversations).catch(()=>null),
     ]);
     renderAnalytics(s, t, g);
+    if (conv !== null) renderConversations(conv);
   } catch(e) { /* analitika je sekundarna — tiho */ }
 }
 
@@ -1154,13 +1159,11 @@ async function loadAll() {
   const icon = $('refresh-icon');
   icon.classList.add('spin');
   try {
-    const [metrics, traces, botState] = await Promise.all([
+    const [metrics, botState] = await Promise.all([
       api('/admin/metrics').then(d => d.metrics).catch(()=>null),
-      api('/admin/traces?limit=20').then(d => d.traces).catch(()=>null),
       api('/admin/bot-state').then(d => d.enabled).catch(()=>null),
     ]);
     if (metrics) renderMetrics(metrics);
-    if (traces !== null) renderTraces(traces);
     if (botState !== null) renderBot(botState);
     $('last-update').textContent = new Date().toLocaleTimeString('hr-HR');
     $('sb-dot').className = 'pulse-dot on';

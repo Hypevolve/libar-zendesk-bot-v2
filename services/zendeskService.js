@@ -461,6 +461,12 @@ async function getTicketSummary(ticketId) {
   }
 }
 
+// Poveznica na ticket u Zendesk agent sučelju.
+function ticketUrl(ticketId) {
+  if (!ticketId || !env.ZENDESK_SUBDOMAIN) return null;
+  return `https://${env.ZENDESK_SUBDOMAIN}.zendesk.com/agent/tickets/${ticketId}`;
+}
+
 // Čista funkcija: normalizira sirovi ticket iz Incremental API-ja u oblik za analizu.
 function normalizeIncrementalTicket(raw = {}) {
   return {
@@ -588,5 +594,5 @@ module.exports = {
   updateRequester, updateTicketRequester,
   uploadAttachments, verifyWebhookToken,
   isHumanHandled, isTicketHumanHandled, HUMAN_OWNED_TAGS,
-  listTicketsSince, normalizeIncrementalTicket
+  listTicketsSince, normalizeIncrementalTicket, ticketUrl
 };

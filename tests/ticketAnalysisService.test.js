@@ -35,6 +35,31 @@ test("parseAnalysis poništava gap polja kad is_kb_gap nije true", () => {
   assert.strictEqual(a.suggested_kb_topic, null);
 });
 
+// ─── extractQA ─────────────────────────────────────────────────
+
+test("extractQA razlikuje pitanje kupca i zadnji odgovor po requesterId", () => {
+  const comments = [
+    { author_id: 11, body: "Gdje je moja narudžba?" },
+    { author_id: 99, body: "Poslana je jučer, stiže sutra." },
+    { author_id: 11, body: "Hvala!" }
+  ];
+  const qa = svc.extractQA(comments, 11);
+  assert.strictEqual(qa.firstQuestion, "Gdje je moja narudžba?");
+  assert.strictEqual(qa.lastReply, "Poslana je jučer, stiže sutra.");
+});
+
+test("extractQA fallback na prvi/zadnji kad nema requesterId", () => {
+  const qa = svc.extractQA([{ body: "A" }, { body: "B" }]);
+  assert.strictEqual(qa.firstQuestion, "A");
+  assert.strictEqual(qa.lastReply, "B");
+});
+
+test("extractQA: lastReply prazan kad postoji samo pitanje", () => {
+  const qa = svc.extractQA([{ author_id: 11, body: "Samo pitanje" }], 11);
+  assert.strictEqual(qa.firstQuestion, "Samo pitanje");
+  assert.strictEqual(qa.lastReply, "");
+});
+
 // ─── run() orkestracija ────────────────────────────────────────
 
 function mockStore({ cursor = null } = {}) {

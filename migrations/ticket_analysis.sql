@@ -19,6 +19,8 @@ create table if not exists ticket_analysis (
   kb_gap_reason      text,
   suggested_kb_topic text,
   summary            text,                 -- kratki sažetak (maskiran)
+  first_question     text,                 -- prvo pitanje kupca (maskirano)
+  last_reply         text,                 -- zadnji odgovor bota/agenta (maskirano)
   model_used         text,
   analyzed_at        timestamptz default now()
 );

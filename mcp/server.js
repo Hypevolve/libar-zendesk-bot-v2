@@ -21,7 +21,25 @@ const botStateService = require("../services/botStateService");
 const knowledgeService = require("../services/knowledgeService");
 const analyticsStore = require("../services/analyticsStore");
 const ticketAnalysisService = require("../services/ticketAnalysisService");
+const zendeskService = require("../services/zendeskService");
 const { normalizeForComparison } = require("../services/textUtils");
+
+// Obogati analizirane razgovore poveznicom na pravi Zendesk ticket.
+function enrichConversations(rows = []) {
+  return rows.map((r) => ({
+    ticket_id: r.ticket_id,
+    created_at: r.created_at,
+    channel: r.channel,
+    topic: r.topic,
+    handled_by: r.handled_by,
+    bot_quality: r.bot_quality,
+    question: r.first_question || null,
+    answer: r.last_reply || null,
+    summary: r.summary || null,
+    is_kb_gap: r.is_kb_gap,
+    ticket_url: zendeskService.ticketUrl(r.ticket_id)
+  }));
+}
 
 // Cijene po 1M tokena (USD) — zrcali admin-dashboard.html da prikaz bude isti.
 const PRICING = {
@@ -264,7 +282,21 @@ function buildServer() {
         analyticsStore.getTopQuestions({ limit: limit || 10 }),
         analyticsStore.getConversations({ limit: limit || 10 })
       ]);
-      return asText({ summary, topQuestions: topQuestionsReal, conversations });
+      return asText({ summary, topQuestions: topQuestionsReal, conversations: enrichConversations(conversations) });
+    }
+  );
+
+  server.registerTool(
+    "recent_conversations",
+    {
+      title: "Zadnji razgovori (pravi Zendesk ticketi)",
+      description: "Zadnji analizirani Zendesk razgovori sa stvarnim pitanjem kupca, odgovorom, temom, tko je riješio i poveznicom na ticket.",
+      inputSchema: { limit: z.number().int().min(1).max(100).optional() }
+    },
+    async ({ limit }) => {
+      if (!analyticsStore.isConfigured()) return notConfigured();
+      const rows = await analyticsStore.getConversations({ limit: limit || 20 });
+      return asText({ conversations: enrichConversations(rows) });
     }
   );
 

@@ -44,8 +44,8 @@ test("svi očekivani toolovi su registrirani", async () => {
   const names = tools.map((t) => t.name).sort();
   assert.deepStrictEqual(names, [
     "analyze_tickets", "conversation_insights", "cost_breakdown", "get_bot_state",
-    "get_metrics", "get_traces", "kb_gaps", "set_bot_state", "sync_vector",
-    "top_questions", "weekly_report"
+    "get_metrics", "get_traces", "kb_gaps", "recent_conversations", "set_bot_state",
+    "sync_vector", "top_questions", "weekly_report"
   ]);
   await close();
 });
@@ -132,6 +132,14 @@ test("conversation_insights bez Supabasea vraća not-configured", async () => {
 test("analyze_tickets bez Supabasea vraća not-configured", async () => {
   const { client, close } = await connectedClient();
   const data = parse(await client.callTool({ name: "analyze_tickets", arguments: {} }));
+  assert.strictEqual(data.ok, false);
+  assert.strictEqual(data.reason, "supabase_not_configured");
+  await close();
+});
+
+test("recent_conversations bez Supabasea vraća not-configured", async () => {
+  const { client, close } = await connectedClient();
+  const data = parse(await client.callTool({ name: "recent_conversations", arguments: {} }));
   assert.strictEqual(data.ok, false);
   assert.strictEqual(data.reason, "supabase_not_configured");
   await close();

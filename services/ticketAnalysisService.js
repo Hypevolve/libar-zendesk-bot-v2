@@ -19,6 +19,7 @@ const ANALYSIS_MODEL = env.ANALYSIS_MODEL || "google/gemini-2.5-flash";
 const DEFAULT_MAX_TICKETS = env.ANALYSIS_MAX_TICKETS || 150;
 const BACKFILL_DAYS = env.ANALYSIS_BACKFILL_DAYS || 90;
 const MAX_CONVO_CHARS = 6000;
+const MAX_QA_CHARS = 1000;
 
 const QUALITY = new Set(["good", "partial", "bad", "na"]);
 const HANDLED = new Set(["bot", "human", "mixed"]);
@@ -101,6 +102,22 @@ function buildConversationText(comments = []) {
   return text.slice(0, MAX_CONVO_CHARS);
 }
 
+// Izvuci stvarno prvo pitanje kupca i zadnji odgovor (bota/agenta) iz komentara.
+// Ako znamo requesterId, razlikujemo kupca od odgovora; inače uzimamo prvi i zadnji.
+function extractQA(comments = [], requesterId = null) {
+  const arr = comments.filter((c) => (c?.body || "").trim());
+  if (!arr.length) return { firstQuestion: "", lastReply: "" };
+  const firstFromRequester = requesterId != null ? arr.find((c) => c.author_id === requesterId) : null;
+  const lastFromOther = requesterId != null ? [...arr].reverse().find((c) => c.author_id !== requesterId) : null;
+  const firstQuestion = (firstFromRequester || arr[0]).body.trim();
+  const lastReplyComment = lastFromOther || arr[arr.length - 1];
+  const lastReply = lastReplyComment.body.trim();
+  return {
+    firstQuestion: firstQuestion.slice(0, MAX_QA_CHARS),
+    lastReply: lastReply === firstQuestion ? "" : lastReply.slice(0, MAX_QA_CHARS)
+  };
+}
+
 /**
  * Analiziraj jedan ticket → red za ticket_analysis. Maskira PII prije LLM-a i
  * prije spremanja (nema sirovih osobnih podataka ni u promptu ni u Supabaseu).
@@ -113,6 +130,7 @@ async function analyzeOne(ticket, comments, deps = {}) {
   const userText = `Subject: ${maskedSubject}\nKanal: ${ticket.channel}\nRazgovor:\n${maskedConvo}`;
 
   const analysis = parseAnalysis(await llm(buildAnalysisPrompt(), userText));
+  const qa = extractQA(comments, ticket.requester_id);
 
   return {
     ticket_id: ticket.id,
@@ -131,6 +149,8 @@ async function analyzeOne(ticket, comments, deps = {}) {
     kb_gap_reason: analysis.kb_gap_reason,
     suggested_kb_topic: analysis.suggested_kb_topic,
     summary: piiService.maskPII(analysis.summary).masked,
+    first_question: piiService.maskPII(qa.firstQuestion).masked,
+    last_reply: piiService.maskPII(qa.lastReply).masked,
     model_used: ANALYSIS_MODEL,
     analyzed_at: new Date().toISOString()
   };
@@ -188,5 +208,6 @@ module.exports = {
   parseAnalysis,
   buildAnalysisPrompt,
   buildConversationText,
+  extractQA,
   ANALYSIS_MODEL
 };
