@@ -202,6 +202,16 @@ const REFERENTNE_CINJENICE = [
   "- Trgovac: Dante d.o.o., OIB: 20816309823"
 ].join("\n");
 
+// Kupac je uvijek već u izravnom razgovoru s nama (chat, email ili Facebook),
+// pa bot ne smije sam od sebe preusmjeravati na mail/telefon. Kontakt podatke
+// daje samo na izričit upit ili kad postupak to nužno traži (npr. reklamacija).
+const RAZGOVOR_U_TIJEKU = [
+  "RAZGOVOR JE VEĆ U TIJEKU (NE PREUSMJERAVAJ NA KONTAKT):",
+  "- Korisnik je već u izravnom razgovoru s nama (chat, email ili Facebook), pa ga ne upućuj da nas dodatno kontaktira na email ili telefon za općenitu pomoć - već smo tu i nastavljamo u ovom razgovoru.",
+  "- Ne dodaji generičku završnu poruku tipa 'za dodatna pitanja slobodno nas kontaktirajte na email/telefon'.",
+  "- Email ili telefon navedi SAMO ako ih korisnik izričito traži, ili ako konkretan postupak to nužno zahtijeva (npr. slanje fotografije oštećenja i računa za reklamaciju)."
+].join("\n");
+
 // ─── Prompts ──────────────────────────────────────────────────
 
 function buildGroundedAnswerPrompt(context, { channelType = "unknown", customerName = "", conversationSummary = "" } = {}) {
@@ -267,6 +277,8 @@ function buildGroundedAnswerPrompt(context, { channelType = "unknown", customerN
     customerName ? `KORISNIK: Korisnik se zove ${customerName}. Ime koristi samo ako zvuči prirodno.` : "",
     "- Vrati samo gotov odgovor za korisnika, bez JSON-a i bez dodatnih oznaka.",
     "",
+    RAZGOVOR_U_TIJEKU,
+    "",
     REFERENTNE_CINJENICE,
     "",
     ...buildChannelInstructions(channelType),
@@ -313,6 +325,8 @@ function buildSystemPrompt(context, { channelType = "unknown", conversationSumma
     conversationSummary ? `SAŽETAK RAZGOVORA:\n${conversationSummary}` : "",
     customerName ? `KORISNIK: ${customerName}` : "",
     standaloneQuery ? `STANDALONE UPIT: ${standaloneQuery}` : "",
+    "",
+    RAZGOVOR_U_TIJEKU,
     "",
     REFERENTNE_CINJENICE,
     "",
