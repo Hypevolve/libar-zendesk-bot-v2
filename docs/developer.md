@@ -106,6 +106,10 @@
 - Fallback: `OPENROUTER_FALLBACK_MODEL` (default: `google/gemini-2.5-flash`)
 - Ako oba padnu, vraća `null` (eskalacija)
 
+**Pravila u promptu** (oba buildera, `buildGroundedAnswerPrompt` i `buildSystemPrompt`):
+- `REFERENTNE_CINJENICE` — hardkodirane činjenice (dostava, radno vrijeme, kontakt, otkup...) koje se ubacuju u svaki poziv. Kontakt (email/telefon) živi ovdje, **ne** u KB dokumentima.
+- `RAZGOVOR_U_TIJEKU` — kupac je već u izravnom razgovoru, pa bot ne preusmjerava na mail/telefon osim na izričit upit ili kad postupak to traži (npr. reklamacija). Vidi [ADR 0002](decisions/0002-bez-preusmjeravanja-na-kontakt-tijekom-razgovora.md). Pokriveno u `tests/groundedPrompt.test.js`.
+
 ### knowledgeService.js
 
 **Hybrid RAG pipeline**:

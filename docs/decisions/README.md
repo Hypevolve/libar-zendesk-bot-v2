@@ -12,3 +12,4 @@ ADR se **ne mijenja** nakon donošenja — ako se odluka promijeni, piše se nov
 
 ## Popis
 - [0001-openrouter-umjesto-direct-openai.md](0001-openrouter-umjesto-direct-openai.md) — Zašto OpenRouter kao LLM gateway
+- [0002-bez-preusmjeravanja-na-kontakt-tijekom-razgovora.md](0002-bez-preusmjeravanja-na-kontakt-tijekom-razgovora.md) — Zašto bot ne šalje na mail/telefon dok razgovor traje
