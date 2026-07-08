@@ -258,6 +258,7 @@ async function resolveAutomatedOutcome(session, userMessage, opts = {}) {
   } catch (error) {
     log.error("automated_outcome_failed", { message: error.message, stack: error.stack });
     metricsService.recordDecision("escalate_no_answer");
+    metricsService.recordChannelOutcome("web", "escalate_no_answer");
     metricsService.recordLatency(Date.now() - start);
     const fallbackOutcome = {
       type: "escalate_no_answer",
@@ -280,6 +281,7 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
   // whole conversation to a human. This is the incident-response stop button.
   if (!botStateService.isEnabled()) {
     metricsService.recordDecision("escalate_no_answer");
+    metricsService.recordChannelOutcome("web", "escalate_no_answer");
     metricsService.recordLatency(Date.now() - start);
     metricsService.increment("botDisabledEscalations");
     log.warn("bot_disabled_escalation", { ticketId: session.ticketId });
@@ -313,6 +315,7 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
   // them, so immediately hand off to a human agent with a reassuring message.
   if (opts.hasAttachments) {
     metricsService.recordDecision("escalate_no_answer");
+    metricsService.recordChannelOutcome("web", "escalate_no_answer");
     metricsService.recordLatency(Date.now() - start);
     return {
       knowledge: null,
@@ -329,6 +332,7 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
   const escalationCheck = detectEscalationIntent(normMsg);
   if (escalationCheck.shouldEscalate) {
     metricsService.recordDecision("escalate_no_answer");
+    metricsService.recordChannelOutcome("web", "escalate_no_answer");
     metricsService.recordLatency(Date.now() - start);
     log.info("intent_escalation", { reason: escalationCheck.reason, intent: escalationCheck.intent });
     return {
@@ -498,6 +502,7 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
     : buildSelfServiceFallback(userMessage);
 
   metricsService.recordDecision(outcome.type);
+  metricsService.recordChannelOutcome("web", outcome.type);
   metricsService.recordLatency(Date.now() - start);
 
   tracingService.createTrace({
@@ -1111,6 +1116,7 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
             log.info("webhook_race_condition_agent", { ticketId, reason: raceCheck.reason });
             metricsService.increment("agentTakeoversSkipped");
             metricsService.recordDecision("escalate_no_answer");
+            metricsService.recordChannelOutcome(normalizedChannel, "escalate_no_answer");
             metricsService.recordLatency(Date.now() - webhookStart);
             await zendeskService.updateConversationState(ticketId, "human_active", ["agent_detected_race"]);
             return res.status(200).json({ success: true, skipped: "agent_took_over_race" });
@@ -1161,7 +1167,9 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
       syncWebhookMessageToSession(ticketId, latestMessage, answer || null);
 
       // Record decision and latency for admin panel parity with webchat
-      metricsService.recordDecision(safeAnswerSent ? "safe_answer" : "escalate_no_answer");
+      const webhookDecision = safeAnswerSent ? "safe_answer" : "escalate_no_answer";
+      metricsService.recordDecision(webhookDecision);
+      metricsService.recordChannelOutcome(normalizedChannel, webhookDecision);
       metricsService.recordLatency(Date.now() - webhookStart);
     }
 
