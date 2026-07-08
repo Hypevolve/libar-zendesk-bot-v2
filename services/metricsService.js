@@ -100,7 +100,8 @@ function recordDecision(decision) {
 }
 
 function recordChannelOutcome(channel, decision) {
-  const ch = String(channel || "").toLowerCase();
+  let ch = String(channel || "").toLowerCase();
+  if (ch === "web_chat") ch = "web";                // normalizeChannelType vraća "web_chat" za web-origin
   if (!counters.byChannel[ch]) return;              // web|email|facebook; ostalo = no-op
   counters.byChannel[ch].requests++;
   if (decision === "safe_answer") counters.byChannel[ch].answered++;

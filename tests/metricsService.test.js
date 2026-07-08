@@ -43,3 +43,20 @@ test("reset čisti byChannel", () => {
   metrics.reset();
   assert.strictEqual(metrics.getMetrics().byChannel.web.requests, 0);
 });
+
+// normalizeChannelType (aiService) vraća "web_chat" za web-origin kanale; webhook
+// put prosljeđuje upravo tu vrijednost. Mora se mapirati na "web", inače se web
+// ticketi s webhooka tiho ne broje.
+test("recordChannelOutcome: web_chat se mapira na web", () => {
+  metrics.reset();
+  metrics.recordChannelOutcome("web_chat", "safe_answer");
+  const m = metrics.getMetrics();
+  assert.strictEqual(m.byChannel.web.requests, 1);
+  assert.strictEqual(m.byChannel.web.answered, 1);
+});
+
+test("recordChannelOutcome: naziv kanala je case-insensitive", () => {
+  metrics.reset();
+  metrics.recordChannelOutcome("EMAIL", "escalate_no_answer");
+  assert.strictEqual(metrics.getMetrics().byChannel.email.escalated, 1);
+});
