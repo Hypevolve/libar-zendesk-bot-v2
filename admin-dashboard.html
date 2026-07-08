@@ -54,7 +54,7 @@
   --brand-muted: var(--primary-muted);
   --bg: var(--background);
   --surface: var(--card);
-  --border-light: var(--muted);
+  --border-light: var(--border);
   --text: var(--foreground);
   --text-2: #3F3F46;
   --text-3: var(--muted-foreground);
@@ -562,6 +562,8 @@ tbody tr:hover td { background: var(--bg); }
   .content { padding: 16px; }
   /* Touch targeti ≥44px (WCAG 2.5.5) */
   .sb-item, .sb-logout, .tb-btn, .sync-btn, .bot-btn, .login-btn { min-height: 44px; }
+  /* Icon-only gumbi nemaju tekst pa im treba i min-width za puni touch target */
+  .tb-icon { min-width: 44px; }
 }
 @media (max-width: 480px) {
   .kpi-grid { grid-template-columns: 1fr; }
