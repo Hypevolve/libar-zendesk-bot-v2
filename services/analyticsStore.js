@@ -82,15 +82,43 @@ async function countWhere(filterQS = "") {
   return Number(String(cr).split("/")[1]) || 0;
 }
 
+// Zendesk via.channel je heterogen (email, facebook, web, api, web_service, chat…).
+// Mapiramo sirove vrijednosti u 3 prikazna kanala + "ostalo".
+// VAŽNO: provjeri stvarne vrijednosti u bazi (SELECT DISTINCT channel) i doradi.
+function channelBuckets() {
+  return {
+    email: ["email"],
+    facebook: ["facebook", "messenger", "facebook_page", "facebook_post"],
+    web: ["web", "web_widget", "web_service", "chat", "messaging", "api"]
+  };
+}
+
 async function getSummary() {
-  if (!isConfigured()) return { total: 0, kbGaps: 0, byHandledBy: {}, byQuality: {} };
+  if (!isConfigured()) return {
+    total: 0, kbGaps: 0, byHandledBy: {}, byQuality: {},
+    byChannel: { web: 0, email: 0, facebook: 0, ostalo: 0 }, byChannelQuality: {}
+  };
   const total = await countWhere("");
   const kbGaps = await countWhere("&is_kb_gap=eq.true");
   const byHandledBy = {};
   for (const v of ["bot", "human", "mixed"]) byHandledBy[v] = await countWhere(`&handled_by=eq.${v}`);
   const byQuality = {};
   for (const v of ["good", "partial", "bad", "na"]) byQuality[v] = await countWhere(`&bot_quality=eq.${v}`);
-  return { total, kbGaps, byHandledBy, byQuality };
+
+  const buckets = channelBuckets();
+  const byChannel = { web: 0, email: 0, facebook: 0, ostalo: 0 };
+  const byChannelQuality = {};
+  for (const [bucket, vias] of Object.entries(buckets)) {
+    byChannel[bucket] = await countWhere(`&channel=in.(${vias.join(",")})`);
+    byChannelQuality[bucket] = {};
+    for (const q of ["good", "partial", "bad", "na"]) {
+      byChannelQuality[bucket][q] =
+        await countWhere(`&channel=in.(${vias.join(",")})&bot_quality=eq.${q}`);
+    }
+  }
+  byChannel.ostalo = Math.max(0, total - byChannel.web - byChannel.email - byChannel.facebook);
+
+  return { total, kbGaps, byHandledBy, byQuality, byChannel, byChannelQuality };
 }
 
 async function getConversations({ limit = 20 } = {}) {

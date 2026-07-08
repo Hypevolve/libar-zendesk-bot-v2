@@ -40,7 +40,10 @@ test("bez Supabase konfiguracije: čitanja vraćaju prazno, isConfigured=false",
     assert.deepStrictEqual(await store.getConversations(), []);
     assert.deepStrictEqual(await store.getKbGaps(), []);
     assert.deepStrictEqual(await store.getTopQuestions(), []);
-    assert.deepStrictEqual(await store.getSummary(), { total: 0, kbGaps: 0, byHandledBy: {}, byQuality: {} });
+    assert.deepStrictEqual(await store.getSummary(), {
+      total: 0, kbGaps: 0, byHandledBy: {}, byQuality: {},
+      byChannel: { web: 0, email: 0, facebook: 0, ostalo: 0 }, byChannelQuality: {}
+    });
   } finally { env.SUPABASE_URL = prevUrl; env.SUPABASE_SERVICE_ROLE_KEY = prevKey; }
 });
 
@@ -103,4 +106,38 @@ test("getSummary parsira count iz content-range", () => withConfig(async () => {
   assert.strictEqual(s.kbGaps, 3);
   assert.strictEqual(s.byHandledBy.bot, 6);
   assert.strictEqual(s.byQuality.good, 5);
+}));
+
+test("getSummary vraća byChannel i byChannelQuality iz Zendesk via.channel", () => withConfig(async () => {
+  // countWhere gradi URL "/rest/v1/ticket_analysis?select=ticket_id" + filterQS.
+  // Ovdje simuliramo brojeve po channelBuckets() filteru (i po bot_quality unutar njega).
+  mockClient({ getImpl: (url) => {
+    let count = "10"; // total i sve ne-channel filtere (handled_by, bot_quality, kb_gap) tretiramo kao 10 - nebitno za ovaj test
+    if (url.includes("channel=in.(email)")) {
+      if (url.includes("bot_quality=eq.good")) count = "2";
+      else if (url.includes("bot_quality=eq.partial")) count = "1";
+      else if (url.includes("bot_quality=eq.bad")) count = "0";
+      else if (url.includes("bot_quality=eq.na")) count = "1";
+      else count = "4";
+    } else if (url.includes("channel=in.(facebook,messenger,facebook_page,facebook_post)")) {
+      if (url.includes("bot_quality")) count = "0";
+      else count = "1";
+    } else if (url.includes("channel=in.(web,web_widget,web_service,chat,messaging,api)")) {
+      if (url.includes("bot_quality=eq.good")) count = "3";
+      else if (url.includes("bot_quality=eq.partial")) count = "1";
+      else if (url.includes("bot_quality=eq.bad")) count = "1";
+      else if (url.includes("bot_quality=eq.na")) count = "0";
+      else count = "5";
+    }
+    return { data: [], headers: { "content-range": `0-0/${count}` } };
+  }});
+  const s = await store.getSummary();
+  assert.strictEqual(s.byChannel.email, 4);
+  assert.strictEqual(s.byChannel.facebook, 1);
+  assert.strictEqual(s.byChannel.web, 5);
+  // ostalo = total(10) - web(5) - email(4) - facebook(1) = 0
+  assert.strictEqual(s.byChannel.ostalo, 0);
+  assert.deepStrictEqual(s.byChannelQuality.email, { good: 2, partial: 1, bad: 0, na: 1 });
+  assert.deepStrictEqual(s.byChannelQuality.facebook, { good: 0, partial: 0, bad: 0, na: 0 });
+  assert.deepStrictEqual(s.byChannelQuality.web, { good: 3, partial: 1, bad: 1, na: 0 });
 }));
