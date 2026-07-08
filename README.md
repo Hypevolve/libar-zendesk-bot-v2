@@ -134,14 +134,15 @@ Webhook ruta (`/zendesk/webhook`) prima događaje:
 
 ## Admin panel
 
-Admin panel dostupan na `/admin/dashboard`. Prikazuje:
+Admin panel dostupan na `/admin/dashboard` — moderno ShadCN sučelje (**light/dark tema**, responsive). Prikazuje:
 
 - **Ukupno upita** — webchat + email/Facebook
+- **Metrike po kanalima** — web / email / Facebook zasebno (volumen, % odgovoreno, % eskalirano) + kvaliteta bota po kanalu
 - **Odgovoreno / eskalirano** — s postotcima
-- **Prosječna latencija** — brzina odgovora
+- **Prosječna / P95 latencija** — brzina odgovora
 - **Token potrošnja** — in/out i procijenjeni trošak
 - **Cache hit rate** — učinkovitost cachea
-- **Posljednji razgovori** — pregled svih upita i odluka
+- **Posljednji razgovori** — pregled upita i odluka, s oznakom kanala
 - **Kill switch** — uključivanje/isključivanje bota jednim klikom
 - **Analitika ticketa** — pravi podaci iz Zendeska: najčešće teme i rupe u knowledge baseu (vidi [docs/analytics.md](docs/analytics.md))
 

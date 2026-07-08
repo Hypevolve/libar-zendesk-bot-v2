@@ -157,11 +157,14 @@
 - `totalChatStarts` — početak razgovora
 - `totalChatMessages` — poruke u razgovoru
 - `decisions` — breakdown odluka (`safe_answer`, `escalate_no_answer`)
+- `byChannel` — live brojači po kanalu (`web`/`email`/`facebook`), svaki `{ requests, answered, escalated }`. Puni se preko `recordChannelOutcome(channel, decision)` uz svaki `recordDecision` u [index.js](../index.js) (webchat = `web`, webhook = `normalizeChannelType`; `web_chat` se mapira na `web`).
 - `errors` — greške
 - `handoffs` — eskalacije
 - `latencies` — latencije (zadnjih 1000)
 
-**Persistencija**: Supabase `bot_metrics` tablica (auto-save svakih 30 sekundi)
+**Persistencija**: Supabase `bot_metrics` tablica (auto-save svakih 30 sekundi). Tablica **mora postojati** — vidi [troubleshooting](#metrics_save_failed-404). Bez nje `save()` vraća 404 i brojači se resetiraju pri svakom restartu.
+
+> Metrike po kanalima imaju **dva izvora** (live brojači vs. analiza ticketa) s različitim vokabularom — detalji u [analytics.md → Metrike po kanalima](analytics.md#metrike-po-kanalima-web--email--facebook).
 
 ### tracingService.js
 
@@ -300,21 +303,24 @@ BOT_ENABLED=true
 | `webhook_skipped_human_handled` | Preskočeno (agent preuzeo) |
 | `webhook_intent_escalation` | Eskalacija zbog intenta |
 | `webhook_output_validation_failed` | Validacija nije prošla |
-| `metrics_hydrated` | Metrike učitane iz Supabasea |
+| `metrics_hydrated` / `metrics_loaded` | Metrike učitane iz Supabasea na startu |
+| `metrics_table_missing` | Tablica `bot_metrics` ne postoji (404) → metrike se ne perzistiraju, resetiraju se pri restartu |
 | `metrics_save_failed` | Greška pri spremanju metrika |
 
 ### Admin panel
 
-Dostupan na `/admin/dashboard`.
+Dostupan na `/admin/dashboard`. Single-file (vanilla HTML/CSS/JS, bez build koraka) u ShadCN „New York" stilu — **light/dark tema** (toggle u topbaru, izbor u `localStorage`), responsive, čisti CSS/SVG grafovi. Servira ga Express iz [admin-dashboard.html](../admin-dashboard.html).
 
 **Prikazuje**:
-- Ukupno upita (webchat + webhook)
-- Odgovoreno / eskalirano
-- Prosječna latencija
-- Token potrošnja
-- Cache hit rate
-- Posljednji traceovi
-- Kill switch status
+- Ukupno upita (webchat + webhook), odgovoreno / eskalirano, breakdown odluka
+- **Metrike po kanalima** (web / email / Facebook) — volumen, % odgovoreno, % eskalirano; iz live `byChannel` brojača
+- Kvaliteta bota po kanalu — iz analize ticketa (`summary.byChannelQuality`), kad je analiza pokrenuta
+- Prosječna / P95 latencija, token potrošnja, procijenjeni trošak, cache hit rate
+- Posljednji razgovori (pravi Zendesk ticketi) — s **badgeom kanala** po retku
+- Analitika ticketa (najčešće teme, KB rupe)
+- Kill switch status + kontrole (bot on/off, KB sync, analiza ticketa)
+
+> **Napomena o podacima:** sve su brojke stvarne (live brojači ili pravi Zendesk podaci). Jedina iznimka je „Procijenjeni trošak" — računa se u frontendu iz stvarnih tokena × hardkodirane tablice cijena (`PRICING`). Pozdravi i cache-hit odgovori bilježe samo latenciju, pa se ne broje u kanale/odluke (padnu u „Ostalo"). `byChannel` je kumulativan od deploya ove značajke.
 
 ---
 
@@ -417,7 +423,8 @@ Model nije dostupan na OpenRouteru. Promijeni `OPENROUTER_MODEL` u siguran model
 1. Kreiraj handler u `index.js` (slično `/api/zendesk/webhook`)
 2. Koristi `aiService.generateGroundedAnswer()` za generiranje
 3. Dodaj `metricsService.increment("totalRequests")`
-4. Pozovi `tracingService.createTrace()` za admin panel
+4. Uz svaki `recordDecision(...)` pozovi i `metricsService.recordChannelOutcome(kanal, decision)` da se broji u metrikama po kanalu (dodaj i ključ u `byChannel` te po potrebi u `normalizeChannelType` / dashboard `channelBadge`)
+5. Pozovi `tracingService.createTrace()` za admin panel
 
 ### Dodavanje novog izvora znanja
 
