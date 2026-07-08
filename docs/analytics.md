@@ -54,6 +54,31 @@ do danas. Nakon toga obrađuju se samo novi ticketi (inkrementalno preko cursora
 | `GET /admin/analytics/kb-gaps` | `kb_gaps` | rupe u KB s primjerima i prijedlozima |
 | `GET /admin/analytics/conversations` | `conversation_insights` | zadnji analizirani razgovori |
 
+## Metrike po kanalima (web / email / facebook)
+
+Dashboard prikazuje razdiobu razgovora po kanalu iz **dva izvora** — oni odgovaraju
+na različita pitanja i imaju **različit vokabular kanala**:
+
+| Izvor | Polje | Pokriva | Vokabular |
+|---|---|---|---|
+| Live brojači (`metricsService`) | `GET /admin/metrics` → `metrics.byChannel` | **sav** promet, real-time | normaliziran: `web`, `email`, `facebook` |
+| Analiza ticketa (`analyticsStore`) | `GET /admin/analytics/summary` → `summary.byChannel`, `summary.byChannelQuality` | samo **analizirani** ticketi | sirovi Zendesk `via.channel` → bucket |
+
+**Live brojači** (`metrics.byChannel.<kanal>` = `{ requests, answered, escalated }`)
+puni se u `index.js` pozivom `metricsService.recordChannelOutcome(channel, decision)`
+uz svaki `recordDecision`: webchat put je uvijek `web`, webhook koristi
+`aiService.normalizeChannelType(channelType)` (`web`/`email`/`facebook`). Brojači su
+**kumulativni** (od pokretanja, perzistiraju u Supabase kao ostale metrike) — nisu
+vremenska serija po danu/tjednu.
+
+**Analiza ticketa** čuva sirovi `via.channel` iz Zendeska (`raw.via?.channel`,
+`zendeskService.js`) — npr. `email`, `facebook`, `web`, `api`, `web_service`. Zato
+`analyticsStore.getSummary()` mapira te vrijednosti u `web|email|facebook|ostalo`
+preko `channelBuckets()`. **Napomena:** bot-kreirani webchat ticketi znaju imati
+`via.channel = api`/`web_service` (ne `web`) — provjeri stvarne vrijednosti u bazi
+(`SELECT DISTINCT channel FROM ticket_analysis`) i po potrebi doradi mapu u
+`channelBuckets()`.
+
 ## Trošak
 
 Analiza koristi jeftiniji model (`ANALYSIS_MODEL`, default gemini-2.5-flash), jedan
