@@ -5,48 +5,90 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Libar Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- No-flash tema: postavi data-theme prije prvog paint-a (prije <style>) -->
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem('libar_admin_theme');
+      var t = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }
+  })();
+</script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --brand: #E85D04;
-  --brand-dark: #C74E03;
-  --brand-muted: rgba(232,93,4,0.12);
-  --sidebar: #111318;
+  /* ── ShadCN "New York" tokeni (svijetla tema, default) ── */
+  --background: #FAFAFA;   --foreground: #0A0A0A;
+  --card: #FFFFFF;         --card-foreground: #0A0A0A;
+  --muted: #F4F4F5;        --muted-foreground: #71717A;
+  --border: #E4E4E7;       --input: #E4E4E7;   --ring: #E85D04;
+  --primary: #E85D04;      --primary-foreground: #FFFFFF;
+  --primary-dark: #C74E03; --primary-muted: rgba(232,93,4,0.10);
+  --green: #16A34A;  --red: #DC2626;  --amber: #D97706;  --indigo: #4F46E5;
+  --green-bg: #F0FDF4; --green-border: #BBF7D0;
+  --red-bg: #FEF2F2;   --red-border: #FECACA;
+  --amber-bg: #FFFBEB; --amber-border: #FDE68A;
+  --indigo-bg: #EEF2FF;
+  --radius: 0.65rem;
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.05);
+
+  /* Sidebar (tamna „New York" bočna traka i u svijetloj temi) */
+  --sidebar: #0A0A0B;
+  --sidebar-foreground: #A1A1AA;
   --sidebar-border: rgba(255,255,255,0.07);
   --sidebar-hover: rgba(255,255,255,0.05);
   --sidebar-active: rgba(232,93,4,0.14);
-  --sidebar-text: #9CA3AF;
+  --sidebar-text: var(--sidebar-foreground);
   --sidebar-text-hi: #E8EAF0;
-  --bg: #F4F5F7;
-  --surface: #FFFFFF;
-  --border: #E4E7EC;
-  --border-light: #F0F2F5;
-  --text: #0D0F14;
-  --text-2: #4B5162;
-  --text-3: #6B7280;
-  --green: #16A34A;
-  --green-bg: #F0FDF4;
-  --green-border: #BBF7D0;
-  --red: #DC2626;
-  --red-bg: #FEF2F2;
-  --red-border: #FECACA;
-  --amber: #D97706;
-  --amber-bg: #FFFBEB;
-  --indigo: #4F46E5;
-  --indigo-bg: #EEF2FF;
-  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 8px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05);
-  --r: 10px;
-  --r-sm: 7px;
   --sidebar-w: 230px;
+
+  /* ── Legacy aliasi → mapirani na tokene (postojeći CSS ostaje tematski svjestan;
+       var() se razrješava lijeno pa dark override tokena automatski povlači i aliase) ── */
+  --brand: var(--primary);
+  --brand-dark: var(--primary-dark);
+  --brand-muted: var(--primary-muted);
+  --bg: var(--background);
+  --surface: var(--card);
+  --border-light: var(--muted);
+  --text: var(--foreground);
+  --text-2: #3F3F46;
+  --text-3: var(--muted-foreground);
+  --r: var(--radius);
+  --r-sm: calc(var(--radius) - 0.2rem);
+}
+
+/* ── Tamna tema ── */
+:root[data-theme="dark"] {
+  --background: #09090B;   --foreground: #FAFAFA;
+  --card: #131316;         --card-foreground: #FAFAFA;
+  --muted: #1C1C1F;        --muted-foreground: #A1A1AA;
+  --border: #27272A;       --input: #27272A;
+  --primary-muted: rgba(232,93,4,0.18);
+  --shadow: 0 1px 2px rgba(0,0,0,.3);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.45);
+
+  --sidebar: #050506;
+  --sidebar-hover: rgba(255,255,255,0.06);
+  --sidebar-active: rgba(232,93,4,0.20);
+
+  /* Aliasi bez direktne token-veze → ručni dark override */
+  --text-2: #D4D4D8;
+  /* Suptilni tamni tintovi statusnih badgeva (umjesto pastelnih ploha) */
+  --green-bg: rgba(22,163,74,0.15);   --green-border: rgba(22,163,74,0.32);
+  --red-bg: rgba(220,38,38,0.15);     --red-border: rgba(220,38,38,0.34);
+  --amber-bg: rgba(217,119,6,0.15);   --amber-border: rgba(217,119,6,0.34);
+  --indigo-bg: rgba(79,70,229,0.18);
 }
 
 body {
-  font-family: 'DM Sans', system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--background);
+  color: var(--foreground);
   min-height: 100vh;
   display: flex;
   font-size: 14px;
@@ -296,6 +338,43 @@ body {
 .bar-fill.r { background: var(--red); }
 .bar-fill.a { background: var(--amber); }
 
+/* ─── Kanali (Web / Email / Facebook) ──────────────────────────────── */
+.ch-card { display: flex; flex-direction: column; position: relative; overflow: hidden; }
+.ch-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+.ch-card[data-ch="web"]::after { background: var(--indigo); }
+.ch-card[data-ch="email"]::after { background: var(--amber); }
+.ch-card[data-ch="facebook"]::after { background: var(--primary); }
+
+.ch-hd { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
+.ch-icon {
+  width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 17px;
+}
+.ch-card[data-ch="web"] .ch-icon { background: var(--indigo-bg); }
+.ch-card[data-ch="email"] .ch-icon { background: var(--amber-bg); }
+.ch-card[data-ch="facebook"] .ch-icon { background: var(--brand-muted); }
+
+.ch-val { font-size: 28px; font-weight: 700; line-height: 1; margin-bottom: 12px; color: var(--foreground); font-variant-numeric: tabular-nums; }
+.ch-meta { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.ch-card .bar-track { margin-bottom: 10px; }
+.ch-card .msc-detail { margin-top: 0; }
+
+/* Kvaliteta po kanalu (iz analize ticketa) */
+.ch-quality { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-light); }
+.ch-q-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); margin-bottom: 7px; }
+.ch-q-track { display: flex; height: 7px; border-radius: 100px; overflow: hidden; background: var(--border-light); }
+.ch-q-seg { height: 100%; transition: width 0.6s cubic-bezier(0.16,1,0.3,1); }
+.ch-q-seg.g { background: var(--green); }
+.ch-q-seg.a { background: var(--amber); }
+.ch-q-seg.r { background: var(--red); }
+.ch-q-seg.n { background: var(--muted-foreground); opacity: 0.4; }
+.ch-q-legend { display: flex; gap: 12px; margin-top: 7px; font-size: 11.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.ch-q-legend span { display: inline-flex; align-items: center; gap: 3px; }
+
+/* ─── Ikonski gumb u topbaru (theme toggle) ──────────────────────────── */
+.tb-btn.tb-icon { padding: 7px; }
+.tb-btn.tb-icon svg { display: block; }
+
 /* ─── Bot Control ──────────────────────────────── */
 .bot-box {
   display: flex; align-items: center; justify-content: space-between;
@@ -412,7 +491,7 @@ tbody tr:hover td { background: var(--bg); }
 }
 .badge.answered { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
 .badge.escalated { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
-.badge.other { background: var(--amber-bg); color: var(--amber); border: 1px solid #FDE68A; }
+.badge.other { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-border); }
 
 .empty-row td { text-align: center; padding: 40px; color: var(--text-3); font-size: 13px; }
 
@@ -498,14 +577,15 @@ tbody tr:hover td { background: var(--bg); }
   }
 }
 /* Analitika ticketa */
-.an-stat { background: var(--sidebar-hover, rgba(0,0,0,0.03)); border: 1px solid var(--sidebar-border, rgba(0,0,0,0.07)); border-radius: var(--r, 10px); padding: 12px 14px; }
-.an-val { font-size: 22px; font-weight: 700; line-height: 1.1; }
-.an-lbl { font-size: 12px; color: var(--muted, #888); margin-top: 4px; }
+.an-stat { background: var(--muted); border: 1px solid var(--border); border-radius: var(--r); padding: 12px 14px; }
+.an-val { font-size: 22px; font-weight: 700; line-height: 1.1; color: var(--foreground); font-variant-numeric: tabular-nums; }
+.an-lbl { font-size: 12px; color: var(--muted-foreground); margin-top: 4px; }
 .an-list { list-style: none; margin: 0; padding: 0; }
-.an-list li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--sidebar-border, rgba(0,0,0,0.07)); font-size: 13px; }
-.an-list li .an-count { font-weight: 700; color: var(--brand, #f6ad01); white-space: nowrap; }
-.an-list li .an-sugg { display: block; font-size: 11px; color: var(--muted, #888); margin-top: 2px; }
-.an-empty { color: var(--muted, #888); }
+.an-list li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text-2); }
+.an-list li:last-child { border-bottom: none; }
+.an-list li .an-count { font-weight: 700; color: var(--primary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.an-list li .an-sugg { display: block; font-size: 11px; color: var(--muted-foreground); margin-top: 2px; }
+.an-empty { color: var(--muted-foreground); }
 @media (max-width: 720px) { #an-cols { grid-template-columns: 1fr !important; } }
 </style>
 </head>
@@ -545,6 +625,10 @@ tbody tr:hover td { background: var(--bg); }
     <button class="sb-item active" aria-current="page" onclick="navTo(this,'sec-metrics')">
       <svg aria-hidden="true" focusable="false" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
       Metrike
+    </button>
+    <button class="sb-item" onclick="navTo(this,'sec-channels')">
+      <svg aria-hidden="true" focusable="false" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M4.93 19.07a10 10 0 0 1 0-14.14M19.07 4.93a10 10 0 0 1 0 14.14M7.76 16.24a6 6 0 0 1 0-8.49M16.24 7.76a6 6 0 0 1 0 8.49"/></svg>
+      Kanali
     </button>
     <button class="sb-item" onclick="navTo(this,'sec-traces')">
       <svg aria-hidden="true" focusable="false" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -596,6 +680,9 @@ tbody tr:hover td { background: var(--bg); }
         <svg aria-hidden="true" focusable="false" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span id="last-update" aria-live="polite">—</span>
       </div>
+      <button class="tb-btn tb-icon" id="theme-toggle" onclick="toggleTheme()" aria-label="Promijeni temu" title="Promijeni temu">
+        <span id="theme-icon" aria-hidden="true"></span>
+      </button>
       <button class="tb-btn" onclick="loadAll()" aria-label="Osvježi podatke">
         <svg aria-hidden="true" focusable="false" width="13" height="13" id="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
         <span>Osvježi</span>
@@ -631,6 +718,54 @@ tbody tr:hover td { background: var(--bg); }
         <div class="kpi-label" role="heading" aria-level="3">Prosj. latencija</div>
         <div class="kpi-val" id="m-latency">—</div>
         <div class="kpi-sub" id="m-latency-p95">—</div>
+      </div>
+    </div>
+
+    <!-- Kanali (Web chat / Email / Facebook) -->
+    <div class="row c3" id="sec-channels" role="region" aria-label="Metrike po kanalima">
+      <div class="card ch-card" data-ch="web">
+        <div class="ch-hd">
+          <div class="ch-icon">🌐</div>
+          <div>
+            <div class="card-title" role="heading" aria-level="3">Web chat</div>
+            <div class="card-sub">Widget na stranici</div>
+          </div>
+        </div>
+        <div class="ch-val" id="ch-web-req">—</div>
+        <div class="ch-meta"><span class="bd-label">Odgovoreno</span><span class="bd-val" id="ch-web-ans">—</span></div>
+        <div class="bar-track"><div class="bar-fill g" id="ch-web-bar"></div></div>
+        <div class="msc-detail" id="ch-web-esc">—</div>
+        <div class="ch-quality" id="ch-web-quality" hidden></div>
+      </div>
+
+      <div class="card ch-card" data-ch="email">
+        <div class="ch-hd">
+          <div class="ch-icon">✉️</div>
+          <div>
+            <div class="card-title" role="heading" aria-level="3">Email</div>
+            <div class="card-sub">Zendesk tiketi e-poštom</div>
+          </div>
+        </div>
+        <div class="ch-val" id="ch-email-req">—</div>
+        <div class="ch-meta"><span class="bd-label">Odgovoreno</span><span class="bd-val" id="ch-email-ans">—</span></div>
+        <div class="bar-track"><div class="bar-fill g" id="ch-email-bar"></div></div>
+        <div class="msc-detail" id="ch-email-esc">—</div>
+        <div class="ch-quality" id="ch-email-quality" hidden></div>
+      </div>
+
+      <div class="card ch-card" data-ch="facebook">
+        <div class="ch-hd">
+          <div class="ch-icon">💬</div>
+          <div>
+            <div class="card-title" role="heading" aria-level="3">Facebook</div>
+            <div class="card-sub">Messenger poruke</div>
+          </div>
+        </div>
+        <div class="ch-val" id="ch-facebook-req">—</div>
+        <div class="ch-meta"><span class="bd-label">Odgovoreno</span><span class="bd-val" id="ch-facebook-ans">—</span></div>
+        <div class="bar-track"><div class="bar-fill g" id="ch-facebook-bar"></div></div>
+        <div class="msc-detail" id="ch-facebook-esc">—</div>
+        <div class="ch-quality" id="ch-facebook-quality" hidden></div>
       </div>
     </div>
 
@@ -747,6 +882,7 @@ tbody tr:hover td { background: var(--bg); }
           <thead>
             <tr>
               <th>Vrijeme</th>
+              <th>Kanal</th>
               <th>Pitanje kupca</th>
               <th>Odgovor</th>
               <th>Tema</th>
@@ -755,7 +891,7 @@ tbody tr:hover td { background: var(--bg); }
             </tr>
           </thead>
           <tbody id="traces-body">
-            <tr class="empty-row"><td colspan="6">Učitavanje...</td></tr>
+            <tr class="empty-row"><td colspan="7">Učitavanje...</td></tr>
           </tbody>
         </table>
       </div>
@@ -815,6 +951,31 @@ const $ = id => document.getElementById(id);
 // sessionStorage (ne localStorage): token nestaje po zatvaranju taba i manje je
 // izložen ako bi se ikad provukao XSS.
 const getToken = () => sessionStorage.getItem('libar_admin_token') || '';
+
+// ─── Tema (light/dark) ──────────────────────────────────────
+// data-theme je već postavljen inline skriptom u <head> (bez flash-a); ovdje samo
+// održavamo ikonu i mijenjamo/persistiramo izbor.
+const SUN_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+const MOON_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+function updateThemeIcon() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const iconEl = document.getElementById('theme-icon');
+  if (iconEl) iconEl.innerHTML = dark ? SUN_ICON : MOON_ICON;
+  const btn = document.getElementById('theme-toggle');
+  if (btn) {
+    const lbl = dark ? 'Prebaci na svijetlu temu' : 'Prebaci na tamnu temu';
+    btn.setAttribute('aria-label', lbl);
+    btn.setAttribute('title', lbl);
+  }
+}
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  try { localStorage.setItem('libar_admin_theme', next); } catch (e) {}
+  document.documentElement.setAttribute('data-theme', next);
+  updateThemeIcon();
+}
+updateThemeIcon(); // uskladi ikonu s temom već postavljenom prije prvog paint-a
 
 // HTML-escape za sve što se umeće u markup (korisnikov upit je napadački kontroliran).
 // Mora escapeati i " jer se vrijednost koristi u title="..." atributu.
@@ -961,6 +1122,48 @@ function renderMetrics(m) {
   $('m-cache-detail').textContent = `${cache.hits||0} hits / ${cache.misses||0} misses`;
 
   renderCost(tok);
+  renderChannels(m.byChannel);
+}
+
+// ─── Kanali (Web / Email / Facebook) ──────────────────────────────
+// Ključevi kanala u live metrikama: web, email, facebook (Task 1/2).
+function renderChannels(byChannel) {
+  const chans = [['web', 'ch-web'], ['email', 'ch-email'], ['facebook', 'ch-facebook']];
+  for (const [key, pfx] of chans) {
+    const c = (byChannel && byChannel[key]) || { requests: 0, answered: 0, escalated: 0 };
+    const req = c.requests || 0;
+    const ans = c.answered || 0;
+    $(`${pfx}-req`).textContent = fmt(req);
+    const ansPct = req ? ((ans / req) * 100).toFixed(0) : 0;
+    $(`${pfx}-ans`).textContent = `${fmt(ans)} (${ansPct}%)`;
+    $(`${pfx}-bar`).style.transform = `scaleX(${req ? ans / req : 0})`;
+    $(`${pfx}-esc`).textContent = `Eskalirano: ${fmt(c.escalated || 0)}`;
+  }
+}
+
+// Kvaliteta odgovora po kanalu (iz analize ticketa, Task 3). Tiho preskoči ako
+// backend ne šalje byChannelQuality (stariji backend). Vrijednosti su brojevi.
+function renderChannelQuality(byQ) {
+  const chans = [['web', 'ch-web'], ['email', 'ch-email'], ['facebook', 'ch-facebook']];
+  for (const [key, pfx] of chans) {
+    const box = $(`${pfx}-quality`);
+    if (!box) continue;
+    const q = byQ && byQ[key];
+    const good = (q && q.good) || 0, partial = (q && q.partial) || 0, bad = (q && q.bad) || 0, na = (q && q.na) || 0;
+    const tot = good + partial + bad + na;
+    if (!q || !tot) { box.hidden = true; box.innerHTML = ''; continue; }
+    box.hidden = false;
+    const pct = n => (n / tot) * 100;
+    box.innerHTML =
+      '<div class="ch-q-label">Kvaliteta odgovora</div>' +
+      '<div class="ch-q-track" role="img" aria-label="Dobrih ' + good + ', djelomičnih ' + partial + ', loših ' + bad + '">' +
+        '<div class="ch-q-seg g" style="width:' + pct(good) + '%"></div>' +
+        '<div class="ch-q-seg a" style="width:' + pct(partial) + '%"></div>' +
+        '<div class="ch-q-seg r" style="width:' + pct(bad) + '%"></div>' +
+        '<div class="ch-q-seg n" style="width:' + pct(na) + '%"></div>' +
+      '</div>' +
+      '<div class="ch-q-legend"><span>✓ ' + good + '</span><span>~ ' + partial + '</span><span>✕ ' + bad + '</span></div>';
+  }
 }
 
 // Cijene po 1M tokena (USD), OpenRouter, lipanj 2026. Produkcijski model na
@@ -1040,10 +1243,19 @@ function handledLabel(h) {
   if (h === 'human') return { cls: 'escalated', lbl: '👤 Agent' };
   return { cls: 'other', lbl: '· Mješovito' };
 }
+// Badge kanala iz sirovog Zendesk via.channel stringa. Nepoznate vrijednosti
+// prikazujemo escapeane (napadački kontrolirane).
+function channelBadge(ch) {
+  const v = String(ch || '').toLowerCase();
+  if (['email', 'mail'].includes(v)) return '<span class="badge other">✉️ Email</span>';
+  if (['facebook', 'messenger'].includes(v) || v.startsWith('facebook')) return '<span class="badge other">💬 Facebook</span>';
+  if (['web', 'web_widget', 'chat', 'messaging', 'api', 'web_service'].includes(v)) return '<span class="badge answered">🌐 Web</span>';
+  return `<span class="badge other">${esc(ch || '—')}</span>`;
+}
 function renderConversations(rows) {
   const tbody = $('traces-body');
   if (!rows || !rows.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Nema analiziranih razgovora — pokreni „Analiziraj tickete"</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Nema analiziranih razgovora — pokreni „Analiziraj tickete"</td></tr>';
     return;
   }
   tbody.innerHTML = rows.map(c => {
@@ -1056,6 +1268,7 @@ function renderConversations(rows) {
       : `<span class="tc-mono">#${c.ticketId}</span>`;
     return `<tr>
       <td class="tc-time">${fmtTime(c.createdAt)}</td>
+      <td>${channelBadge(c.channel)}</td>
       <td class="tc-input" tabindex="0" title="${q}">${q}</td>
       <td class="tc-input" tabindex="0" title="${a}">${a}</td>
       <td>${topic}</td>
@@ -1102,6 +1315,8 @@ function renderAnalytics(summary, top, gaps) {
     $('an-bot').textContent = fmt(hb.bot || 0);
     $('an-human').textContent = fmt(hb.human || 0);
     $('an-gaps').textContent = fmt(summary.kbGaps || 0);
+    // Kvaliteta po kanalu (ako backend šalje byChannelQuality — inače tiho preskoči)
+    if (summary.byChannelQuality) renderChannelQuality(summary.byChannelQuality);
   }
   const topEl = $('an-top');
   if (top && top.length) {
@@ -1209,7 +1424,7 @@ const spyObserver = new IntersectionObserver((entries) => {
     if (btn && !btn.classList.contains('active')) setActiveNav(btn);
   }
 }, { rootMargin: '-45% 0px -50% 0px' });
-['sec-metrics', 'sec-bot', 'sec-kb', 'sec-traces', 'sec-analytics'].forEach(id => {
+['sec-metrics', 'sec-channels', 'sec-bot', 'sec-kb', 'sec-traces', 'sec-analytics'].forEach(id => {
   const el = $(id); if (el) spyObserver.observe(el);
 });
 
