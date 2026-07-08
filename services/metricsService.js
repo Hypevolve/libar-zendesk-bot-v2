@@ -9,6 +9,15 @@ const responseCache = require("./responseCacheService");
 const supabaseMetrics = require("./supabaseMetricsService");
 const log = require("../config/logger");
 
+// ─── Helper za svježu praznu strukturu po kanalu ─────────────────
+function emptyByChannel() {
+  return {
+    web:      { requests: 0, answered: 0, escalated: 0 },
+    email:    { requests: 0, answered: 0, escalated: 0 },
+    facebook: { requests: 0, answered: 0, escalated: 0 }
+  };
+}
+
 const counters = {
   totalRequests: 0,
   totalWebhooks: 0,
@@ -20,7 +29,8 @@ const counters = {
   botDisabledEscalations: 0,
   webhooksSkippedHumanHandled: 0,
   agentTakeoversSkipped: 0,
-  latencies: []
+  latencies: [],
+  byChannel: emptyByChannel()
 };
 
 // ─── Load persisted metrics on startup ──────────────────────────
@@ -39,6 +49,17 @@ const counters = {
     counters.webhooksSkippedHumanHandled = persisted.webhooksSkippedHumanHandled || 0;
     counters.agentTakeoversSkipped = persisted.agentTakeoversSkipped || 0;
     counters.latencies = Array.isArray(persisted.latencies) ? persisted.latencies.slice(-1000) : [];
+    counters.byChannel = emptyByChannel();
+    if (persisted.byChannel && typeof persisted.byChannel === "object") {
+      for (const ch of ["web", "email", "facebook"]) {
+        const p = persisted.byChannel[ch] || {};
+        counters.byChannel[ch] = {
+          requests: p.requests || 0,
+          answered: p.answered || 0,
+          escalated: p.escalated || 0
+        };
+      }
+    }
     log.info("metrics_hydrated", { totalRequests: counters.totalRequests, totalWebhooks: counters.totalWebhooks });
   }
 })();
@@ -57,7 +78,8 @@ function serializeCounters() {
     botDisabledEscalations: counters.botDisabledEscalations,
     webhooksSkippedHumanHandled: counters.webhooksSkippedHumanHandled,
     agentTakeoversSkipped: counters.agentTakeoversSkipped,
-    latencies: counters.latencies
+    latencies: counters.latencies,
+    byChannel: counters.byChannel
   };
 }
 
@@ -75,6 +97,14 @@ function increment(key) {
 
 function recordDecision(decision) {
   counters.decisions[decision] = (counters.decisions[decision] || 0) + 1;
+}
+
+function recordChannelOutcome(channel, decision) {
+  const ch = String(channel || "").toLowerCase();
+  if (!counters.byChannel[ch]) return;              // web|email|facebook; ostalo = no-op
+  counters.byChannel[ch].requests++;
+  if (decision === "safe_answer") counters.byChannel[ch].answered++;
+  else if (decision === "escalate_no_answer") counters.byChannel[ch].escalated++;
 }
 
 function recordLatency(ms) {
@@ -107,9 +137,10 @@ async function reset() {
   counters.webhooksSkippedHumanHandled = 0;
   counters.agentTakeoversSkipped = 0;
   counters.latencies = [];
+  counters.byChannel = emptyByChannel();
   tokenBudget.resetUsage();
   responseCache.clear();
   await supabaseMetrics.save(serializeCounters());
 }
 
-module.exports = { increment, recordDecision, recordLatency, getMetrics, reset };
+module.exports = { increment, recordDecision, recordChannelOutcome, recordLatency, getMetrics, reset };
