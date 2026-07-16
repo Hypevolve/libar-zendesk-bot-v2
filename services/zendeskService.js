@@ -283,7 +283,9 @@ async function createChatTicket({ requesterName, requesterEmail, initialMessage,
           ...(uploadTokens.length ? { uploads: uploadTokens } : {})
         },
         metadata: { custom: { libar_message_role: "customer", libar_message_origin: "webchat" } },
-        requester: { name: requesterName, email: requesterEmail },
+        // Bez emaila (anonimni web chat) Zendesk kreira requestera samo s imenom
+        // i ne pokušava slati email notifikacije — nema "failed to deliver" greške.
+        requester: { name: requesterName, ...(requesterEmail ? { email: requesterEmail } : {}) },
         ...(externalId ? { external_id: externalId } : {}),
         additional_tags: [...new Set(["webshop_chat", "ai_chat", "ai_active", ...additionalTags])]
       }

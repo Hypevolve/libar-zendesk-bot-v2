@@ -535,7 +535,11 @@ app.post("/api/chat/start", rateLimiter, inputSanitizer, chatUpload.array("attac
   const files = req.files || [];
 
   const isAnonymous = !email;
-  const placeholderEmail = isAnonymous ? `webchat-${crypto.randomUUID().slice(0, 8)}@guest.libar.hr` : email;
+  // Anonimni posjetitelji se kreiraju BEZ email adrese: Zendesk tada preskače
+  // email notifikacije bez greške. (Raniji placeholder @guest.libar.hr je
+  // bounce-ao svaku notifikaciju → "Email failed to deliver. Status code: 500"
+  // + tag email_notification_failure na svakom komentaru tiketa.)
+  const requesterEmail = isAnonymous ? null : email;
   const requesterName = name || "Web Chat Visitor";
 
   try {
@@ -554,7 +558,7 @@ app.post("/api/chat/start", rateLimiter, inputSanitizer, chatUpload.array("attac
     const initialMessage = message || "[Korisnik je započeo razgovor]";
     const { ticketId, requesterId } = await zendeskService.createChatTicket({
       requesterName,
-      requesterEmail: placeholderEmail,
+      requesterEmail,
       initialMessage,
       subject: buildChatSubject(requesterName),
       uploadTokens
@@ -567,7 +571,7 @@ app.post("/api/chat/start", rateLimiter, inputSanitizer, chatUpload.array("attac
     const session = createSession({
       ticketId, requesterId,
       requesterName,
-      requesterEmail: placeholderEmail,
+      requesterEmail: requesterEmail || "",
       emailIsPlaceholder: isAnonymous,
       entryIntent: entryIntent || null
     });
