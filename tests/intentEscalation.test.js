@@ -145,4 +145,62 @@ describe("intentEscalationService", () => {
       assert.strictEqual(result.shouldEscalate, false);
     });
   });
+
+  describe("detectEscalationIntent — order_issue (greška pri narudžbi)", () => {
+    // Stvarni slučaj iz Zendeska: greška na checkoutu + nema potvrde o kupnji.
+    // Bot nema pristup narudžbama pa OVO mora ići čovjeku, ne u self-service fallback.
+    it("escalates for checkout error without confirmation (stvarni ticket)", () => {
+      const result = detectEscalationIntent(n(
+        "Pokusala sam naruciti knjige preko vase stranice, i na kraju mi je pisalo da se desilo greska sad ne znam dal su knjige narucene ili ne, nisam dobila ni potvrdu o kupnji"
+      ));
+      assert.strictEqual(result.shouldEscalate, true);
+      assert.strictEqual(result.intent, "order_issue");
+    });
+
+    it("escalates for 'nisam dobio potvrdu narudžbe'", () => {
+      const result = detectEscalationIntent(n("nisam dobio potvrdu narudžbe"));
+      assert.strictEqual(result.shouldEscalate, true);
+      assert.strictEqual(result.intent, "order_issue");
+    });
+
+    it("escalates for 'prilikom plaćanja se pojavila greška'", () => {
+      const result = detectEscalationIntent(n("prilikom plaćanja se pojavila greška"));
+      assert.strictEqual(result.shouldEscalate, true);
+      assert.strictEqual(result.intent, "order_issue");
+    });
+
+    it("escalates for 'ne znam je li narudžba prošla'", () => {
+      const result = detectEscalationIntent(n("ne znam je li narudžba prošla"));
+      assert.strictEqual(result.shouldEscalate, true);
+      assert.strictEqual(result.intent, "order_issue");
+    });
+
+    it("escalates for 'imam problem s narudžbom'", () => {
+      const result = detectEscalationIntent(n("imam problem s narudžbom"));
+      assert.strictEqual(result.shouldEscalate, true);
+      assert.strictEqual(result.intent, "order_issue");
+    });
+
+    it("escalates for 'skinut mi je novac s kartice a narudžba nije prošla'", () => {
+      const result = detectEscalationIntent(n("skinut mi je novac s kartice a narudžba nije prošla"));
+      assert.strictEqual(result.shouldEscalate, true);
+      assert.strictEqual(result.intent, "order_issue");
+    });
+
+    // Benigni upiti o naručivanju NE smiju eskalirati (bot ih dobro odgovara iz KB)
+    it("does NOT escalate 'kako mogu naručiti udžbenik'", () => {
+      const result = detectEscalationIntent(n("kako mogu naručiti udžbenik"));
+      assert.strictEqual(result.shouldEscalate, false);
+    });
+
+    it("does NOT escalate 'želim naručiti knjige'", () => {
+      const result = detectEscalationIntent(n("želim naručiti knjige"));
+      assert.strictEqual(result.shouldEscalate, false);
+    });
+
+    it("does NOT escalate 'naručila sam knjige i zanima me kada stižu'", () => {
+      const result = detectEscalationIntent(n("naručila sam knjige i zanima me kada stižu"));
+      assert.strictEqual(result.shouldEscalate, false);
+    });
+  });
 });

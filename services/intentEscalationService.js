@@ -49,6 +49,22 @@ const ESCALATION_INTENTS = [
     message: "Žao nam je zbog neugodnosti! Vaš upit o pogrešnoj pošiljci prosljeđujemo timu koji će Vam se javiti s rješenjem."
   },
   {
+    // Greška pri narudžbi/plaćanju ili izostanak potvrde — bot nema pristup
+    // narudžbama pa ne može provjeriti je li narudžba prošla; mora ići čovjeku.
+    // (Prije je ovakav upit padao u generički self-service fallback.)
+    intent: "order_issue",
+    patterns: [
+      /(greska|greske|gresku|error|problem).{0,40}(naruc|narudzb|kupnj|placanj|webshop|kosaric)/,
+      /(naruc|narudzb|kupnj|placanj|webshop|kosaric).{0,40}(greska|greske|gresku|error|problem|ne radi|nije (prosl|uspjel)|neuspje)/,
+      /nisam dobi(o|la).{0,30}potvrd/, /nije (mi )?(stigla|dosla).{0,20}potvrd/,
+      /(ne znam|nisam sigur|nije (mi )?jasno).{0,40}(naruce|narudzb)/,
+      /(je li|jel|jeli|da li|dal[i]? ).{0,30}narudzb.{0,30}(prosl|zaprimljen|uspjel|evidentiran)/,
+      /(skinut|naplacen|terecen).{0,30}(novac|kartic|iznos)/,
+      /(novac|kartic|iznos).{0,30}(skinut|naplacen|terecen)/
+    ],
+    message: "Žao nam je zbog poteškoća s narudžbom! Vaš upit prosljeđujemo našem timu koji će provjeriti status narudžbe i javiti Vam se u najkraćem roku."
+  },
+  {
     intent: "legal_threat",
     patterns: [
       /odvjetnik/, /odvjetnic/, /tuzb[aeiou]/, /tuzit cu/, /tuzi(t|m|li)/,
