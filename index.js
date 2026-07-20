@@ -258,7 +258,7 @@ async function resolveAutomatedOutcome(session, userMessage, opts = {}) {
   } catch (error) {
     log.error("automated_outcome_failed", { message: error.message, stack: error.stack });
     metricsService.recordDecision("escalate_no_answer");
-    metricsService.recordChannelOutcome("web", "escalate_no_answer");
+    metricsService.recordChannelOutcome(opts.channelType || "web_chat", "escalate_no_answer");
     metricsService.recordLatency(Date.now() - start);
     const fallbackOutcome = {
       type: "escalate_no_answer",
@@ -281,7 +281,7 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
   // whole conversation to a human. This is the incident-response stop button.
   if (!botStateService.isEnabled()) {
     metricsService.recordDecision("escalate_no_answer");
-    metricsService.recordChannelOutcome("web", "escalate_no_answer");
+    metricsService.recordChannelOutcome(opts.channelType || "web_chat", "escalate_no_answer");
     metricsService.recordLatency(Date.now() - start);
     metricsService.increment("botDisabledEscalations");
     log.warn("bot_disabled_escalation", { ticketId: session.ticketId });
@@ -315,7 +315,7 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
   // them, so immediately hand off to a human agent with a reassuring message.
   if (opts.hasAttachments) {
     metricsService.recordDecision("escalate_no_answer");
-    metricsService.recordChannelOutcome("web", "escalate_no_answer");
+    metricsService.recordChannelOutcome(opts.channelType || "web_chat", "escalate_no_answer");
     metricsService.recordLatency(Date.now() - start);
     return {
       knowledge: null,
@@ -332,7 +332,7 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
   const escalationCheck = detectEscalationIntent(normMsg);
   if (escalationCheck.shouldEscalate) {
     metricsService.recordDecision("escalate_no_answer");
-    metricsService.recordChannelOutcome("web", "escalate_no_answer");
+    metricsService.recordChannelOutcome(opts.channelType || "web_chat", "escalate_no_answer");
     metricsService.recordLatency(Date.now() - start);
     log.info("intent_escalation", { reason: escalationCheck.reason, intent: escalationCheck.intent });
     return {
@@ -502,7 +502,7 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
     : buildSelfServiceFallback(userMessage);
 
   metricsService.recordDecision(outcome.type);
-  metricsService.recordChannelOutcome("web", outcome.type);
+  metricsService.recordChannelOutcome(opts.channelType || "web_chat", outcome.type);
   metricsService.recordLatency(Date.now() - start);
 
   tracingService.createTrace({
@@ -1301,10 +1301,25 @@ app.post("/admin/analytics/sync", requireAdmin, async (req, res) => {
   }
 });
 
+// Razdoblje iz query stringa (?from=YYYY-MM-DD&to=YYYY-MM-DD). Neispravan datum
+// ili obrnut raspon vraća 400 s porukom, ne 500 — greška je u zahtjevu.
+function readRange(req) {
+  return { from: req.query.from || null, to: req.query.to || null };
+}
+
+function isRangeError(error) {
+  return /neispravan (datum|raspon)/i.test(error?.message || "");
+}
+
 app.get("/admin/analytics/summary", requireAdmin, async (req, res) => {
   try {
-    res.json({ success: true, configured: analyticsStore.isConfigured(), summary: await analyticsStore.getSummary() });
+    const summary = await analyticsStore.getSummary(readRange(req));
+    // lastSync omogućuje panelu da odmah pokaže ako je dnevni sync zapeo.
+    let lastSync = null;
+    try { lastSync = await analyticsStore.getCursor(); } catch { /* neobavezno */ }
+    res.json({ success: true, configured: analyticsStore.isConfigured(), summary, lastSync });
   } catch (error) {
+    if (isRangeError(error)) return res.status(400).json({ success: false, error: error.message });
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -1312,7 +1327,7 @@ app.get("/admin/analytics/summary", requireAdmin, async (req, res) => {
 app.get("/admin/analytics/conversations", requireAdmin, async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 20, 200);
-    const rows = await analyticsStore.getConversations({ limit });
+    const rows = await analyticsStore.getConversations({ limit, ...readRange(req) });
     const conversations = rows.map((r) => ({
       ticketId: r.ticket_id,
       createdAt: r.created_at,
@@ -1328,6 +1343,7 @@ app.get("/admin/analytics/conversations", requireAdmin, async (req, res) => {
     }));
     res.json({ success: true, conversations });
   } catch (error) {
+    if (isRangeError(error)) return res.status(400).json({ success: false, error: error.message });
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -1335,8 +1351,9 @@ app.get("/admin/analytics/conversations", requireAdmin, async (req, res) => {
 app.get("/admin/analytics/kb-gaps", requireAdmin, async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 10, 50);
-    res.json({ success: true, kbGaps: await analyticsStore.getKbGaps({ limit }) });
+    res.json({ success: true, kbGaps: await analyticsStore.getKbGaps({ limit, ...readRange(req) }) });
   } catch (error) {
+    if (isRangeError(error)) return res.status(400).json({ success: false, error: error.message });
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -1344,8 +1361,9 @@ app.get("/admin/analytics/kb-gaps", requireAdmin, async (req, res) => {
 app.get("/admin/analytics/top-questions", requireAdmin, async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 10, 50);
-    res.json({ success: true, topQuestions: await analyticsStore.getTopQuestions({ limit }) });
+    res.json({ success: true, topQuestions: await analyticsStore.getTopQuestions({ limit, ...readRange(req) }) });
   } catch (error) {
+    if (isRangeError(error)) return res.status(400).json({ success: false, error: error.message });
     res.status(500).json({ success: false, error: error.message });
   }
 });

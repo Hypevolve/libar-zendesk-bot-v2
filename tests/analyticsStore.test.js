@@ -40,10 +40,12 @@ test("bez Supabase konfiguracije: čitanja vraćaju prazno, isConfigured=false",
     assert.deepStrictEqual(await store.getConversations(), []);
     assert.deepStrictEqual(await store.getKbGaps(), []);
     assert.deepStrictEqual(await store.getTopQuestions(), []);
-    assert.deepStrictEqual(await store.getSummary(), {
-      total: 0, kbGaps: 0, byHandledBy: {}, byQuality: {},
-      byChannel: { web: 0, email: 0, facebook: 0, ostalo: 0 }, byChannelQuality: {}
-    });
+    const s = await store.getSummary();
+    assert.strictEqual(s.total, 0);
+    assert.strictEqual(s.botResolved, 0);
+    assert.strictEqual(s.humanHandled, 0);
+    assert.strictEqual(s.kbGaps, 0);
+    assert.deepStrictEqual(s.byChannel, { web: 0, email: 0, facebook: 0, ostalo: 0 });
   } finally { env.SUPABASE_URL = prevUrl; env.SUPABASE_SERVICE_ROLE_KEY = prevKey; }
 });
 
@@ -90,54 +92,68 @@ test("getKbGaps grupira rupe po temi s primjerima i prijedlogom", () => withConf
   assert.strictEqual(res[1].topic, "garancija");
 }));
 
-test("getSummary parsira count iz content-range", () => withConfig(async () => {
-  mockClient({ getImpl: (url) => {
-    // total bez filtera vs filtrirani
-    let count = "10";
-    if (url.includes("is_kb_gap=eq.true")) count = "3";
-    else if (url.includes("handled_by=eq.bot")) count = "6";
-    else if (url.includes("handled_by")) count = "0";
-    else if (url.includes("bot_quality=eq.good")) count = "5";
-    else if (url.includes("bot_quality")) count = "0";
-    return { data: [], headers: { "content-range": `0-0/${count}` } };
-  }});
+test("getSummary dohvaća redove jednim upitom i agregira ih", () => withConfig(async () => {
+  const client = mockClient({ getImpl: () => ({ data: [
+    { channel: "web", handled_by: "bot", bot_quality: "good", is_kb_gap: false },
+    { channel: "web", handled_by: "mixed", bot_quality: "bad", is_kb_gap: true },
+    { channel: "email", handled_by: "human", bot_quality: "na", is_kb_gap: false },
+    { channel: "facebook", handled_by: "bot", bot_quality: "partial", is_kb_gap: false }
+  ], headers: {} })});
+
   const s = await store.getSummary();
-  assert.strictEqual(s.total, 10);
-  assert.strictEqual(s.kbGaps, 3);
-  assert.strictEqual(s.byHandledBy.bot, 6);
-  assert.strictEqual(s.byQuality.good, 5);
+
+  // Jedan dohvat (jedna stranica), ne ~20 count upita kao prije.
+  assert.strictEqual(client.calls.get.length, 1);
+  assert.strictEqual(s.total, 4);
+  assert.strictEqual(s.botResolved, 2);
+  assert.strictEqual(s.humanHandled, 2);
+  assert.strictEqual(s.kbGaps, 1);
+  assert.deepStrictEqual(s.byChannel, { web: 2, email: 1, facebook: 1, ostalo: 0 });
+  assert.deepStrictEqual(s.byChannelQuality.web, { good: 1, partial: 0, bad: 1, na: 0 });
 }));
 
-test("getSummary vraća byChannel i byChannelQuality iz Zendesk via.channel", () => withConfig(async () => {
-  // countWhere gradi URL "/rest/v1/ticket_analysis?select=ticket_id" + filterQS.
-  // Ovdje simuliramo brojeve po channelBuckets() filteru (i po bot_quality unutar njega).
-  mockClient({ getImpl: (url) => {
-    let count = "10"; // total i sve ne-channel filtere (handled_by, bot_quality, kb_gap) tretiramo kao 10 - nebitno za ovaj test
-    if (url.includes("channel=in.(email)")) {
-      if (url.includes("bot_quality=eq.good")) count = "2";
-      else if (url.includes("bot_quality=eq.partial")) count = "1";
-      else if (url.includes("bot_quality=eq.bad")) count = "0";
-      else if (url.includes("bot_quality=eq.na")) count = "1";
-      else count = "4";
-    } else if (url.includes("channel=in.(facebook,messenger,facebook_page,facebook_post)")) {
-      if (url.includes("bot_quality")) count = "0";
-      else count = "1";
-    } else if (url.includes("channel=in.(web,web_widget,web_service,chat,messaging,api)")) {
-      if (url.includes("bot_quality=eq.good")) count = "3";
-      else if (url.includes("bot_quality=eq.partial")) count = "1";
-      else if (url.includes("bot_quality=eq.bad")) count = "1";
-      else if (url.includes("bot_quality=eq.na")) count = "0";
-      else count = "5";
-    }
-    return { data: [], headers: { "content-range": `0-0/${count}` } };
-  }});
+test("getSummary šalje created_at filter kad je zadano razdoblje", () => withConfig(async () => {
+  const client = mockClient({ getImpl: () => ({ data: [], headers: {} }) });
+  const s = await store.getSummary({ from: "2026-07-01", to: "2026-07-31" });
+
+  const url = decodeURIComponent(client.calls.get[0].url);
+  assert.match(url, /created_at=gte\.2026-07-01T00:00:00\.000Z/);
+  assert.match(url, /created_at=lte\.2026-07-31T23:59:59\.999Z/);
+  assert.deepStrictEqual(s.range, {
+    from: "2026-07-01T00:00:00.000Z",
+    to: "2026-07-31T23:59:59.999Z"
+  });
+}));
+
+test("getSummary bez razdoblja ne šalje created_at filter", () => withConfig(async () => {
+  const client = mockClient({ getImpl: () => ({ data: [], headers: {} }) });
+  await store.getSummary();
+  assert.ok(!client.calls.get[0].url.includes("created_at=gte"));
+  assert.ok(!client.calls.get[0].url.includes("created_at=lte"));
+}));
+
+test("getSummary stranicira kad ima više od 1000 redova", () => withConfig(async () => {
+  const full = Array.from({ length: 1000 }, () => ({ channel: "web", handled_by: "bot", bot_quality: "good" }));
+  const rest = Array.from({ length: 7 }, () => ({ channel: "email", handled_by: "human", bot_quality: "na" }));
+  const client = mockClient({ getImpl: (url) => ({
+    data: url.includes("offset=0") ? full : rest,
+    headers: {}
+  })});
+
   const s = await store.getSummary();
-  assert.strictEqual(s.byChannel.email, 4);
-  assert.strictEqual(s.byChannel.facebook, 1);
-  assert.strictEqual(s.byChannel.web, 5);
-  // ostalo = total(10) - web(5) - email(4) - facebook(1) = 0
-  assert.strictEqual(s.byChannel.ostalo, 0);
-  assert.deepStrictEqual(s.byChannelQuality.email, { good: 2, partial: 1, bad: 0, na: 1 });
-  assert.deepStrictEqual(s.byChannelQuality.facebook, { good: 0, partial: 0, bad: 0, na: 0 });
-  assert.deepStrictEqual(s.byChannelQuality.web, { good: 3, partial: 1, bad: 1, na: 0 });
+  assert.strictEqual(client.calls.get.length, 2, "druga stranica se dohvaća dok je prva puna");
+  assert.strictEqual(s.total, 1007);
+  assert.strictEqual(s.byChannel.web, 1000);
+  assert.strictEqual(s.byChannel.email, 7);
+}));
+
+test("getConversations i getKbGaps poštuju razdoblje", () => withConfig(async () => {
+  const client = mockClient({ getImpl: () => ({ data: [], headers: {} }) });
+  await store.getConversations({ limit: 5, from: "2026-07-01", to: "2026-07-31" });
+  await store.getKbGaps({ limit: 5, from: "2026-07-01", to: "2026-07-31" });
+  for (const call of client.calls.get) {
+    const url = decodeURIComponent(call.url);
+    assert.match(url, /created_at=gte\.2026-07-01/);
+    assert.match(url, /created_at=lte\.2026-07-31/);
+  }
 }));

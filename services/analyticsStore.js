@@ -73,15 +73,6 @@ async function setCursor(iso) {
 
 // ─── Čitanje ───────────────────────────────────────────────────
 
-async function countWhere(filterQS = "") {
-  const res = await getClient().get(
-    `/rest/v1/ticket_analysis?select=ticket_id${filterQS}`,
-    { headers: { Prefer: "count=exact", Range: "0-0" } }
-  );
-  const cr = res.headers?.["content-range"] || res.headers?.["Content-Range"] || "";
-  return Number(String(cr).split("/")[1]) || 0;
-}
-
 // Zendesk via.channel je heterogen (email, facebook, web, api, web_service, chat…).
 // Mapiramo sirove vrijednosti u 3 prikazna kanala + "ostalo".
 // VAŽNO: provjeri stvarne vrijednosti u bazi (SELECT DISTINCT channel) i doradi.
@@ -93,44 +84,161 @@ function channelBuckets() {
   };
 }
 
-async function getSummary() {
-  if (!isConfigured()) return {
-    total: 0, kbGaps: 0, byHandledBy: {}, byQuality: {},
-    byChannel: { web: 0, email: 0, facebook: 0, ostalo: 0 }, byChannelQuality: {}
+// ─── Razdoblje ─────────────────────────────────────────────────
+
+const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Normalizira {from, to} u ISO timestampe za PostgREST filter.
+ * Datum bez vremena ("2026-07-01") se širi na cijeli dan da rubni dani budu
+ * uključivi u oba smjera — inače bi "do 31.7." odbacilo sve tog dana.
+ * Vraća null za nezadanu granicu (= bez filtera).
+ */
+function normalizeRange({ from = null, to = null } = {}) {
+  const parse = (value, endOfDay) => {
+    if (value === null || value === undefined || value === "") return null;
+    const raw = String(value).trim();
+    const iso = DATE_ONLY_RE.test(raw)
+      ? `${raw}T${endOfDay ? "23:59:59.999" : "00:00:00.000"}Z`
+      : raw;
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) throw new Error(`Neispravan datum: ${raw}`);
+    // Datum-only smo već sami sastavili; pun ISO vraćamo doslovno kako ga je
+    // pozivatelj poslao (bez preformatiranja u drugu vremensku zonu).
+    return DATE_ONLY_RE.test(raw) ? iso : raw;
   };
-  const total = await countWhere("");
-  const kbGaps = await countWhere("&is_kb_gap=eq.true");
-  const byHandledBy = {};
-  for (const v of ["bot", "human", "mixed"]) byHandledBy[v] = await countWhere(`&handled_by=eq.${v}`);
-  const byQuality = {};
-  for (const v of ["good", "partial", "bad", "na"]) byQuality[v] = await countWhere(`&bot_quality=eq.${v}`);
 
-  const buckets = channelBuckets();
-  const byChannel = { web: 0, email: 0, facebook: 0, ostalo: 0 };
-  const byChannelQuality = {};
-  for (const [bucket, vias] of Object.entries(buckets)) {
-    byChannel[bucket] = await countWhere(`&channel=in.(${vias.join(",")})`);
-    byChannelQuality[bucket] = {};
-    for (const q of ["good", "partial", "bad", "na"]) {
-      byChannelQuality[bucket][q] =
-        await countWhere(`&channel=in.(${vias.join(",")})&bot_quality=eq.${q}`);
-    }
+  const fromIso = parse(from, false);
+  const toIso = parse(to, true);
+  if (fromIso && toIso && new Date(fromIso) > new Date(toIso)) {
+    throw new Error("Neispravan raspon: 'from' je nakon 'to'.");
   }
-  byChannel.ostalo = Math.max(0, total - byChannel.web - byChannel.email - byChannel.facebook);
-
-  return { total, kbGaps, byHandledBy, byQuality, byChannel, byChannelQuality };
+  return { from: fromIso, to: toIso };
 }
 
-async function getConversations({ limit = 20 } = {}) {
+// ─── Agregacija (čista funkcija — bez mreže) ───────────────────
+
+const QUALITIES = ["good", "partial", "bad", "na"];
+
+function emptyQuality() {
+  return { good: 0, partial: 0, bad: 0, na: 0 };
+}
+
+function emptySummary(range = { from: null, to: null }) {
+  return {
+    total: 0, botResolved: 0, humanHandled: 0, kbGaps: 0,
+    byHandledBy: { bot: 0, human: 0, mixed: 0 },
+    byQuality: emptyQuality(),
+    byChannel: { web: 0, email: 0, facebook: 0, ostalo: 0 },
+    byChannelQuality: { web: emptyQuality(), email: emptyQuality(), facebook: emptyQuality(), ostalo: emptyQuality() },
+    range
+  };
+}
+
+// Mapira sirovi Zendesk via.channel u jedan od 4 prikazna kanala.
+function bucketForChannel(raw) {
+  const ch = String(raw || "").trim().toLowerCase();
+  for (const [bucket, vias] of Object.entries(channelBuckets())) {
+    if (vias.includes(ch)) return bucket;
+  }
+  return "ostalo";
+}
+
+/**
+ * Zbraja redove ticket_analysis u brojke za dashboard.
+ *
+ * Sve kartice se računaju iz ISTOG skupa redova, pa vrijede invarijante koje
+ * su na starom panelu bile prekršene:
+ *   botResolved + humanHandled === total
+ *   suma byChannel === total
+ *   suma byChannelQuality[k] === byChannel[k]
+ *
+ * "Bot riješio" je isključivo handled_by === "bot" — 'mixed' znači da je agent
+ * ipak morao intervenirati, pa se ne broji kao ušteda rada. Nepoznate/prazne
+ * vrijednosti idu konzervativno na stranu čovjeka.
+ */
+function tallySummary(rows = [], range = { from: null, to: null }) {
+  const s = emptySummary(range);
+  for (const r of rows || []) {
+    s.total++;
+
+    const handled = String(r?.handled_by || "").trim().toLowerCase();
+    if (handled === "bot") { s.byHandledBy.bot++; s.botResolved++; }
+    else {
+      if (handled === "human" || handled === "mixed") s.byHandledBy[handled]++;
+      s.humanHandled++;
+    }
+
+    const quality = String(r?.bot_quality || "").trim().toLowerCase();
+    const q = QUALITIES.includes(quality) ? quality : "na";
+    s.byQuality[q]++;
+
+    const bucket = bucketForChannel(r?.channel);
+    s.byChannel[bucket]++;
+    s.byChannelQuality[bucket][q]++;
+
+    if (r?.is_kb_gap === true) s.kbGaps++;
+  }
+  return s;
+}
+
+// ─── Dohvat + agregacija ───────────────────────────────────────
+
+const PAGE_SIZE = 1000;
+const MAX_PAGES = 50; // 50k redova — zaštita od runawaya, daleko iznad realnog volumena
+
+function rangeFilter({ from, to }) {
+  let qs = "";
+  if (from) qs += `&created_at=gte.${encodeURIComponent(from)}`;
+  if (to) qs += `&created_at=lte.${encodeURIComponent(to)}`;
+  return qs;
+}
+
+/**
+ * Dohvaća redove za razdoblje u stranicama. Jedan prolaz kroz podatke umjesto
+ * ~20 zasebnih count upita — brže i bez rizika da pojedini upiti vide različita
+ * stanja baze (što je znalo dati kartice koje se ne zbrajaju).
+ */
+async function fetchRowsInRange(range) {
+  const client = getClient();
+  const filter = rangeFilter(range);
+  const rows = [];
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const offset = page * PAGE_SIZE;
+    const res = await client.get(
+      `/rest/v1/ticket_analysis?select=created_at,channel,handled_by,bot_quality,is_kb_gap${filter}` +
+      `&order=created_at.desc&offset=${offset}&limit=${PAGE_SIZE}`
+    );
+    const batch = res.data || [];
+    rows.push(...batch);
+    if (batch.length < PAGE_SIZE) break;
+  }
+  return rows;
+}
+
+async function getSummary({ from = null, to = null } = {}) {
+  const range = normalizeRange({ from, to });
+  if (!isConfigured()) return emptySummary(range);
+  const rows = await fetchRowsInRange(range);
+  return tallySummary(rows, range);
+}
+
+async function getConversations({ limit = 20, from = null, to = null } = {}) {
   if (!isConfigured()) return [];
   const n = Math.min(Math.max(Number(limit) || 20, 1), 200);
-  const res = await getClient().get(`/rest/v1/ticket_analysis?select=*&order=created_at.desc&limit=${n}`);
+  const filter = rangeFilter(normalizeRange({ from, to }));
+  const res = await getClient().get(
+    `/rest/v1/ticket_analysis?select=*${filter}&order=created_at.desc&limit=${n}`
+  );
   return res.data || [];
 }
 
-async function getTopQuestions({ limit = 10 } = {}) {
+async function getTopQuestions({ limit = 10, from = null, to = null } = {}) {
   if (!isConfigured()) return [];
-  const res = await getClient().get("/rest/v1/ticket_analysis?select=topic&topic=not.is.null&limit=2000");
+  const filter = rangeFilter(normalizeRange({ from, to }));
+  const res = await getClient().get(
+    `/rest/v1/ticket_analysis?select=topic&topic=not.is.null${filter}&limit=2000`
+  );
   const tally = new Map();
   for (const r of res.data || []) {
     const t = (r.topic || "").trim();
@@ -143,10 +251,12 @@ async function getTopQuestions({ limit = 10 } = {}) {
     .slice(0, Math.min(Math.max(Number(limit) || 10, 1), 50));
 }
 
-async function getKbGaps({ limit = 10 } = {}) {
+async function getKbGaps({ limit = 10, from = null, to = null } = {}) {
   if (!isConfigured()) return [];
+  const filter = rangeFilter(normalizeRange({ from, to }));
   const res = await getClient().get(
-    "/rest/v1/ticket_analysis?is_kb_gap=eq.true&select=topic,suggested_kb_topic,ticket_id,summary&order=created_at.desc&limit=500"
+    `/rest/v1/ticket_analysis?is_kb_gap=eq.true&select=topic,suggested_kb_topic,ticket_id,summary${filter}` +
+    "&order=created_at.desc&limit=500"
   );
   const groups = new Map();
   for (const r of res.data || []) {
@@ -171,5 +281,8 @@ module.exports = {
   getConversations,
   getTopQuestions,
   getKbGaps,
+  // Čiste funkcije — izložene radi testiranja bez mreže.
+  normalizeRange,
+  tallySummary,
   _setTestClient
 };

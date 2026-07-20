@@ -267,6 +267,42 @@ body {
   gap: 14px; margin-bottom: 20px;
 }
 
+/* ── Odabir razdoblja ─────────────────────────────────────────── */
+.range-bar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 16px;
+}
+.range-presets { display: flex; gap: 6px; }
+.range-btn {
+  padding: 6px 14px; border: 1px solid var(--border); border-radius: var(--r-sm);
+  font-size: 13px; font-weight: 500; font-family: inherit;
+  color: var(--text-2); background: var(--surface);
+  cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.range-btn:hover { background: var(--surface-2, var(--surface)); color: var(--text); }
+.range-btn[aria-pressed="true"] {
+  background: var(--brand, #f97316); border-color: var(--brand, #f97316); color: #fff;
+}
+.range-custom { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.range-custom input[type="date"] {
+  padding: 5px 9px; border: 1px solid var(--border); border-radius: var(--r-sm);
+  font-size: 12.5px; font-family: inherit;
+  color: var(--text-2); background: var(--surface); color-scheme: light dark;
+}
+.range-sep { color: var(--text-3, var(--text-2)); font-size: 12.5px; }
+.range-note {
+  width: 100%; font-size: 12px; color: var(--text-3, var(--text-2));
+  display: flex; align-items: center; gap: 6px;
+}
+.range-note.warn { color: var(--red, #ef4444); }
+
+/* Naslov sekcije koja NE ovisi o razdoblju (live brojači). */
+.live-hd {
+  display: flex; align-items: baseline; gap: 8px;
+  margin: 4px 0 10px; font-size: 13px; font-weight: 600; color: var(--text-2);
+}
+.live-hd .live-sub { font-size: 12px; font-weight: 400; color: var(--text-3, var(--text-2)); }
+
 .kpi {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--r); padding: 18px 20px;
@@ -685,7 +721,7 @@ tbody tr:hover td { background: var(--bg); }
       <button class="tb-btn tb-icon" id="theme-toggle" onclick="toggleTheme()" aria-label="Promijeni temu" title="Promijeni temu">
         <span id="theme-icon" aria-hidden="true"></span>
       </button>
-      <button class="tb-btn" onclick="loadAll()" aria-label="Osvježi podatke">
+      <button class="tb-btn" onclick="refreshAll()" aria-label="Osvježi podatke">
         <svg aria-hidden="true" focusable="false" width="13" height="13" id="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
         <span>Osvježi</span>
       </button>
@@ -695,31 +731,48 @@ tbody tr:hover td { background: var(--bg); }
   <!-- Content -->
   <div class="content">
 
-    <!-- KPI Cards -->
+    <!-- Odabir razdoblja — vrijedi za sve kartice ISPOD, do "UŽIVO" sekcije -->
+    <div class="range-bar" role="region" aria-label="Odabir razdoblja">
+      <div class="range-presets" role="group" aria-label="Brzi odabir razdoblja">
+        <button class="range-btn" id="rg-7"  aria-pressed="false" onclick="setPreset(7)">7 dana</button>
+        <button class="range-btn" id="rg-30" aria-pressed="true"  onclick="setPreset(30)">30 dana</button>
+        <button class="range-btn" id="rg-90" aria-pressed="false" onclick="setPreset(90)">90 dana</button>
+        <button class="range-btn" id="rg-all" aria-pressed="false" onclick="setPreset(null)">Sve</button>
+      </div>
+      <div class="range-custom">
+        <label class="range-sep" for="rg-from">Od</label>
+        <input type="date" id="rg-from" aria-label="Datum od" onchange="applyCustomRange()">
+        <label class="range-sep" for="rg-to">do</label>
+        <input type="date" id="rg-to" aria-label="Datum do" onchange="applyCustomRange()">
+      </div>
+      <div class="range-note" id="rg-note" aria-live="polite">—</div>
+    </div>
+
+    <!-- KPI Cards — iz analize Zendesk ticketa, filtrirano po razdoblju -->
     <div class="kpi-grid" id="sec-metrics" role="region" aria-label="Ključne metrike">
       <div class="kpi k-brand">
         <div class="kpi-icon"><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-        <div class="kpi-label" role="heading" aria-level="3">Ukupno upita</div>
+        <div class="kpi-label" role="heading" aria-level="3">Ukupno razgovora</div>
         <div class="kpi-val" id="m-total">—</div>
-        <div class="kpi-sub" id="m-total-sub">Od pokretanja</div>
+        <div class="kpi-sub" id="m-total-sub">—</div>
       </div>
       <div class="kpi k-green">
         <div class="kpi-icon"><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div class="kpi-label" role="heading" aria-level="3">Odgovoreno</div>
-        <div class="kpi-val" id="m-answered">—</div>
-        <div class="kpi-sub" id="m-answered-pct">—</div>
+        <div class="kpi-label" role="heading" aria-level="3">Bot riješio sam</div>
+        <div class="kpi-val" id="m-bot">—</div>
+        <div class="kpi-sub" id="m-bot-pct">—</div>
       </div>
       <div class="kpi k-red">
-        <div class="kpi-icon"><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
-        <div class="kpi-label" role="heading" aria-level="3">Eskalirano</div>
-        <div class="kpi-val" id="m-escalated">—</div>
-        <div class="kpi-sub" id="m-escalated-pct">—</div>
+        <div class="kpi-icon"><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg></div>
+        <div class="kpi-label" role="heading" aria-level="3">Čovjek preuzeo</div>
+        <div class="kpi-val" id="m-human">—</div>
+        <div class="kpi-sub" id="m-human-pct">—</div>
       </div>
       <div class="kpi k-indigo">
-        <div class="kpi-icon"><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-        <div class="kpi-label" role="heading" aria-level="3">Prosj. latencija</div>
-        <div class="kpi-val" id="m-latency">—</div>
-        <div class="kpi-sub" id="m-latency-p95">—</div>
+        <div class="kpi-icon"><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div class="kpi-label" role="heading" aria-level="3">Rupe u bazi znanja</div>
+        <div class="kpi-val" id="m-gaps">—</div>
+        <div class="kpi-sub" id="m-gaps-pct">—</div>
       </div>
     </div>
 
@@ -734,7 +787,7 @@ tbody tr:hover td { background: var(--bg); }
           </div>
         </div>
         <div class="ch-val" id="ch-web-req">—</div>
-        <div class="ch-meta"><span class="bd-label">Odgovoreno</span><span class="bd-val" id="ch-web-ans">—</span></div>
+        <div class="ch-meta"><span class="bd-label">Bot riješio sam</span><span class="bd-val" id="ch-web-ans">—</span></div>
         <div class="bar-track"><div class="bar-fill g" id="ch-web-bar"></div></div>
         <div class="msc-detail" id="ch-web-esc">—</div>
         <div class="ch-quality" id="ch-web-quality" hidden></div>
@@ -749,7 +802,7 @@ tbody tr:hover td { background: var(--bg); }
           </div>
         </div>
         <div class="ch-val" id="ch-email-req">—</div>
-        <div class="ch-meta"><span class="bd-label">Odgovoreno</span><span class="bd-val" id="ch-email-ans">—</span></div>
+        <div class="ch-meta"><span class="bd-label">Bot riješio sam</span><span class="bd-val" id="ch-email-ans">—</span></div>
         <div class="bar-track"><div class="bar-fill g" id="ch-email-bar"></div></div>
         <div class="msc-detail" id="ch-email-esc">—</div>
         <div class="ch-quality" id="ch-email-quality" hidden></div>
@@ -764,7 +817,7 @@ tbody tr:hover td { background: var(--bg); }
           </div>
         </div>
         <div class="ch-val" id="ch-facebook-req">—</div>
-        <div class="ch-meta"><span class="bd-label">Odgovoreno</span><span class="bd-val" id="ch-facebook-ans">—</span></div>
+        <div class="ch-meta"><span class="bd-label">Bot riješio sam</span><span class="bd-val" id="ch-facebook-ans">—</span></div>
         <div class="bar-track"><div class="bar-fill g" id="ch-facebook-bar"></div></div>
         <div class="msc-detail" id="ch-facebook-esc">—</div>
         <div class="ch-quality" id="ch-facebook-quality" hidden></div>
@@ -825,7 +878,36 @@ tbody tr:hover td { background: var(--bg); }
       </div>
     </div>
 
-    <!-- Token / Cost / Cache -->
+    <!-- ── UŽIVO: brojači iz procesa, NE ovise o odabranom razdoblju ────────
+         Latencija, tokeni i cache postoje samo kao živi brojači (bez datuma),
+         pa su namjerno odvojeni od kartica iznad da se ne čitaju kao njihova
+         razdioba. Resetiraju se pri deployu. -->
+    <div class="live-hd" role="heading" aria-level="2">
+      Uživo
+      <span class="live-sub" id="live-sub">kumulativno od zadnjeg pokretanja · ne ovisi o razdoblju</span>
+    </div>
+    <div class="row c3" style="margin-bottom: 14px;">
+      <div class="msc">
+        <div class="msc-label" role="heading" aria-level="3">Prosj. latencija</div>
+        <div class="msc-val" id="m-latency">—</div>
+        <div class="msc-sub" id="m-latency-p95">—</div>
+        <div class="msc-detail" id="m-live-volume">—</div>
+      </div>
+      <div class="msc">
+        <div class="msc-label" role="heading" aria-level="3">Obrađeni webhookovi</div>
+        <div class="msc-val" id="m-wh">—</div>
+        <div class="msc-sub" id="m-wh-sub">—</div>
+        <div class="msc-detail" id="m-wh-detail">—</div>
+      </div>
+      <div class="msc">
+        <div class="msc-label" role="heading" aria-level="3">Cache hit rate</div>
+        <div class="msc-val" id="m-cache">—</div>
+        <div class="msc-sub" id="m-cache-detail">—</div>
+        <div class="msc-detail" id="m-cache-extra">&nbsp;</div>
+      </div>
+    </div>
+
+    <!-- Token / Cost -->
     <div class="row c3">
       <div class="msc">
         <div class="msc-label" role="heading" aria-level="3">Token potrošnja</div>
@@ -840,10 +922,10 @@ tbody tr:hover td { background: var(--bg); }
         <div class="msc-detail">$<span id="m-cost-in">—</span>/1M input · $<span id="m-cost-out">—</span>/1M output</div>
       </div>
       <div class="msc">
-        <div class="msc-label" role="heading" aria-level="3">Cache hit rate</div>
-        <div class="msc-val" id="m-cache">—</div>
-        <div class="msc-sub" id="m-cache-detail">—</div>
-        <div class="msc-detail" id="m-cache-extra">&nbsp;</div>
+        <div class="msc-label" role="heading" aria-level="3">Odluke bota</div>
+        <div class="msc-val" id="m-dec">—</div>
+        <div class="msc-sub" id="m-dec-sub">—</div>
+        <div class="msc-detail" id="m-dec-detail">—</div>
       </div>
     </div>
 
@@ -1027,6 +1109,7 @@ async function saveToken() {
     const ls = $('login-screen');
     ls.classList.add('fade-out');
     setTimeout(() => ls.classList.add('hidden'), 300);
+    syncRangeButtons();
     loadAll();
     loadAnalytics();
     startPoll();
@@ -1083,33 +1166,146 @@ async function api(path, opts = {}) {
   return r.json();
 }
 
-// ─── Metrics ──────────────────────────────────────
+// ─── Razdoblje ────────────────────────────────────
+// Jedan izvor istine za sve kartice koje ovise o datumu. `days: null` = sve.
+const range = { days: 30, from: null, to: null };
+
+function isoDay(d) { return d.toISOString().slice(0, 10); }
+
+// Pretvara stanje u {from, to} za API. Preset se računa unatrag od danas.
+function rangeParams() {
+  if (range.from || range.to) return { from: range.from, to: range.to };
+  if (range.days === null) return {};
+  const to = new Date();
+  const from = new Date(to.getTime() - (range.days - 1) * 86400000);
+  return { from: isoDay(from), to: isoDay(to) };
+}
+
+function rangeQuery(extra = {}) {
+  const qs = new URLSearchParams({ ...rangeParams(), ...extra });
+  const s = qs.toString();
+  return s ? `?${s}` : '';
+}
+
+function syncRangeButtons() {
+  const custom = Boolean(range.from || range.to);
+  for (const [id, days] of [['rg-7', 7], ['rg-30', 30], ['rg-90', 90], ['rg-all', null]]) {
+    const btn = $(id);
+    if (btn) btn.setAttribute('aria-pressed', String(!custom && range.days === days));
+  }
+}
+
+function setPreset(days) {
+  range.days = days; range.from = null; range.to = null;
+  $('rg-from').value = ''; $('rg-to').value = '';
+  syncRangeButtons();
+  loadAnalytics();
+}
+
+function applyCustomRange() {
+  const from = $('rg-from').value || null;
+  const to = $('rg-to').value || null;
+  if (from && to && from > to) {
+    setRangeNote('Datum „od" je nakon datuma „do".', true);
+    return;
+  }
+  range.from = from; range.to = to;
+  syncRangeButtons();
+  loadAnalytics();
+}
+
+function setRangeNote(text, isWarn) {
+  const el = $('rg-note');
+  if (!el) return;
+  el.textContent = text;
+  el.classList.toggle('warn', Boolean(isWarn));
+}
+
+// ─── Analitika: glavne kartice (ovise o razdoblju) ───────────────
+// Izvor: ticket_analysis u Supabaseu (stvarni Zendesk tiketi), osvježava se
+// dnevnim auto-syncom. Sve brojke dolaze iz ISTOG skupa redova, pa se kartice
+// međusobno zbrajaju — za razliku od ranijeg miksa živih brojača i analize.
+function renderSummary(s, lastSync) {
+  if (!s) return;
+  const total = s.total || 0;
+  const bot = s.botResolved || 0;
+  const human = s.humanHandled || 0;
+  const gaps = s.kbGaps || 0;
+  const pct = n => total ? `${((n / total) * 100).toFixed(0)}%` : '—';
+
+  $('m-total').textContent = fmt(total);
+  $('m-total-sub').textContent = describeRange();
+  $('m-bot').textContent = fmt(bot);
+  $('m-bot-pct').textContent = total ? `${pct(bot)} bez agenta` : '—';
+  $('m-human').textContent = fmt(human);
+  $('m-human-pct').textContent = total ? `${pct(human)} uz agenta` : '—';
+  $('m-gaps').textContent = fmt(gaps);
+  $('m-gaps-pct').textContent = total ? `${pct(gaps)} razgovora` : '—';
+
+  renderChannels(s.byChannel, s.byChannelQuality);
+  renderSyncNote(total, lastSync);
+}
+
+// Prikaz zadnjeg syncа uz razdoblje — ako dnevni auto-sync zapne, odmah se vidi.
+function renderSyncNote(total, lastSync) {
+  if (!lastSync) {
+    setRangeNote(`${fmt(total)} razgovora · sync još nije pokrenut`, total === 0);
+    return;
+  }
+  const d = new Date(lastSync);
+  if (Number.isNaN(d.getTime())) { setRangeNote(`${fmt(total)} razgovora`); return; }
+  const ageH = (Date.now() - d.getTime()) / 3600000;
+  const stale = ageH > 48; // auto-sync je dnevni; >48h znači da je zapeo
+  setRangeNote(
+    `${fmt(total)} razgovora · zadnji sync ${d.toLocaleString('hr-HR')}` + (stale ? ' — sync kasni!' : ''),
+    stale
+  );
+}
+
+function describeRange() {
+  if (range.from || range.to) {
+    return `${range.from || 'početak'} – ${range.to || 'danas'}`;
+  }
+  return range.days === null ? 'Cijelo razdoblje' : `Zadnjih ${range.days} dana`;
+}
+
+// ─── Metrics (živi brojači — NE ovise o razdoblju) ───────────────
 function renderMetrics(m) {
   if (!m) return;
-  const total = m.totalRequests || 0;
   const dec = m.decisions || {};
   const answered = dec.safe_answer || 0;
   const escalated = dec.escalate_no_answer || 0;
-  const other = Math.max(0, total - answered - escalated);
+  const decTotal = answered + escalated;
   const webchat = (m.totalChatStarts||0) + (m.totalChatMessages||0);
-  const webhook = m.totalWebhooks || 0;
+  const webhooksIn = m.totalWebhooks || 0;
+  const skipped = (m.webhooksSkippedHumanHandled||0) + (m.agentTakeoversSkipped||0);
 
-  $('m-total').textContent = fmt(total);
-  $('m-total-sub').textContent = `Webchat: ${fmt(webchat)} · Webhook: ${fmt(webhook)}`;
-  $('m-answered').textContent = fmt(answered);
-  $('m-answered-pct').textContent = total ? `${((answered/total)*100).toFixed(0)}% uspješnost` : '—';
-  $('m-escalated').textContent = fmt(escalated);
-  $('m-escalated-pct').textContent = total ? `${((escalated/total)*100).toFixed(0)}% eskalacija` : '—';
   $('m-latency').textContent = m.avgLatencyMs ? `${(m.avgLatencyMs/1000).toFixed(1)}s` : '—';
   $('m-latency-p95').textContent = m.p95LatencyMs ? `P95: ${(m.p95LatencyMs/1000).toFixed(1)}s` : '—';
+  $('m-live-volume').textContent = `${fmt(webchat)} web chat poruka`;
 
-  if (total > 0) {
-    $('d-answered').textContent = `${fmt(answered)} (${((answered/total)*100).toFixed(0)}%)`;
-    $('d-answered-bar').style.transform = `scaleX(${answered/total})`;
-    $('d-escalated').textContent = `${fmt(escalated)} (${((escalated/total)*100).toFixed(0)}%)`;
-    $('d-escalated-bar').style.transform = `scaleX(${escalated/total})`;
-    $('d-other').textContent = `${fmt(other)} (${((other/total)*100).toFixed(0)}%)`;
-    $('d-other-bar').style.transform = `scaleX(${other/total})`;
+  // Dolazni webhookovi nisu isto što i obrađeni upiti — većina se preskoči
+  // (agent je preuzeo, duplikat, bot ugašen). Prikazujemo oboje da se ne
+  // uspoređuju nesumjerljive brojke kao prije.
+  $('m-wh').textContent = fmt(webhooksIn);
+  $('m-wh-sub').textContent = `${fmt(skipped)} preskočeno`;
+  $('m-wh-detail').textContent = 'Email + Facebook dolazni događaji';
+
+  $('m-dec').textContent = fmt(decTotal);
+  $('m-dec-sub').textContent = decTotal
+    ? `${((answered/decTotal)*100).toFixed(0)}% odgovoreno bez eskalacije`
+    : '—';
+  $('m-dec-detail').textContent = `✓ ${fmt(answered)} odgovoreno · ↑ ${fmt(escalated)} eskalirano`;
+
+  if (decTotal > 0) {
+    const other = Math.max(0, (m.totalRequests||0) - answered - escalated);
+    const denom = answered + escalated + other;
+    $('d-answered').textContent = `${fmt(answered)} (${((answered/denom)*100).toFixed(0)}%)`;
+    $('d-answered-bar').style.transform = `scaleX(${answered/denom})`;
+    $('d-escalated').textContent = `${fmt(escalated)} (${((escalated/denom)*100).toFixed(0)}%)`;
+    $('d-escalated-bar').style.transform = `scaleX(${escalated/denom})`;
+    $('d-other').textContent = `${fmt(other)} (${((other/denom)*100).toFixed(0)}%)`;
+    $('d-other-bar').style.transform = `scaleX(${other/denom})`;
   }
 
   const tok = m.tokenUsage || {};
@@ -1124,48 +1320,45 @@ function renderMetrics(m) {
   $('m-cache-detail').textContent = `${cache.hits||0} hits / ${cache.misses||0} misses`;
 
   renderCost(tok);
-  renderChannels(m.byChannel);
 }
 
 // ─── Kanali (Web / Email / Facebook) ──────────────────────────────
-// Ključevi kanala u live metrikama: web, email, facebook (Task 1/2).
-function renderChannels(byChannel) {
+// Iz analize ticketa, filtrirano po razdoblju. Traka pokazuje udio razgovora
+// koje je bot riješio bez agenta; ispod je raspodjela kvalitete istog skupa.
+function renderChannels(byChannel, byChannelQuality) {
   const chans = [['web', 'ch-web'], ['email', 'ch-email'], ['facebook', 'ch-facebook']];
   for (const [key, pfx] of chans) {
-    const c = (byChannel && byChannel[key]) || { requests: 0, answered: 0, escalated: 0 };
-    const req = c.requests || 0;
-    const ans = c.answered || 0;
+    const req = (byChannel && byChannel[key]) || 0;
+    const q = (byChannelQuality && byChannelQuality[key]) || {};
+    const good = q.good || 0, partial = q.partial || 0, bad = q.bad || 0, na = q.na || 0;
+    // "Bot riješio" po kanalu nije u byChannel, pa koristimo kvalitetu kao
+    // najbližu mjeru učinka: dobri + djelomični odgovori.
+    const ok = good + partial;
     $(`${pfx}-req`).textContent = fmt(req);
-    const ansPct = req ? ((ans / req) * 100).toFixed(0) : 0;
-    $(`${pfx}-ans`).textContent = `${fmt(ans)} (${ansPct}%)`;
-    $(`${pfx}-bar`).style.transform = `scaleX(${req ? ans / req : 0})`;
-    $(`${pfx}-esc`).textContent = `Eskalirano: ${fmt(c.escalated || 0)}`;
+    const okPct = req ? ((ok / req) * 100).toFixed(0) : 0;
+    $(`${pfx}-ans`).textContent = `${fmt(ok)} (${okPct}%)`;
+    $(`${pfx}-bar`).style.transform = `scaleX(${req ? ok / req : 0})`;
+    $(`${pfx}-esc`).textContent = `Loših odgovora: ${fmt(bad)}`;
+    renderOneChannelQuality(pfx, { good, partial, bad, na });
   }
 }
 
-// Kvaliteta odgovora po kanalu (iz analize ticketa, Task 3). Tiho preskoči ako
-// backend ne šalje byChannelQuality (stariji backend). Vrijednosti su brojevi.
-function renderChannelQuality(byQ) {
-  const chans = [['web', 'ch-web'], ['email', 'ch-email'], ['facebook', 'ch-facebook']];
-  for (const [key, pfx] of chans) {
-    const box = $(`${pfx}-quality`);
-    if (!box) continue;
-    const q = byQ && byQ[key];
-    const good = (q && q.good) || 0, partial = (q && q.partial) || 0, bad = (q && q.bad) || 0, na = (q && q.na) || 0;
-    const tot = good + partial + bad + na;
-    if (!q || !tot) { box.hidden = true; box.innerHTML = ''; continue; }
-    box.hidden = false;
-    const pct = n => (n / tot) * 100;
-    box.innerHTML =
-      '<div class="ch-q-label">Kvaliteta odgovora</div>' +
-      '<div class="ch-q-track" role="img" aria-label="Dobrih ' + good + ', djelomičnih ' + partial + ', loših ' + bad + '">' +
-        '<div class="ch-q-seg g" style="width:' + pct(good) + '%"></div>' +
-        '<div class="ch-q-seg a" style="width:' + pct(partial) + '%"></div>' +
-        '<div class="ch-q-seg r" style="width:' + pct(bad) + '%"></div>' +
-        '<div class="ch-q-seg n" style="width:' + pct(na) + '%"></div>' +
-      '</div>' +
-      '<div class="ch-q-legend"><span>✓ ' + good + '</span><span>~ ' + partial + '</span><span>✕ ' + bad + '</span></div>';
-  }
+function renderOneChannelQuality(pfx, q) {
+  const box = $(`${pfx}-quality`);
+  if (!box) return;
+  const tot = q.good + q.partial + q.bad + q.na;
+  if (!tot) { box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+  const pct = n => (n / tot) * 100;
+  box.innerHTML =
+    '<div class="ch-q-label">Kvaliteta odgovora</div>' +
+    '<div class="ch-q-track" role="img" aria-label="Dobrih ' + q.good + ', djelomičnih ' + q.partial + ', loših ' + q.bad + ', bez ocjene ' + q.na + '">' +
+      '<div class="ch-q-seg g" style="width:' + pct(q.good) + '%"></div>' +
+      '<div class="ch-q-seg a" style="width:' + pct(q.partial) + '%"></div>' +
+      '<div class="ch-q-seg r" style="width:' + pct(q.bad) + '%"></div>' +
+      '<div class="ch-q-seg n" style="width:' + pct(q.na) + '%"></div>' +
+    '</div>' +
+    '<div class="ch-q-legend"><span>✓ ' + q.good + '</span><span>~ ' + q.partial + '</span><span>✕ ' + q.bad + '</span></div>';
 }
 
 // Cijene po 1M tokena (USD), OpenRouter, lipanj 2026. Produkcijski model na
@@ -1317,8 +1510,6 @@ function renderAnalytics(summary, top, gaps) {
     $('an-bot').textContent = fmt(hb.bot || 0);
     $('an-human').textContent = fmt(hb.human || 0);
     $('an-gaps').textContent = fmt(summary.kbGaps || 0);
-    // Kvaliteta po kanalu (ako backend šalje byChannelQuality — inače tiho preskoči)
-    if (summary.byChannelQuality) renderChannelQuality(summary.byChannelQuality);
   }
   const topEl = $('an-top');
   if (top && top.length) {
@@ -1330,16 +1521,21 @@ function renderAnalytics(summary, top, gaps) {
   } else { gapsEl.innerHTML = '<li class="an-empty">Nema detektiranih rupa</li>'; }
 }
 
+// Sve analitičke čitanke dijele isto razdoblje — glavne kartice, kanali,
+// top pitanja, KB rupe i popis razgovora uvijek prikazuju isti skup podataka.
 async function loadAnalytics() {
   try {
-    const [s, t, g, conv] = await Promise.all([
-      api('/admin/analytics/summary').then(d => d.summary).catch(()=>null),
-      api('/admin/analytics/top-questions?limit=10').then(d => d.topQuestions).catch(()=>null),
-      api('/admin/analytics/kb-gaps?limit=10').then(d => d.kbGaps).catch(()=>null),
-      api('/admin/analytics/conversations?limit=20').then(d => d.conversations).catch(()=>null),
+    const [sum, t, g, conv] = await Promise.all([
+      api(`/admin/analytics/summary${rangeQuery()}`).catch(()=>null),
+      api(`/admin/analytics/top-questions${rangeQuery({ limit: 10 })}`).then(d => d.topQuestions).catch(()=>null),
+      api(`/admin/analytics/kb-gaps${rangeQuery({ limit: 10 })}`).then(d => d.kbGaps).catch(()=>null),
+      api(`/admin/analytics/conversations${rangeQuery({ limit: 20 })}`).then(d => d.conversations).catch(()=>null),
     ]);
+    const s = sum && sum.summary;
+    renderSummary(s, sum && sum.lastSync);
     renderAnalytics(s, t, g);
     if (conv !== null) renderConversations(conv);
+    if (!s) setRangeNote('Analitika trenutno nije dostupna.', true);
   } catch(e) { /* analitika je sekundarna — tiho */ }
 }
 
@@ -1394,6 +1590,12 @@ async function loadAll() {
   }
 }
 
+// Gumb "Osvježi" mora povući i analitiku — periodični polling je namjerno
+// ne dira (analiza se osvježava dnevnim syncom, ne svakih par sekundi).
+async function refreshAll() {
+  await Promise.all([loadAll(), loadAnalytics()]);
+}
+
 // setTimeout-lanac umjesto setInterval: dopušta promjenjiv interval (backoff) i
 // pauzu kad je tab skriven.
 function scheduleNext() {
@@ -1435,6 +1637,7 @@ const saved = getToken();
 if (saved) {
   api('/admin/metrics').then(() => {
     $('login-screen').classList.add('hidden');
+    syncRangeButtons();
     loadAll();
     loadAnalytics();
     startPoll();
