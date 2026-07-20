@@ -1384,6 +1384,31 @@ async function runVectorSync() {
   }
 }
 
+// ─── Analitika ticketa Auto-Sync ──────────────────────────────
+
+const ANALYSIS_SYNC_INTERVAL_MS = env.ANALYSIS_AUTO_SYNC_INTERVAL_MS;
+const ANALYSIS_SYNC_MAX_TICKETS = env.ANALYSIS_AUTO_SYNC_MAX_TICKETS;
+const ANALYSIS_SYNC_MAX_PASSES = 10;
+
+// Analiza ide u serijama jer je svaki ticket jedan LLM poziv; vrtimo dok se
+// cursor ne stigne do sada ili dok ne potrošimo prolaze (zaštita od runawaya).
+async function runAnalysisSync() {
+  let totals = { analyzed: 0, skipped: 0, kbGaps: 0, errors: 0 };
+  try {
+    for (let pass = 0; pass < ANALYSIS_SYNC_MAX_PASSES; pass++) {
+      const result = await ticketAnalysisService.run({ maxTickets: ANALYSIS_SYNC_MAX_TICKETS });
+      totals.analyzed += result.analyzed || 0;
+      totals.skipped += result.skipped || 0;
+      totals.kbGaps += result.kbGaps || 0;
+      totals.errors += result.errors || 0;
+      if ((result.fetched || 0) < ANALYSIS_SYNC_MAX_TICKETS) break;
+    }
+    log.info("analysis_sync_complete", totals);
+  } catch (err) {
+    log.error("analysis_sync_error", { message: err.message, ...totals });
+  }
+}
+
 // ─── Static files (embed.js, index.html, etc.) ──────────────
 
 app.use(express.static("public"));
@@ -1409,6 +1434,13 @@ const server = app.listen(PORT, () => {
   // Schedule vector sync
   setTimeout(runVectorSync, 10000);
   setInterval(runVectorSync, VECTOR_SYNC_INTERVAL_MS);
+
+  // Schedule analitiku ticketa (odmaknuto od vector synca da se ne preklapaju)
+  if (env.ANALYSIS_AUTO_SYNC_ENABLED) {
+    setTimeout(runAnalysisSync, 60000);
+    setInterval(runAnalysisSync, ANALYSIS_SYNC_INTERVAL_MS);
+    log.info("analysis_sync_scheduled", { intervalMs: ANALYSIS_SYNC_INTERVAL_MS });
+  }
 });
 
 function gracefulShutdown(signal) {
