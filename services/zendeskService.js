@@ -482,6 +482,11 @@ function normalizeIncrementalTicket(raw = {}) {
   };
 }
 
+// Incremental Export vraća do 1000 ticketa po stranici — puno više podataka od
+// običnog API poziva, pa mu treba veći timeout od klijentovih 15 s (inače
+// backfill po gustoj povijesti puca s "listTicketsSince failed").
+const INCREMENTAL_TIMEOUT_MS = 60000;
+
 // Unix sekunde iz Zendesk vremenskog polja; null ako polje ne postoji/nije valjano.
 function ticketUpdatedUnix(raw = {}) {
   const value = raw.updated_at || raw.generated_timestamp || null;
@@ -513,7 +518,7 @@ async function listTicketsSince(sinceISO, { maxTickets = 150, client = zendeskCl
   let cursorUnix = startTime;
   try {
     while (url && tickets.length < maxTickets) {
-      const res = await client.get(url);
+      const res = await client.get(url, { timeout: INCREMENTAL_TIMEOUT_MS });
       const batch = Array.isArray(res.data?.tickets) ? res.data.tickets : [];
 
       let truncated = false;

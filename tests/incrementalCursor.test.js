@@ -50,8 +50,9 @@ function mockClient(pages) {
   let i = 0;
   return {
     calls,
-    get: async (url) => {
+    get: async (url, opts) => {
       calls.push(url);
+      calls.lastOpts = opts;
       const page = pages[i++];
       if (!page) throw new Error(`Nema pripremljene stranice za: ${url}`);
       return { data: page };
@@ -140,6 +141,15 @@ test("cursor napreduje i kad svi preuzeti ticketi dijele istu sekundu (bez deadl
   });
 
   assert.ok(unix(nextCursorISO) > unix(sameIso), "cursor mora napredovati barem 1s");
+});
+
+test("incremental poziv ima veći timeout od standardnog klijenta", async () => {
+  // Stranica od 1000 ticketa ne stigne u klijentovih 15 s — backfill je zbog
+  // toga padao s "listTicketsSince failed" na gustoj povijesti.
+  const client = mockClient([makePage(10, { count: 10 })]);
+  await listTicketsSince("2026-05-31T00:00:00Z", { maxTickets: 10, client });
+
+  assert.ok(client.calls.lastOpts?.timeout >= 60000, "timeout mora biti barem 60 s");
 });
 
 test("ticket bez updated_at ne ruši cursor unatrag", async () => {
