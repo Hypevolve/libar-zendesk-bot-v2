@@ -161,11 +161,22 @@ function defaultCursorISO(sinceDays) {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 }
 
+function parseSinceISO(value) {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) throw new Error(`Neispravan sinceISO: ${value}`);
+  return d.toISOString();
+}
+
 /**
  * Pokreni analizu od zadnjeg cursora (ili backfill prozor ako cursora nema).
  * Vraća sažetak: { ok, analyzed, skipped, kbGaps, errors, fetched, cursor }.
+ *
+ * BACKFILL: spremljeni cursor nikad ne ide unatrag (dnevni sync mora ostati na
+ * sadašnjosti), pa se povijest ne može obraditi u serijama preko njega. Zato
+ * backfill vodi pozivatelj: prva serija šalje `sinceDays` (ili `sinceISO`),
+ * a svaka sljedeća šalje `sinceISO` = `cursor` iz prethodnog odgovora.
  */
-async function run({ sinceDays, maxTickets } = {}, deps = {}) {
+async function run({ sinceDays, sinceISO, maxTickets } = {}, deps = {}) {
   const store = deps.store || analyticsStore;
   const listTicketsSince = deps.listTicketsSince || zendeskService.listTicketsSince;
   const getComments = deps.getPublicTicketComments || zendeskService.getPublicTicketComments;
@@ -179,7 +190,7 @@ async function run({ sinceDays, maxTickets } = {}, deps = {}) {
   // na spremljeni cursor (inače se, čim cursor postoji, sinceDays ignorira i
   // preskočena povijest se ne može pokupiti).
   const savedCursor = await store.getCursor();
-  const backfillFrom = sinceDays ? defaultCursorISO(sinceDays) : null;
+  const backfillFrom = sinceISO ? parseSinceISO(sinceISO) : (sinceDays ? defaultCursorISO(sinceDays) : null);
   const cursor = backfillFrom || savedCursor || defaultCursorISO();
 
   const { tickets, nextCursorISO } = await listTicketsSince(cursor, { maxTickets: max });

@@ -1292,8 +1292,10 @@ const ticketAnalysisService = require("./services/ticketAnalysisService");
 app.post("/admin/analytics/sync", requireAdmin, async (req, res) => {
   try {
     const sinceDays = Number(req.body?.sinceDays) || undefined;
+    // sinceISO vozi serijski backfill: svaka serija šalje cursor prethodne.
+    const sinceISO = req.body?.sinceISO || undefined;
     const maxTickets = Number(req.body?.maxTickets) || undefined;
-    const result = await ticketAnalysisService.run({ sinceDays, maxTickets });
+    const result = await ticketAnalysisService.run({ sinceDays, sinceISO, maxTickets });
     res.json({ success: true, result });
   } catch (error) {
     log.error("analytics_sync_failed", { message: error.message });

@@ -170,6 +170,34 @@ test("backfill koji prestigne spremljeni cursor ga pomiče naprijed", async () =
   assert.deepStrictEqual(store.calls.cursors, ["2026-07-15T00:00:00Z"]);
 });
 
+test("run({sinceISO}) nastavlja backfill od zadanog trenutka", async () => {
+  const store = mockStore({ cursor: "2026-07-01T00:00:00Z" });
+  const deps = backfillDeps(store, { nextCursorISO: "2026-04-10T00:00:00Z" });
+
+  const res = await svc.run({ sinceISO: "2026-04-05T00:00:00Z" }, deps);
+
+  assert.strictEqual(deps._listArgs.cursor, "2026-04-05T00:00:00.000Z");
+  // Odgovor vraća cursor kojim pozivatelj vozi sljedeću seriju.
+  assert.strictEqual(res.cursor, "2026-04-10T00:00:00Z");
+  assert.deepStrictEqual(store.calls.cursors, [], "serija u prošlosti ne dira živi cursor");
+});
+
+test("run({sinceISO}) odbija neispravan datum", async () => {
+  const store = mockStore({ cursor: "2026-07-01T00:00:00Z" });
+  const deps = backfillDeps(store, { nextCursorISO: "2026-04-10T00:00:00Z" });
+
+  await assert.rejects(() => svc.run({ sinceISO: "jučer" }, deps), /Neispravan sinceISO/);
+});
+
+test("sinceISO ima prednost pred sinceDays", async () => {
+  const store = mockStore({ cursor: "2026-07-01T00:00:00Z" });
+  const deps = backfillDeps(store, { nextCursorISO: "2026-04-10T00:00:00Z" });
+
+  await svc.run({ sinceISO: "2026-04-05T00:00:00Z", sinceDays: 365 }, deps);
+
+  assert.strictEqual(deps._listArgs.cursor, "2026-04-05T00:00:00.000Z");
+});
+
 test("run() bez sinceDays i dalje koristi spremljeni cursor", async () => {
   const store = mockStore({ cursor: "2026-07-01T00:00:00Z" });
   const deps = backfillDeps(store, { nextCursorISO: "2026-07-02T00:00:00Z" });

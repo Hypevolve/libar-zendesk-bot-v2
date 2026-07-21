@@ -49,6 +49,22 @@ Eksplicitan `sinceDays` znači **ručni backfill**: kreće od tog prozora bez ob
 spremljeni cursor, a cursor pritom nikad ne ide unatrag (dnevni sync ostaje gdje je
 bio). Bez `sinceDays` se koristi spremljeni cursor.
 
+Zato backfill u serijama vozi **pozivatelj**, ne spremljeni cursor: prva serija šalje
+`sinceDays`, svaka sljedeća šalje `sinceISO` = `cursor` iz prethodnog odgovora. Gotovo
+je kad `fetched` padne ispod `maxTickets`.
+
+```bash
+# prva serija
+curl -X POST "$BOT/admin/analytics/sync" -H "x-admin-token: $T" \
+  -H "Content-Type: application/json" -d '{"sinceDays":365,"maxTickets":200}'
+# → {"result":{"fetched":200,"cursor":"2025-08-14T…Z", …}}
+
+# sljedeće serije: sinceISO = cursor prethodne
+curl -X POST "$BOT/admin/analytics/sync" -H "x-admin-token: $T" \
+  -H "Content-Type: application/json" \
+  -d '{"sinceISO":"2025-08-14T…Z","maxTickets":200}'
+```
+
 ### Cursor semantika (zašto brojke moraju odgovarati Zendesku)
 Zendesk Incremental Export vraća do 1000 ticketa po stranici, a mi obradimo najviše
 `maxTickets`. Kad stranicu presiječemo, cursor ide samo do `updated_at` **zadnjeg
