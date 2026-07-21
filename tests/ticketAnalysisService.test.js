@@ -123,6 +123,63 @@ test("run() maskira PII prije slanja LLM-u", async () => {
   assert.ok(!capturedUserText.includes("test@example.com"), "sirovi email ne smije ići LLM-u");
 });
 
+// ─── backfill (sinceDays nadjačava spremljeni cursor) ──────────
+
+// Zajednički mock za backfill testove: bilježi s kojim je cursorom pozvan
+// listTicketsSince i vraća zadani nextCursorISO.
+function backfillDeps(store, { nextCursorISO }) {
+  const deps = {
+    store,
+    listTicketsSince: async (cursor, opts) => {
+      deps._listArgs = { cursor, opts };
+      return { tickets: [{ id: 1, subject: "a", created_at: "2026-04-01T00:00:00Z" }], nextCursorISO };
+    },
+    getPublicTicketComments: async () => [{ body: "x" }],
+    llm: async () => JSON.stringify({ topic: "ok", summary: "s" })
+  };
+  return deps;
+}
+
+test("run({sinceDays}) kreće od zadanog prozora, ne od spremljenog cursora", async () => {
+  const store = mockStore({ cursor: "2026-07-01T00:00:00Z" });
+  const deps = backfillDeps(store, { nextCursorISO: "2026-04-05T00:00:00Z" });
+
+  await svc.run({ sinceDays: 365 }, deps);
+
+  const used = new Date(deps._listArgs.cursor).getTime();
+  const expected = Date.now() - 365 * 24 * 60 * 60 * 1000;
+  assert.ok(Math.abs(used - expected) < 60_000, "cursor mora biti ~365 dana unatrag");
+  assert.ok(used < new Date("2026-07-01T00:00:00Z").getTime(), "ne smije koristiti spremljeni cursor");
+});
+
+test("backfill ne vraća spremljeni cursor unatrag", async () => {
+  const store = mockStore({ cursor: "2026-07-01T00:00:00Z" });
+  const deps = backfillDeps(store, { nextCursorISO: "2026-04-05T00:00:00Z" });
+
+  await svc.run({ sinceDays: 365 }, deps);
+
+  assert.deepStrictEqual(store.calls.cursors, [], "stariji cursor se ne smije upisati");
+});
+
+test("backfill koji prestigne spremljeni cursor ga pomiče naprijed", async () => {
+  const store = mockStore({ cursor: "2026-07-01T00:00:00Z" });
+  const deps = backfillDeps(store, { nextCursorISO: "2026-07-15T00:00:00Z" });
+
+  await svc.run({ sinceDays: 365 }, deps);
+
+  assert.deepStrictEqual(store.calls.cursors, ["2026-07-15T00:00:00Z"]);
+});
+
+test("run() bez sinceDays i dalje koristi spremljeni cursor", async () => {
+  const store = mockStore({ cursor: "2026-07-01T00:00:00Z" });
+  const deps = backfillDeps(store, { nextCursorISO: "2026-07-02T00:00:00Z" });
+
+  await svc.run({}, deps);
+
+  assert.strictEqual(deps._listArgs.cursor, "2026-07-01T00:00:00Z");
+  assert.deepStrictEqual(store.calls.cursors, ["2026-07-02T00:00:00Z"]);
+});
+
 test("run() nastavlja kad LLM padne na jednom ticketu", async () => {
   const store = mockStore();
   let call = 0;

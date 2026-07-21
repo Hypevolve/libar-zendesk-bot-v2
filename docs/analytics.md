@@ -45,6 +45,18 @@ Prvi put sustav ide unatrag `ANALYSIS_BACKFILL_DAYS` dana. Svaki run je ogranič
 do danas. Nakon toga obrađuju se samo novi ticketi (inkrementalno preko cursora u
 `analysis_sync_state`). Obrisani ticketi (404) i status `deleted` se preskaču.
 
+Eksplicitan `sinceDays` znači **ručni backfill**: kreće od tog prozora bez obzira na
+spremljeni cursor, a cursor pritom nikad ne ide unatrag (dnevni sync ostaje gdje je
+bio). Bez `sinceDays` se koristi spremljeni cursor.
+
+### Cursor semantika (zašto brojke moraju odgovarati Zendesku)
+Zendesk Incremental Export vraća do 1000 ticketa po stranici, a mi obradimo najviše
+`maxTickets`. Kad stranicu presiječemo, cursor ide samo do `updated_at` **zadnjeg
+preuzetog** ticketa — ne do `end_time` stranice. Inače bi svi neobrađeni ticketi s te
+stranice trajno ispali iz analize i dashboard bi pokazivao manje ticketa nego Zendesk.
+Granični ticket se ponovi u sljedećem runu (`start_time` je inkluzivan) i upsert ga
+pregazi. Pokriveno u [tests/incrementalCursor.test.js](../tests/incrementalCursor.test.js).
+
 ## Čitanje (endpointi i MCP)
 
 | Endpoint (requireAdmin) | MCP tool | Vrati |

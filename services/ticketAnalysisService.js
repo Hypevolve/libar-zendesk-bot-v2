@@ -175,7 +175,12 @@ async function run({ sinceDays, maxTickets } = {}, deps = {}) {
   }
 
   const max = Number(maxTickets) || DEFAULT_MAX_TICKETS;
-  const cursor = (await store.getCursor()) || defaultCursorISO(sinceDays);
+  // Eksplicitni sinceDays = ručni backfill: kreni od zadanog prozora bez obzira
+  // na spremljeni cursor (inače se, čim cursor postoji, sinceDays ignorira i
+  // preskočena povijest se ne može pokupiti).
+  const savedCursor = await store.getCursor();
+  const backfillFrom = sinceDays ? defaultCursorISO(sinceDays) : null;
+  const cursor = backfillFrom || savedCursor || defaultCursorISO();
 
   const { tickets, nextCursorISO } = await listTicketsSince(cursor, { maxTickets: max });
 
@@ -197,7 +202,10 @@ async function run({ sinceDays, maxTickets } = {}, deps = {}) {
     }
   }
 
-  if (nextCursorISO) await store.setCursor(nextCursorISO);
+  // Backfill radi u prošlosti — cursor smije ići samo naprijed, inače bi dnevni
+  // sync nakon backfilla ponovno analizirao sve od starog datuma.
+  const movesForward = !savedCursor || new Date(nextCursorISO) > new Date(savedCursor);
+  if (nextCursorISO && movesForward) await store.setCursor(nextCursorISO);
   log.info("ticket_analysis_run", { analyzed, kbGaps, errors, fetched: tickets.length });
   return { ok: true, analyzed, skipped, kbGaps, errors, fetched: tickets.length, cursor: nextCursorISO };
 }

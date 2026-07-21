@@ -482,12 +482,30 @@ function normalizeIncrementalTicket(raw = {}) {
   };
 }
 
+// Unix sekunde iz Zendesk vremenskog polja; null ako polje ne postoji/nije valjano.
+function ticketUpdatedUnix(raw = {}) {
+  const value = raw.updated_at || raw.generated_timestamp || null;
+  if (!value) return null;
+  if (typeof value === "number") return value;
+  const ms = Date.parse(value);
+  return Number.isNaN(ms) ? null : Math.floor(ms / 1000);
+}
+
 /**
  * Dohvati tickete kreirane/izmijenjene od sinceISO preko Incremental Export API-ja.
  * Paginirano; staje kad skupi maxTickets ili kad nema više stranica.
- * Vraća { tickets: normalized[], nextCursorISO } (cursor = zadnji end_time kao ISO).
+ * Vraća { tickets: normalized[], nextCursorISO }.
+ *
+ * CURSOR: Zendesk vraća do 1000 ticketa po stranici, a mi obradimo najviše
+ * maxTickets. Ako stranicu presiječemo, cursor smije ići samo do updated_at
+ * ZADNJEG PREUZETOG ticketa — ne do end_time stranice, jer bi tada sve neuzeto
+ * s te stranice trajno ispalo iz analize (dashboard je zato pokazivao znatno
+ * manje ticketa nego Zendesk). start_time je inkluzivan, pa se granični ticket
+ * ponovi u sljedećem runu; upsert ga samo pregazi.
+ *
+ * Klijent je injektabilan (opts.client) radi testova bez mreže.
  */
-async function listTicketsSince(sinceISO, { maxTickets = 150 } = {}) {
+async function listTicketsSince(sinceISO, { maxTickets = 150, client = zendeskClient } = {}) {
   validateZendeskConfig();
   const startTime = Math.floor(new Date(sinceISO || 0).getTime() / 1000) || 0;
   const tickets = [];
@@ -495,15 +513,29 @@ async function listTicketsSince(sinceISO, { maxTickets = 150 } = {}) {
   let cursorUnix = startTime;
   try {
     while (url && tickets.length < maxTickets) {
-      const res = await zendeskClient.get(url);
+      const res = await client.get(url);
       const batch = Array.isArray(res.data?.tickets) ? res.data.tickets : [];
+
+      let truncated = false;
+      let lastTakenUnix = null;
       for (const raw of batch) {
+        if (tickets.length >= maxTickets) { truncated = true; break; }
         tickets.push(normalizeIncrementalTicket(raw));
-        if (tickets.length >= maxTickets) break;
+        lastTakenUnix = ticketUpdatedUnix(raw) ?? lastTakenUnix;
       }
+
+      if (truncated) {
+        // Presjekli smo stranicu → cursor na zadnji preuzeti ticket. +1s samo ako
+        // se cursor inače ne bi pomaknuo (svi preuzeti dijele istu sekundu), da
+        // sync ne zapne na istom bloku zauvijek. Bez pouzdanog updated_at radije
+        // ostajemo na polaznom cursoru (ponovi) nego da skočimo preko.
+        if (lastTakenUnix !== null) cursorUnix = Math.max(lastTakenUnix, startTime + 1);
+        break;
+      }
+
       if (res.data?.end_time) cursorUnix = res.data.end_time;
       // Incremental stream je gotov kad count < 1000 (Zendesk konvencija).
-      url = (res.data?.count >= 1000 && tickets.length < maxTickets) ? res.data.next_page : null;
+      url = res.data?.count >= 1000 ? res.data.next_page : null;
     }
     return { tickets, nextCursorISO: new Date(cursorUnix * 1000).toISOString() };
   } catch (error) {
