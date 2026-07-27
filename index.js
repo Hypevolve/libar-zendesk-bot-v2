@@ -1217,6 +1217,24 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+// ─── GET /api/popis-udzbenika.json ────────────────────────────
+// Javni izvor podataka za WordPress widget. Ista datoteka koju čita bot —
+// jedan izvor istine za chat i web. Podaci su javni (nazivi škola i poveznice
+// na dokumente koje su škole same objavile), pa je CORS otvoren.
+
+const POPIS_UDZBENIKA_PATH = path.join(__dirname, "data", "popis-udzbenika-2026-27.json");
+
+app.get("/api/popis-udzbenika.json", (req, res) => {
+  if (!fs.existsSync(POPIS_UDZBENIKA_PATH)) {
+    log.warn("popis_udzbenika_missing", { path: POPIS_UDZBENIKA_PATH });
+    return res.status(404).json({ success: false, error: "Popis udžbenika trenutno nije dostupan." });
+  }
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Cache-Control", "public, max-age=3600");
+  res.type("application/json");
+  return res.sendFile(POPIS_UDZBENIKA_PATH);
+});
+
 // ─── GET /health ──────────────────────────────────────────────
 
 app.get("/health", async (req, res) => {
