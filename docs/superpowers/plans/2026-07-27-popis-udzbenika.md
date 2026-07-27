@@ -421,7 +421,16 @@ git commit -m "data: popis udžbenika 2026./2027. po školi i razredu"
 - Consumes: `data/popis-udzbenika-2026-27.json` (Task 1), `normalizeForSearch` iz `services/textUtils`
 - Produces:
   - `loadIndex(filePath?) -> { godina, generirano, skole, idf }` — učita i memoizira
+  - `rankSchools(text, { minCoverage?, minScore? }?) -> [{ school, score, coverage }]` — sortirano silazno
   - `findSchool(text) -> { status: "match", school } | { status: "ambiguous", candidates } | { status: "none" }`
+
+Prepoznavanje je otporno na tri vrste nepreciznog upisa:
+
+| Upis | Kako se hvata |
+|---|---|
+| bez dijakritike, velika/mala slova, crtice i razmaci | `normalizeForSearch` nad upitom i nazivom — isti niz tokena |
+| padeži (`daruvaru`, `šibeniku`) | podudaranje po prefiksu, težina 0,7 |
+| tipfeleri (`gimanzija`, `bjelovr`) | uređivačka udaljenost ≤1 (≤2 za tokene od 7 znakova naviše), težina 0,55 |
 
 - [ ] **Step 1: Napiši testove za prepoznavanje škole**
 
@@ -442,6 +451,30 @@ describe("textbookListService", () => {
 
     it("prepoznaje školu bez dijakritike", () => {
       const r = findSchool("popis udzbenika medicinska skola bjelovar");
+      assert.strictEqual(r.status, "match");
+      assert.strictEqual(r.school.naziv, "Medicinska škola Bjelovar");
+    });
+
+    it("prepoznaje školu bez obzira na velika slova i crtice", () => {
+      const r = findSchool("POPIS UDŽBENIKA — GIMNAZIJA DARUVAR");
+      assert.strictEqual(r.status, "match");
+      assert.strictEqual(r.school.naziv, "Gimnazija Daruvar");
+    });
+
+    it("podnosi padež u nazivu grada", () => {
+      const r = findSchool("popis udžbenika za gimnaziju u Daruvaru");
+      assert.strictEqual(r.status, "match");
+      assert.strictEqual(r.school.naziv, "Gimnazija Daruvar");
+    });
+
+    it("podnosi tipfeler u nazivu", () => {
+      const r = findSchool("popis udzbenika gimanzija daruvar");
+      assert.strictEqual(r.status, "match");
+      assert.strictEqual(r.school.naziv, "Gimnazija Daruvar");
+    });
+
+    it("podnosi tipfeler u nazivu grada", () => {
+      const r = findSchool("popis udzbenika medicinska skola bjelovr");
       assert.strictEqual(r.status, "match");
       assert.strictEqual(r.school.naziv, "Medicinska škola Bjelovar");
     });
@@ -505,6 +538,10 @@ const MARGIN = 1.35;
 const PREFIX_LEN = 4;
 const PREFIX_WEIGHT = 0.7;
 const MAX_LEN_DIFF = 3;
+// Uređivačka udaljenost hvata tipfelere ("gimanzija" ~ "gimnazija").
+const TYPO_MIN_LEN = 4;
+const TYPO_LONG_LEN = 7;
+const TYPO_WEIGHT = 0.55;
 
 let index = null;
 
@@ -537,6 +574,30 @@ function matchesByPrefix(queryToken, schoolToken) {
   return queryToken.slice(0, PREFIX_LEN) === schoolToken.slice(0, PREFIX_LEN);
 }
 
+// Levenshtein s ranim prekidom — zanima nas samo je li udaljenost unutar praga.
+function withinEditDistance(a, b, max) {
+  if (Math.abs(a.length - b.length) > max) return false;
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const curr = [i];
+    let best = i;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
+      if (curr[j] < best) best = curr[j];
+    }
+    if (best > max) return false;
+    prev = curr;
+  }
+  return prev[b.length] <= max;
+}
+
+function matchesByTypo(queryToken, schoolToken) {
+  if (queryToken.length < TYPO_MIN_LEN || schoolToken.length < TYPO_MIN_LEN) return false;
+  const max = schoolToken.length >= TYPO_LONG_LEN ? 2 : 1;
+  return withinEditDistance(queryToken, schoolToken, max);
+}
+
 function scoreSchool(skola, queryTokens, idf) {
   let score = 0;
   for (const schoolToken of skola.tokens) {
@@ -545,21 +606,25 @@ function scoreSchool(skola, queryTokens, idf) {
       score += weight;
     } else if (queryTokens.some((queryToken) => matchesByPrefix(queryToken, schoolToken))) {
       score += weight * PREFIX_WEIGHT;
+    } else if (queryTokens.some((queryToken) => matchesByTypo(queryToken, schoolToken))) {
+      score += weight * TYPO_WEIGHT;
     }
   }
   return { score, coverage: skola.maxScore ? score / skola.maxScore : 0 };
 }
 
-function findSchool(text) {
+function rankSchools(text, { minCoverage = MIN_COVERAGE, minScore = MIN_SCORE } = {}) {
   const idx = loadIndex();
   const queryTokens = tokenize(text);
-  if (!queryTokens.length) return { status: "none" };
-
-  const scored = idx.skole
+  if (!queryTokens.length) return [];
+  return idx.skole
     .map((skola) => ({ school: skola, ...scoreSchool(skola, queryTokens, idx.idf) }))
-    .filter((row) => row.coverage >= MIN_COVERAGE && row.score >= MIN_SCORE)
+    .filter((row) => row.coverage >= minCoverage && row.score >= minScore)
     .sort((a, b) => b.score - a.score);
+}
 
+function findSchool(text) {
+  const scored = rankSchools(text);
   if (!scored.length) return { status: "none" };
 
   const [best, second] = scored;
@@ -569,7 +634,7 @@ function findSchool(text) {
   return { status: "ambiguous", candidates: scored.slice(0, 3).map((row) => row.school) };
 }
 
-module.exports = { loadIndex, findSchool };
+module.exports = { loadIndex, rankSchools, findSchool };
 ```
 
 - [ ] **Step 4: Pokreni testove i podesi konstante dok ne prođu**
@@ -583,8 +648,20 @@ Ako neki test padne, **podesi konstante** (`MIN_COVERAGE`, `MIN_SCORE`, `MARGIN`
 ```bash
 node -e '
 const s = require("./services/textbookListService");
-for (const q of ["trebam popis udžbenika za Gimnaziju Daruvar", "popis udzbenika medicinska skola bjelovar", "kako naručiti udžbenike?", "trebam popis za gimnaziju"]) {
-  console.log(q, "->", JSON.stringify(s.findSchool(q), (k, v) => (k === "tokens" || k === "dokumenti" ? undefined : v)));
+const upiti = [
+  "trebam popis udžbenika za Gimnaziju Daruvar",
+  "popis udzbenika medicinska skola bjelovar",
+  "POPIS UDŽBENIKA — GIMNAZIJA DARUVAR",
+  "popis udžbenika za gimnaziju u Daruvaru",
+  "popis udzbenika gimanzija daruvar",
+  "popis udzbenika medicinska skola bjelovr",
+  "kako naručiti udžbenike?",
+  "trebam popis za gimnaziju"
+];
+for (const q of upiti) {
+  const r = s.rankSchools(q).slice(0, 3)
+    .map((x) => `${x.school.naziv} (score ${x.score.toFixed(2)}, cov ${x.coverage.toFixed(2)})`);
+  console.log(q, "->", s.findSchool(q).status, "|", r.join(" ; ") || "-");
 }
 '
 ```
@@ -606,11 +683,13 @@ git commit -m "feat(popis): prepoznavanje škole iz upita po IDF bodovanju"
 - Modify: `libar-zendesk-bot-v2/tests/textbookListService.test.js`
 
 **Interfaces:**
-- Consumes: `findSchool`, `loadIndex` (Task 2), `LINKS` iz `services/siteLinkService`
+- Consumes: `findSchool`, `rankSchools`, `loadIndex` (Task 2), `LINKS` iz `services/siteLinkService`
 - Produces:
   - `parseRazred(text) -> "1"|"2"|"3"|"4"|"5"|null`
   - `buildTextbookOutcome(userMessage, session) -> outcome|null` gdje je `outcome` oblika `{ type: "safe_answer", customerMessage, stateTag: "ai_active", reason, source: "textbook_list", links: [], extraTags: [] }`
   - `DISCLAIMER` — konstanta s doslovnim tekstom
+
+Mogući `reason`: `textbook_list`, `textbook_need_razred`, `textbook_no_razred`, `textbook_no_list`, `textbook_ambiguous_school`, `textbook_did_you_mean`.
 
 Linkovi se ugrađuju u `customerMessage` kao markdown `[oznaka](url)`, ne u `outcome.links`. Razlog: `session.messages` čuva samo `content`, pa bi chipovi nestali pri obnovi razgovora, a u Zendesku agent ne bi vidio što je bot poslao. Widget dobiva renderer u Tasku 5.
 
@@ -690,6 +769,16 @@ Then add these blocks inside the outer `describe("textbookListService", …)`, a
       assert.ok(linkovi.length >= 3, `očekivano više linkova, dobiveno ${linkovi.length}`);
     });
 
+    it("nudi kandidate kad je naziv škole nepotpun ili pogrešno upisan", () => {
+      const outcome = buildTextbookOutcome("trebam popis udžbenika za medicinsku u Bjelovaru", {});
+      assert.ok(outcome, "očekivan je odgovor s kandidatima");
+      assert.ok(
+        ["textbook_did_you_mean", "textbook_ambiguous_school", "textbook_need_razred"].includes(outcome.reason),
+        `neočekivan reason: ${outcome.reason}`
+      );
+      assert.match(outcome.customerMessage, /Bjelovar/);
+    });
+
     it("pita za razred kad ga upit ne sadrži i pamti školu u sesiji", () => {
       const session = {};
       const outcome = buildTextbookOutcome("popis udžbenika Gimnazija Daruvar", session);
@@ -750,6 +839,10 @@ const DISCLAIMER = [
 // Upit mora spominjati udžbenike/popis da gate uopće opali. Bez ovoga bi
 // "radim u Gimnaziji Daruvar" oteo razgovor.
 const TEXTBOOK_RE = /\budzbenik|\bpopis|\bknjig/;
+
+// Blaži prag za "jeste li mislili" — popušta se samo pokrivenost, nikad
+// MIN_SCORE, da nedovoljno određen upit ne izvuče nasumične kandidate.
+const RELAXED_COVERAGE = 0.34;
 
 const RAZRED_RIJECI = {
   prvi: "1", prvom: "1", prvog: "1", prva: "1",
@@ -828,16 +921,16 @@ function buildAskRazredAnswer(skola, session) {
   );
 }
 
-function buildAmbiguousAnswer(candidates, session) {
+function buildCandidatesAnswer(candidates, session, uvod, reason) {
   delete session.textbookSchoolId;
   const redci = [
-    "Na koju školu mislite?",
+    uvod,
     "",
     ...candidates.map((skola) => `- ${skola.naziv}`),
     "",
     "Napišite puni naziv škole i razred, pa Vam šaljem popis."
   ];
-  return safeAnswer(redci.join("\n"), "textbook_ambiguous_school");
+  return safeAnswer(redci.join("\n"), reason);
 }
 
 function buildTextbookOutcome(userMessage, session = {}) {
@@ -864,8 +957,24 @@ function buildTextbookOutcome(userMessage, session = {}) {
   if (!TEXTBOOK_RE.test(norm)) return null;
 
   const pogodak = findSchool(userMessage);
-  if (pogodak.status === "none") return null;
-  if (pogodak.status === "ambiguous") return buildAmbiguousAnswer(pogodak.candidates, session);
+
+  if (pogodak.status === "ambiguous") {
+    return buildCandidatesAnswer(
+      pogodak.candidates, session, "Na koju školu mislite?", "textbook_ambiguous_school"
+    );
+  }
+
+  if (pogodak.status === "none") {
+    // Strogi prag nije prošao, a upit očito traži popis — vjerojatno je naziv
+    // upisan nepotpuno ili s greškom. Ponudi najbliže umjesto tihog odustajanja.
+    const blizi = rankSchools(userMessage, { minCoverage: RELAXED_COVERAGE }).slice(0, 3);
+    if (!blizi.length) return null;
+    return buildCandidatesAnswer(
+      blizi.map((row) => row.school), session,
+      "Nisam siguran na koju školu mislite. Jeste li mislili na neku od ovih?",
+      "textbook_did_you_mean"
+    );
+  }
 
   const skola = pogodak.school;
   if (!skola.dokumenti.length) return buildNoListAnswer(skola, idx.godina);
@@ -879,6 +988,7 @@ Then update the exports at the bottom of the file:
 ```js
 module.exports = {
   loadIndex,
+  rankSchools,
   findSchool,
   parseRazred,
   buildTextbookOutcome,
@@ -944,7 +1054,7 @@ Add to `libar-zendesk-bot-v2/tests/textbookListService.test.js`, unutar vanjskog
 
 Run: `cd "/Users/zrinko/Documents/Code Projects/libar-zendesk-bot-v2" && NODE_ENV=test node --test tests/textbookListService.test.js 2>&1 | tail -30`
 
-Expected: PASS. Ako neki upit padne, znači da matcher prepoznaje školu ondje gdje je nema — podigni `MIN_SCORE` ili `MIN_COVERAGE` u servisu i ponovi. Nikad ne uklanjaj upit iz liste.
+Expected: PASS. Ako neki upit padne, znači da matcher prepoznaje školu ondje gdje je nema — podigni `MIN_SCORE`, `MIN_COVERAGE` ili `RELAXED_COVERAGE` u servisu i ponovi. Nikad ne uklanjaj upit iz liste: ovi upiti su regresijski štit za postojeće ponašanje bota.
 
 - [ ] **Step 3: Dodaj zastavicu u konfiguraciju**
 
@@ -1129,6 +1239,12 @@ Web chat odgovara linkom na popis udžbenika koji je škola objavila za tekuću
 nejasna ili razred nedostaje, bot pita umjesto da pogađa. Uz svaki popis ide
 disclaimer da je informativan i preuzet iz javno dostupne baze.
 
+Nepotpun ili neuredan upis naziva škole podnosi se na tri razine: dijakritici,
+velika slova i interpunkcija otpadaju normalizacijom; padeži se hvataju
+podudaranjem po prefiksu; tipfeleri uređivačkom udaljenošću. Kad ni to ne da
+siguran pogodak, bot ponudi najbliže škole ("jeste li mislili…") umjesto da
+tiho odustane.
+
 Opseg: srednje škole u 18 županija (bez Grada Zagreba, Splitsko-dalmatinske i
 Međimurske). Škole bez objavljenog popisa su u podacima s praznim `dokumenti`,
 pa ih bot prepozna i kaže da popis još nije objavljen.
@@ -1176,3 +1292,5 @@ git commit -m "docs: popis udžbenika po školi i razredu"
 - [ ] Widget vraća „još nije objavljen" za školu bez popisa i **ne** šalje link na dokument
 - [ ] `Kako naručiti udžbenike?` i `Otkupljujete li udžbenike?` odgovaraju kao i prije zahvata
 - [ ] Disclaimer je prisutan u svakom odgovoru s popisom
+- [ ] Naziv bez dijakritike, velikim slovima i s tipfelerom i dalje pogađa školu
+- [ ] Nedovoljno određen naziv daje „jeste li mislili" s kandidatima, ne pogađa
