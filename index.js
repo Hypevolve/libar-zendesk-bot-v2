@@ -46,6 +46,7 @@ const { normalizeForComparison } = require("./services/textUtils");
 const { buildDirectWebsiteLinks } = require("./services/siteLinkService");
 const { detectEscalationIntent } = require("./services/intentEscalationService");
 const { isLikelyEmail, buildSelfServiceFallback, resolveAnonymousEscalation } = require("./services/escalationFlowService");
+const textbookListService = require("./services/textbookListService");
 
 // ─── Express Setup ────────────────────────────────────────────
 
@@ -345,6 +346,22 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
         extraTags: ["ai_escalated", `intent_${escalationCheck.intent}`]
       }
     };
+  }
+
+  // ── POPIS UDŽBENIKA (samo web chat) ───────────────────────────
+  // Deterministički odgovor s linkom na popis koji je škola objavila za tekuću
+  // godinu. Stoji iza escalation gateova (žalbe i reklamacije uvijek idu čovjeku)
+  // i ispred cachea i pretrage znanja, pa nepotrebno ne troši LLM pozive.
+  // Bez pogotka vraća null i pipeline teče nepromijenjeno.
+  if (env.POPIS_UDZBENIKA_ENABLED && (opts.channelType || "web_chat") === "web_chat") {
+    const textbookOutcome = textbookListService.buildTextbookOutcome(userMessage, session);
+    if (textbookOutcome) {
+      metricsService.recordDecision(textbookOutcome.type);
+      metricsService.recordChannelOutcome("web_chat", textbookOutcome.type);
+      metricsService.recordLatency(Date.now() - start);
+      log.info("textbook_list_answer", { reason: textbookOutcome.reason });
+      return { knowledge: null, outcome: textbookOutcome };
+    }
   }
 
   // Reference facts check (greetings, canned facts) — only after escalation gates

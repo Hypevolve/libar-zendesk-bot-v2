@@ -123,4 +123,9 @@ module.exports = {
   // --- Spam ---
   ENABLE_EMAIL_SPAM_CLASSIFIER: envBool("ENABLE_EMAIL_SPAM_CLASSIFIER", true),
   EMAIL_SPAM_AI_MIN_CONFIDENCE: parseFloat(process.env.EMAIL_SPAM_AI_MIN_CONFIDENCE || "0.75"),
+
+  // --- Popis udžbenika ---
+  // Deterministički odgovor s linkom na popis udžbenika škole (samo web chat).
+  // Postavi POPIS_UDZBENIKA_ENABLED=false da se ugasi bez diranja koda.
+  POPIS_UDZBENIKA_ENABLED: envBool("POPIS_UDZBENIKA_ENABLED", true),
 };

@@ -262,4 +262,24 @@ describe("textbookListService", () => {
       assert.doesNotMatch(outcome.customerMessage, /Gimnazija Daruvar/);
     });
   });
+
+  describe("gate ne otima postojeće upite", () => {
+    const POSTOJECI_UPITI = [
+      "Kako naručiti udžbenike?",
+      "Otkupljujete li udžbenike fizike?",
+      "Koliko dobivam za otkup udžbenika matematike?",
+      "Koja je cijena udžbenika za 3. razred gimnazije?",
+      "Kako mogu prodati svoje udžbenike",
+      "Imate li udžbenike za prvi razred",
+      "Koliko košta dostava za više udžbenika?",
+      "Želim reklamirati oštećenu knjigu",
+      "Pozdrav"
+    ];
+
+    for (const upit of POSTOJECI_UPITI) {
+      it(`ne aktivira se na: ${upit}`, () => {
+        assert.strictEqual(buildTextbookOutcome(upit, {}), null);
+      });
+    }
+  });
 });
