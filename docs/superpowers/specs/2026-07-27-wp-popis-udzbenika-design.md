@@ -111,9 +111,11 @@ a lista se sužava kako korisnik tipka. Riječi županije nose manju težinu od
 riječi naziva, pa škola s gradom u nazivu ide ispred susjedne škole iz iste
 županije.
 
-**Rangiranje:** prvo škole s popisom, zatim po zbroju težina pogodaka (točna
-riječ vrijedi više od prefiksa), pa kraći naziv prvi. Prikazuje se najviše
-**8** prijedloga. Pretraga kreće od **2 znaka**.
+**Rangiranje:** prvo po zbroju težina pogodaka (točna riječ vrijedi više od
+prefiksa), zatim škole s popisom ispred onih bez, pa kraći naziv prvi.
+Relevantnost mora biti ispred „ima popis" — inače bi upit `gimnazija bjelovar`
+vratio susjednu školu s popisom prije škole koju je korisnik doslovno imenovao.
+Prikazuje se najviše **8** prijedloga. Pretraga kreće od **2 znaka**.
 
 ## Tok korisnika
 
@@ -122,8 +124,10 @@ riječ vrijedi više od prefiksa), pa kraći naziv prvi. Prikazuje se najviše
 Jedno polje, placeholder: *„Upišite naziv škole ili grad — npr. Gimnazija
 Daruvar"*. Polje se ne fokusira samo, da na mobitelu ne iskoči tipkovnica.
 
-Prijedlog prikazuje naziv škole (pogođeni dio podebljan), županiju sitnije i
-oznaku desno — `15 popisa` ili `uskoro` za škole bez popisa.
+Prijedlog prikazuje naziv škole, županiju sitnije i oznaku desno — `15 popisa`
+ili `uskoro` za škole bez popisa. Pogođeni dio naziva se **ne** podebljava:
+uparuje se normalizirani tekst, pa se pozicije znakova ne poklapaju s izvornim
+nazivom i podebljanje bi često palo na krivo mjesto.
 
 Tipkovnica: ↑/↓ kroz prijedloge, Enter odabir, Esc zatvaranje. Uloge
 `combobox`/`listbox`/`option`, `aria-expanded`, `aria-activedescendant`, te
