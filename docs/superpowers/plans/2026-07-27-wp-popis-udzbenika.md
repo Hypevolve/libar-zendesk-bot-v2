@@ -435,8 +435,6 @@ Create `/Users/zrinko/Documents/Code Projects/libar-popis-udzbenika-wp/assets/cs
   width: 100%;
   padding: calc(0.75rem - 0.0625rem);
   font: inherit;
-  background-color: #fcfcfc;
-  border: 0.0625rem solid #e2e2e2;
   border-radius: 0.25rem;
 }
 
@@ -2129,14 +2127,13 @@ Replace the whole content of `/Users/zrinko/Documents/Code Projects/libar-popis-
   font-weight: 700;
 }
 
-/* Isti izgled kao ostala polja na sitecu. */
+/* Boju i obrub polja daje tema svojim globalnim pravilom za input — widget
+   ne diktira ni jedno ni drugo, pa ostaje uklopljen i na drugoj temi. */
 .lpu-polje {
   width: 100%;
   padding: calc(0.75rem - 0.0625rem);
   font: inherit;
   color: inherit;
-  background-color: #fcfcfc;
-  border: 0.0625rem solid #e2e2e2;
   border-radius: 0.25rem;
   transition: border-color 0.25s ease;
 }
