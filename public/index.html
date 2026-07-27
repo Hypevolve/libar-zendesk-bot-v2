@@ -362,12 +362,26 @@
       return new Date().toLocaleTimeString("hr-HR", { hour: "2-digit", minute: "2-digit" });
     }
 
+    // Sadržaj poruke se escapa pa se tek onda ubacuje ograničen markdown:
+    // linkovi (samo http/https) i podebljanje. Bez escapanja bi bilo koji HTML
+    // iz odgovora završio u DOM-u.
+    function renderContent(text) {
+      return String(text || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+          '<a href="$2" target="_blank" rel="noopener">$1</a>')
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\n/g, "<br>");
+    }
+
     function addMessage(role, content, links) {
       const group = document.createElement("div");
       group.className = "msg-group";
       const msg = document.createElement("div");
       msg.className = `msg ${role}`;
-      msg.innerHTML = content.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
+      msg.innerHTML = renderContent(content);
       const ts = document.createElement("span");
       ts.className = "ts";
       ts.textContent = formatTime();
