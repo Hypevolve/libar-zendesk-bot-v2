@@ -924,6 +924,12 @@ describe("hash u adresi", () => {
     assert.strictEqual(parsirajHash("#skola/9").razred, null);
   });
 
+  it("ne ruši se na neispravnom postotnom escapeu", () => {
+    assert.strictEqual(parsirajHash("#%"), null);
+    assert.strictEqual(parsirajHash("#%zz/2"), null);
+    assert.strictEqual(parsirajHash("#gimnazija-daruvar%"), null);
+  });
+
   it("sastavlja hash", () => {
     assert.strictEqual(sastaviHash("gimnazija-daruvar", "2"), "#gimnazija-daruvar/2");
     assert.strictEqual(sastaviHash("gimnazija-daruvar", null), "#gimnazija-daruvar");
@@ -1005,7 +1011,14 @@ Replace the whole content of `/Users/zrinko/Documents/Code Projects/libar-popis-
       return null;
     }
     var dijelovi = tekst.split("/");
-    var skolaId = decodeURIComponent(dijelovi[0] || "");
+    // Neispravan postotni escape ("#%", "#%zz") baca URIError. Takav hash je
+    // smeće kao i svaki drugi, pa vraćamo null umjesto da srušimo widget.
+    var skolaId;
+    try {
+      skolaId = decodeURIComponent(dijelovi[0] || "");
+    } catch (greska) {
+      return null;
+    }
     if (!/^[a-z0-9-]+$/.test(skolaId)) {
       return null;
     }
