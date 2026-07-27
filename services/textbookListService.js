@@ -20,6 +20,7 @@
 const fs = require("fs");
 const path = require("path");
 const { normalizeForSearch } = require("./textUtils");
+const { LINKS } = require("./siteLinkService");
 
 const DATA_PATH = path.join(__dirname, "..", "data", "popis-udzbenika-2026-27.json");
 
@@ -188,4 +189,163 @@ function findSchool(text) {
   return { status: "ambiguous", candidates: confident.slice(0, 3).map((row) => row.school) };
 }
 
-module.exports = { loadIndex, rankSchools, findSchool };
+const DISCLAIMER = [
+  "Napomena: popis je informativnog karaktera i preuzet je iz javno dostupne baze",
+  "podataka (stranice škola). Antikvarijat Libar ne odgovara za eventualne netočnosti",
+  "ili naknadne izmjene — službeni popis provjerite kod svoje škole."
+].join(" ");
+
+// Upit mora spominjati udžbenike/popis da gate uopće opali. Bez ovoga bi
+// "radim u Gimnaziji Daruvar" oteo razgovor.
+const TEXTBOOK_RE = /\budzbenik|\bpopis|\bknjig/;
+
+// Blaži prag za "jeste li mislili" — popušta se samo pokrivenost, nikad
+// MIN_SCORE, da nedovoljno određen upit ne izvuče nasumične kandidate.
+const RELAXED_COVERAGE = 0.34;
+
+const RAZRED_RIJECI = {
+  prvi: "1", prvom: "1", prvog: "1", prva: "1",
+  drugi: "2", drugom: "2", drugog: "2", druga: "2",
+  treci: "3", trecem: "3", treceg: "3", treca: "3",
+  cetvrti: "4", cetvrtom: "4", cetvrtog: "4", cetvrta: "4",
+  peti: "5", petom: "5", petog: "5", peta: "5"
+};
+
+function parseRazred(text) {
+  const norm = normalizeForSearch(text);
+  const brojcani = norm.match(/\b([1-5])\s*[a-e]?\s*razred/);
+  if (brojcani) return brojcani[1];
+  const rijecima = norm.match(
+    /\b(prvi|prvom|prvog|prva|drugi|drugom|drugog|druga|treci|trecem|treceg|treca|cetvrti|cetvrtom|cetvrtog|cetvrta|peti|petom|petog|peta)\s+razred/
+  );
+  if (rijecima) return RAZRED_RIJECI[rijecima[1]];
+  return null;
+}
+
+function markdownLink(label, url) {
+  return `- [${label}](${url})`;
+}
+
+function safeAnswer(customerMessage, reason) {
+  return {
+    type: "safe_answer",
+    customerMessage,
+    stateTag: "ai_active",
+    reason,
+    source: "textbook_list",
+    links: [],
+    extraTags: []
+  };
+}
+
+function buildListAnswer(skola, razred, godina) {
+  const dokumenti = skola.dokumenti.filter((d) => d.razred === razred || d.razred === null);
+  if (!dokumenti.length) return buildNoRazredAnswer(skola, razred, godina);
+
+  const uvod = dokumenti.length > 1
+    ? `${skola.naziv} objavljuje popis po smjerovima. Evo svih popisa za ${razred}. razred (${godina}):`
+    : `Evo popisa udžbenika za ${razred}. razred — ${skola.naziv} (${godina}):`;
+
+  const redci = [uvod, "", ...dokumenti.map((d) => markdownLink(d.oznaka, d.url)), "", DISCLAIMER];
+  return safeAnswer(redci.join("\n"), "textbook_list");
+}
+
+function buildNoRazredAnswer(skola, razred, godina) {
+  const redci = [
+    `Za ${skola.naziv} nemam popis udžbenika za ${razred}. razred (${godina}) — škole ih objavljuju tijekom ljeta, pa pokušajte ponovno za koji dan.`,
+    ""
+  ];
+  if (skola.stranica) redci.push(markdownLink("Stranica škole s popisima", skola.stranica));
+  redci.push(markdownLink("Udžbenike možete potražiti u našem webshopu", LINKS.buyBooks.url));
+  return safeAnswer(redci.join("\n"), "textbook_no_razred");
+}
+
+function buildNoListAnswer(skola, godina) {
+  const redci = [
+    `Za ${skola.naziv} popis udžbenika za ${godina} još nije objavljen — škole ih objavljuju tijekom ljeta, pa pokušajte ponovno za koji dan.`,
+    ""
+  ];
+  if (skola.stranica) redci.push(markdownLink("Stranica škole s popisima", skola.stranica));
+  redci.push(markdownLink("Udžbenike možete potražiti u našem webshopu", LINKS.buyBooks.url));
+  return safeAnswer(redci.join("\n"), "textbook_no_list");
+}
+
+function buildAskRazredAnswer(skola, session) {
+  session.textbookSchoolId = skola.id;
+  const razredi = [...new Set(skola.dokumenti.map((d) => d.razred).filter(Boolean))].sort();
+  const popisRazreda = razredi.length ? ` Imam popise za: ${razredi.map((r) => `${r}. razred`).join(", ")}.` : "";
+  return safeAnswer(
+    `Za koji razred trebate popis udžbenika u ${skola.naziv}?${popisRazreda}`,
+    "textbook_need_razred"
+  );
+}
+
+function buildCandidatesAnswer(candidates, session, uvod, reason) {
+  delete session.textbookSchoolId;
+  const redci = [
+    uvod,
+    "",
+    ...candidates.map((skola) => `- ${skola.naziv}`),
+    "",
+    "Napišite puni naziv škole i razred, pa Vam šaljem popis."
+  ];
+  return safeAnswer(redci.join("\n"), reason);
+}
+
+function buildTextbookOutcome(userMessage, session = {}) {
+  const idx = loadIndex();
+  const razred = parseRazred(userMessage);
+  const norm = normalizeForSearch(userMessage);
+
+  // Nastavak razgovora: školu smo zapamtili, korisnik je dopisao samo razred.
+  if (session.textbookSchoolId) {
+    const zapamcena = session.textbookSchoolId;
+    // Marker vrijedi samo za sljedeću poruku — inače bi kasniji spomen razreda
+    // u nevezanom razgovoru izvukao popis niotkuda.
+    delete session.textbookSchoolId;
+    if (razred) {
+      const skola = idx.skole.find((s) => s.id === zapamcena);
+      if (skola) {
+        return skola.dokumenti.length
+          ? buildListAnswer(skola, razred, idx.godina)
+          : buildNoListAnswer(skola, idx.godina);
+      }
+    }
+  }
+
+  if (!TEXTBOOK_RE.test(norm)) return null;
+
+  const pogodak = findSchool(userMessage);
+
+  if (pogodak.status === "ambiguous") {
+    return buildCandidatesAnswer(
+      pogodak.candidates, session, "Na koju školu mislite?", "textbook_ambiguous_school"
+    );
+  }
+
+  if (pogodak.status === "none") {
+    // Strogi prag nije prošao, a upit očito traži popis — vjerojatno je naziv
+    // upisan nepotpuno ili s greškom. Ponudi najbliže umjesto tihog odustajanja.
+    const blizi = rankSchools(userMessage, { minCoverage: RELAXED_COVERAGE }).slice(0, 3);
+    if (!blizi.length) return null;
+    return buildCandidatesAnswer(
+      blizi.map((row) => row.school), session,
+      "Nisam siguran na koju školu mislite. Jeste li mislili na neku od ovih?",
+      "textbook_did_you_mean"
+    );
+  }
+
+  const skola = pogodak.school;
+  if (!skola.dokumenti.length) return buildNoListAnswer(skola, idx.godina);
+  if (!razred) return buildAskRazredAnswer(skola, session);
+  return buildListAnswer(skola, razred, idx.godina);
+}
+
+module.exports = {
+  loadIndex,
+  rankSchools,
+  findSchool,
+  parseRazred,
+  buildTextbookOutcome,
+  DISCLAIMER
+};
