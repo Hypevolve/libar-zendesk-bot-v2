@@ -364,16 +364,29 @@
 
     // Sadržaj poruke se escapa pa se tek onda ubacuje ograničen markdown:
     // linkovi (samo http/https) i podebljanje. Bez escapanja bi bilo koji HTML
-    // iz odgovora završio u DOM-u.
+    // ili navodnik koji bi pobjegao iz href atributa iz odgovora završio u DOM-u.
+    // Linkovi se prvo izvade u zamjenske tokene (privatni Unicode raspon, ne
+    // mogu se pojaviti u stvarnoj poruci) da URL unutar njih (koji smije
+    // sadržavati "**") kasnije ne bude izlomljen prolazom za podebljanje.
     function renderContent(text) {
-      return String(text || "")
+      const escaped = String(text || "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
-        .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-          '<a href="$2" target="_blank" rel="noopener">$1</a>')
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+
+      const anchors = [];
+      const withTokens = escaped.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_match, label, url) => {
+        const token = "\uE000" + anchors.length + "\uE001";
+        anchors.push('<a href="' + url + '" target="_blank" rel="noopener">' + label + '</a>');
+        return token;
+      });
+
+      return withTokens
         .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-        .replace(/\n/g, "<br>");
+        .replace(/\n/g, "<br>")
+        .replace(/\uE000(\d+)\uE001/g, (_match, i) => anchors[Number(i)]);
     }
 
     function addMessage(role, content, links) {
