@@ -197,5 +197,35 @@ describe("textbookListService", () => {
       assert.match(outcome.customerMessage, /još nije objavljen/i);
       assert.ok(!/\.pdf|\.docx/i.test(outcome.customerMessage), "poslan je link na dokument");
     });
+
+    it("ne odgovara za zapamćenu školu kad sljedeća poruka imenuje drugu školu", () => {
+      const session = {};
+      buildTextbookOutcome("popis udžbenika Gimnazija Daruvar", session);
+      const outcome = buildTextbookOutcome("Ekonomska škola Pula, 1. razred popis udžbenika", session);
+      assert.match(outcome.customerMessage, /Ekonomska škola Pula/);
+      assert.doesNotMatch(outcome.customerMessage, /Gimnazija Daruvar/);
+    });
+
+    it("gramatički ispravno pita za razred (bez 'u ' + nominativ)", () => {
+      const outcome = buildTextbookOutcome("popis udžbenika Gimnazija Daruvar", {});
+      assert.doesNotMatch(outcome.customerMessage, /u Gimnazija/);
+    });
+
+    it("gramatički ispravno javlja da razred nije objavljen (bez 'Za ' + nominativ)", () => {
+      const outcome = buildTextbookOutcome("popis udžbenika Dubrovačka privatna gimnazija 5. razred", {});
+      assert.strictEqual(outcome.reason, "textbook_no_razred");
+      assert.doesNotMatch(outcome.customerMessage, /Za Dubrovačka/);
+    });
+
+    it("gramatički ispravno javlja da popis još nije objavljen (bez 'Za ' + nominativ)", () => {
+      const bez = loadIndex().skole.find((s) => {
+        if (s.dokumenti.length) return false;
+        const pogodak = findSchool(s.naziv);
+        return pogodak.status === "match" && pogodak.school.id === s.id;
+      });
+      assert.ok(bez, "u podacima nema nijedne prepoznatljive škole bez popisa");
+      const outcome = buildTextbookOutcome(`popis udžbenika ${bez.naziv}`, {});
+      assert.ok(!outcome.customerMessage.startsWith("Za "), `poruka počinje s 'Za ': ${outcome.customerMessage}`);
+    });
   });
 });

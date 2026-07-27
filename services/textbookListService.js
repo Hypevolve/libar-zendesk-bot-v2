@@ -252,7 +252,7 @@ function buildListAnswer(skola, razred, godina) {
 
 function buildNoRazredAnswer(skola, razred, godina) {
   const redci = [
-    `Za ${skola.naziv} nemam popis udžbenika za ${razred}. razred (${godina}) — škole ih objavljuju tijekom ljeta, pa pokušajte ponovno za koji dan.`,
+    `${skola.naziv} — nemam popis udžbenika za ${razred}. razred (${godina}). Škole ih objavljuju tijekom ljeta, pa pokušajte ponovno za koji dan.`,
     ""
   ];
   if (skola.stranica) redci.push(markdownLink("Stranica škole s popisima", skola.stranica));
@@ -262,7 +262,7 @@ function buildNoRazredAnswer(skola, razred, godina) {
 
 function buildNoListAnswer(skola, godina) {
   const redci = [
-    `Za ${skola.naziv} popis udžbenika za ${godina} još nije objavljen — škole ih objavljuju tijekom ljeta, pa pokušajte ponovno za koji dan.`,
+    `${skola.naziv} — popis udžbenika za ${godina} još nije objavljen. Škole ih objavljuju tijekom ljeta, pa pokušajte ponovno za koji dan.`,
     ""
   ];
   if (skola.stranica) redci.push(markdownLink("Stranica škole s popisima", skola.stranica));
@@ -275,7 +275,7 @@ function buildAskRazredAnswer(skola, session) {
   const razredi = [...new Set(skola.dokumenti.map((d) => d.razred).filter(Boolean))].sort();
   const popisRazreda = razredi.length ? ` Imam popise za: ${razredi.map((r) => `${r}. razred`).join(", ")}.` : "";
   return safeAnswer(
-    `Za koji razred trebate popis udžbenika u ${skola.naziv}?${popisRazreda}`,
+    `${skola.naziv} — za koji razred trebate popis udžbenika?${popisRazreda}`,
     "textbook_need_razred"
   );
 }
@@ -303,7 +303,12 @@ function buildTextbookOutcome(userMessage, session = {}) {
     // Marker vrijedi samo za sljedeću poruku — inače bi kasniji spomen razreda
     // u nevezanom razgovoru izvukao popis niotkuda.
     delete session.textbookSchoolId;
-    if (razred) {
+    // Ako poruka sama pouzdano imenuje (drugu) školu, ta škola pobjeđuje — zapamćena
+    // škola smije preskočiti provjeru samo kad korisnik odgovori isključivo razredom,
+    // bez ijedne škole u poruci. Inače bi npr. "Ekonomska škola Pula, 3. razred"
+    // tiho odgovorio popisom prethodno zapamćene škole.
+    const pogodakUPoruci = findSchool(userMessage);
+    if (razred && pogodakUPoruci.status !== "match") {
       const skola = idx.skole.find((s) => s.id === zapamcena);
       if (skola) {
         return skola.dokumenti.length
