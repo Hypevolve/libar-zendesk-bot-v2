@@ -55,5 +55,17 @@ describe("textbookListService", () => {
       assert.strictEqual(r.status, "match");
       assert.ok(!r.school.naziv.includes("?"), `naziv sadrži upitnik: ${r.school.naziv}`);
     });
+
+    it("ne pogađa školu iz nedovoljno određenog upita (grad s više škola istog tipa)", () => {
+      // Šibenik ima desetak srednjih škola; "srednja škola Šibenik" ne otkriva o kojoj je riječ
+      // — bez gate-a na prepoznatljivim tokenima ovo bi lažno samouvjereno pogodilo jednu od njih.
+      assert.notStrictEqual(findSchool("srednja skola Sibenik").status, "match");
+    });
+
+    it("ne pogađa školu iz upita bez grada (tip škole sam po sebi nije dovoljan)", () => {
+      // "ekonomska škola" postoji u desetak gradova; ako upit ne kaže koji grad, ne smijemo
+      // pogoditi samo zato što je jedna škola slučajno jedina koja prijeđe prag pokrivenosti.
+      assert.notStrictEqual(findSchool("ekonomska skola").status, "match");
+    });
   });
 });

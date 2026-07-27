@@ -10,6 +10,12 @@
  * ("škola", "srednja", "gimnazija") nose malu težinu, nazivi gradova i vlastita
  * imena veliku. Da bi se škola smatrala prepoznatom, mora prijeći prag
  * pokrivenosti I imati jasan odmak od drugoplasirane — inače radije pitamo.
+ *
+ * Dodatni uvjet za siguran pogodak: SVAKI token naziva škole iznad DISTINCTIVE_IDF
+ * praga mora biti pokriven upitom (točno, prefiksom ili tipfelerom). Bez toga bi
+ * nedovoljno određen upit ("srednja škola Šibenik", "ekonomska škola") mogao
+ * samouvjereno pogoditi krivu školu samo zato što je konkurentskoj slučajno
+ * "otpao" jedan nespomenut, ali prepoznatljiv token (npr. grad ili specifičniji tip).
  */
 const fs = require("fs");
 const path = require("path");
@@ -21,8 +27,18 @@ const DATA_PATH = path.join(__dirname, "..", "data", "popis-udzbenika-2026-27.js
 const MIN_COVERAGE = 0.5;
 // Minimalni zbroj IDF-a — sprječava pogodak na samim generičnim riječima.
 const MIN_SCORE = 3.0;
-// Koliko najbolja mora nadmašiti drugu da bismo bili sigurni.
-const MARGIN = 1.2;
+// Koliko najbolja mora nadmašiti drugu da bismo bili sigurni (kad obje prođu DISTINCTIVE_IDF gate).
+const MARGIN = 1.35;
+// Prag iznad kojeg je token naziva škole "prepoznatljiv" i MORA biti pokriven upitom da
+// bismo tu školu smatrali sigurnim pogotkom — inače upit poput "srednja škola Šibenik" ili
+// "ekonomska škola" (bez grada) dobije lažno samouvjeren odgovor jer je nekoj konkurentskoj
+// školi slučajno "otpao" jedan nespomenut token. Prag je postavljen odmah iznad "škola"
+// (idf 0,30 — pojavljuje se u 229/281 naziva, 81% korpusa; jedina riječ toliko univerzalna
+// da je svaki naziv gotovo nužno sadrži pa je izuzimamo) i ispod "srednja" (idf 1,23,
+// 91/281 = 32%). Svaki drugi token — tip škole ("gimnazija" 1,81/18%, "tehnička" 2,44/10%,
+// "strukovna" 2,91/6% …) ili ime grada — mora biti pokriven, inače škola ne prolazi kao
+// siguran pogodak. (Ako je "škola" jedini uvjet koji ostaje nepokriven, to ne blokira gate.)
+const DISTINCTIVE_IDF = 0.8;
 // Podudaranje po prefiksu hvata padeže ("daruvaru" ~ "daruvar").
 const PREFIX_LEN = 4;
 const PREFIX_WEIGHT = 0.7;
@@ -89,17 +105,27 @@ function matchesByTypo(queryToken, schoolToken) {
 
 function scoreSchool(skola, queryTokens, idf) {
   let score = 0;
+  // Je li neki prepoznatljiv token naziva (iznad DISTINCTIVE_IDF) ostao nepokriven upitom.
+  // Takva škola ne može biti siguran pogodak — vidi findSchool.
+  let uncoveredDistinctive = false;
   for (const schoolToken of skola.tokens) {
     const weight = idf.get(schoolToken);
+    let matched = false;
     if (queryTokens.includes(schoolToken)) {
       score += weight;
+      matched = true;
     } else if (queryTokens.some((queryToken) => matchesByPrefix(queryToken, schoolToken))) {
       score += weight * PREFIX_WEIGHT;
+      matched = true;
     } else if (queryTokens.some((queryToken) => matchesByTypo(queryToken, schoolToken))) {
       score += weight * TYPO_WEIGHT;
+      matched = true;
+    }
+    if (!matched && weight > DISTINCTIVE_IDF) {
+      uncoveredDistinctive = true;
     }
   }
-  return { score, coverage: skola.maxScore ? score / skola.maxScore : 0 };
+  return { score, coverage: skola.maxScore ? score / skola.maxScore : 0, uncoveredDistinctive };
 }
 
 function rankSchools(text, { minCoverage = MIN_COVERAGE, minScore = MIN_SCORE } = {}) {
@@ -116,11 +142,19 @@ function findSchool(text) {
   const scored = rankSchools(text);
   if (!scored.length) return { status: "none" };
 
-  const [best, second] = scored;
+  // Siguran pogodak smije biti samo škola čiji su svi prepoznatljivi tokeni pokriveni
+  // upitom (vidi DISTINCTIVE_IDF) — inače je pobjeda slučajna (npr. grad ima samo jednu
+  // "ekonomsku školu" pa upit "ekonomska škola" pogodi tu, bez da je itko spomenuo grad).
+  const confident = scored.filter((row) => !row.uncoveredDistinctive);
+  if (!confident.length) {
+    return { status: "ambiguous", candidates: scored.slice(0, 3).map((row) => row.school) };
+  }
+
+  const [best, second] = confident;
   if (!second || best.score >= second.score * MARGIN) {
     return { status: "match", school: best.school };
   }
-  return { status: "ambiguous", candidates: scored.slice(0, 3).map((row) => row.school) };
+  return { status: "ambiguous", candidates: confident.slice(0, 3).map((row) => row.school) };
 }
 
 module.exports = { loadIndex, rankSchools, findSchool };
