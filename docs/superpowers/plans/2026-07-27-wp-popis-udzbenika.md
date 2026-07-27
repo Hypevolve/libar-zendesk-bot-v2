@@ -464,7 +464,7 @@ Create `/Users/zrinko/Documents/Code Projects/libar-popis-udzbenika-wp/package.j
   "private": true,
   "description": "WordPress plugin — tražilica popisa udžbenika po školi i razredu.",
   "scripts": {
-    "test": "node --test tests/"
+    "test": "node --test tests/*.test.js"
   },
   "license": "GPL-2.0-or-later"
 }
