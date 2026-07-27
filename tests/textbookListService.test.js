@@ -227,5 +227,39 @@ describe("textbookListService", () => {
       const outcome = buildTextbookOutcome(`popis udžbenika ${bez.naziv}`, {});
       assert.ok(!outcome.customerMessage.startsWith("Za "), `poruka počinje s 'Za ': ${outcome.customerMessage}`);
     });
+
+    it("nastavak sesije: pouzdano imenovana druga škola s okidačem pobjeđuje zapamćenu", () => {
+      const session = {};
+      buildTextbookOutcome("popis udžbenika Gimnazija Daruvar", session);
+      const outcome = buildTextbookOutcome("Ekonomska škola Pula, 3. razred popis udžbenika", session);
+      assert.match(outcome.customerMessage, /Ekonomska škola Pula/);
+      assert.doesNotMatch(outcome.customerMessage, /Gimnazija Daruvar/);
+      assert.strictEqual(session.textbookSchoolId, undefined, "sesija nije očišćena");
+    });
+
+    it("nastavak sesije: pouzdano imenovana druga škola bez okidačke riječi i dalje dobiva odgovor, ne null", () => {
+      const session = {};
+      buildTextbookOutcome("popis udžbenika Gimnazija Daruvar", session);
+      const outcome = buildTextbookOutcome("Ekonomska škola Pula, 3. razred", session);
+      assert.ok(outcome, "razgovor u tijeku ne smije vratiti null samo zato što nedostaje riječ 'popis'/'udžbenik'");
+      assert.match(outcome.customerMessage, /Ekonomska škola Pula/);
+      assert.doesNotMatch(outcome.customerMessage, /Gimnazija Daruvar/);
+    });
+
+    it("nastavak sesije: nejasno imenovana škola (više kandidata u gradu) pita umjesto da padne na zapamćenu", () => {
+      const session = {};
+      buildTextbookOutcome("popis udžbenika Gimnazija Daruvar", session);
+      const outcome = buildTextbookOutcome("srednja škola Šibenik, 3. razred popis udžbenika", session);
+      assert.strictEqual(outcome.reason, "textbook_ambiguous_school");
+      assert.doesNotMatch(outcome.customerMessage, /Gimnazija Daruvar/);
+    });
+
+    it("nastavak sesije: nejasno imenovana škola (tip bez grada) pita umjesto da padne na zapamćenu", () => {
+      const session = {};
+      buildTextbookOutcome("popis udžbenika Gimnazija Daruvar", session);
+      const outcome = buildTextbookOutcome("Ekonomska škola, 3. razred popis udžbenika", session);
+      assert.strictEqual(outcome.reason, "textbook_ambiguous_school");
+      assert.doesNotMatch(outcome.customerMessage, /Gimnazija Daruvar/);
+    });
   });
 });

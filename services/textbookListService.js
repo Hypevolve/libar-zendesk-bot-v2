@@ -297,18 +297,39 @@ function buildTextbookOutcome(userMessage, session = {}) {
   const razred = parseRazred(userMessage);
   const norm = normalizeForSearch(userMessage);
 
-  // Nastavak razgovora: školu smo zapamtili, korisnik je dopisao samo razred.
+  // Nastavak razgovora: školu smo zapamtili, korisnik je dopisao razred (ili spomenuo
+  // posve drugu školu). Grana odgovara za sva tri moguća ishoda findSchool-a ovdje —
+  // ne smije propasti do TEXTBOOK_RE gate-a ispod, jer bi to za pouzdan pogodak bez
+  // riječi "popis"/"udžbenik" izgubilo kontekst i vratilo null, a za "ambiguous" bi
+  // moglo pasti natrag na zapamćenu školu i odgovoriti krivim popisom.
   if (session.textbookSchoolId) {
     const zapamcena = session.textbookSchoolId;
     // Marker vrijedi samo za sljedeću poruku — inače bi kasniji spomen razreda
     // u nevezanom razgovoru izvukao popis niotkuda.
     delete session.textbookSchoolId;
-    // Ako poruka sama pouzdano imenuje (drugu) školu, ta škola pobjeđuje — zapamćena
-    // škola smije preskočiti provjeru samo kad korisnik odgovori isključivo razredom,
-    // bez ijedne škole u poruci. Inače bi npr. "Ekonomska škola Pula, 3. razred"
-    // tiho odgovorio popisom prethodno zapamćene škole.
     const pogodakUPoruci = findSchool(userMessage);
-    if (razred && pogodakUPoruci.status !== "match") {
+
+    if (pogodakUPoruci.status === "match") {
+      // Poruka sama pouzdano imenuje (drugu) školu — ta škola pobjeđuje, bez obzira
+      // spominje li poruka riječi "popis"/"udžbenik" (razgovor je već u tijeku).
+      const skola = pogodakUPoruci.school;
+      if (!skola.dokumenti.length) return buildNoListAnswer(skola, idx.godina);
+      if (!razred) return buildAskRazredAnswer(skola, session);
+      return buildListAnswer(skola, razred, idx.godina);
+    }
+
+    if (pogodakUPoruci.status === "ambiguous") {
+      // Poruka imenuje školu koju matcher ne može odrediti (npr. "Ekonomska škola"
+      // bez grada) — nikad ne padati natrag na zapamćenu školu, to bi bio siguran
+      // odgovor za pogrešnu školu.
+      return buildCandidatesAnswer(
+        pogodakUPoruci.candidates, session, "Na koju školu mislite?", "textbook_ambiguous_school"
+      );
+    }
+
+    // status === "none": poruka ne imenuje nijednu školu — pravi nastavak razgovora,
+    // korisnik je odgovorio samo razredom.
+    if (razred) {
       const skola = idx.skole.find((s) => s.id === zapamcena);
       if (skola) {
         return skola.dokumenti.length
