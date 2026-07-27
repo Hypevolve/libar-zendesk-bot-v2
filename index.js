@@ -1295,7 +1295,9 @@ app.post("/admin/analytics/sync", requireAdmin, async (req, res) => {
     // sinceISO vozi serijski backfill: svaka serija šalje cursor prethodne.
     const sinceISO = req.body?.sinceISO || undefined;
     const maxTickets = Number(req.body?.maxTickets) || undefined;
-    const result = await ticketAnalysisService.run({ sinceDays, sinceISO, maxTickets });
+    // Paralelizam samo za ručni backfill; dnevni auto-sync ostaje sekvencijalan.
+    const concurrency = Number(req.body?.concurrency) || undefined;
+    const result = await ticketAnalysisService.run({ sinceDays, sinceISO, maxTickets, concurrency });
     res.json({ success: true, result });
   } catch (error) {
     log.error("analytics_sync_failed", { message: error.message });

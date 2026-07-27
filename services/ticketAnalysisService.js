@@ -18,6 +18,7 @@ const analyticsStore = require("./analyticsStore");
 const ANALYSIS_MODEL = env.ANALYSIS_MODEL || "google/gemini-2.5-flash";
 const DEFAULT_MAX_TICKETS = env.ANALYSIS_MAX_TICKETS || 150;
 const BACKFILL_DAYS = env.ANALYSIS_BACKFILL_DAYS || 90;
+const CONCURRENCY = env.ANALYSIS_CONCURRENCY || 1;
 const MAX_CONVO_CHARS = 6000;
 const MAX_QA_CHARS = 1000;
 
@@ -176,7 +177,7 @@ function parseSinceISO(value) {
  * backfill vodi pozivatelj: prva serija šalje `sinceDays` (ili `sinceISO`),
  * a svaka sljedeća šalje `sinceISO` = `cursor` iz prethodnog odgovora.
  */
-async function run({ sinceDays, sinceISO, maxTickets } = {}, deps = {}) {
+async function run({ sinceDays, sinceISO, maxTickets, concurrency } = {}, deps = {}) {
   const store = deps.store || analyticsStore;
   const listTicketsSince = deps.listTicketsSince || zendeskService.listTicketsSince;
   const getComments = deps.getPublicTicketComments || zendeskService.getPublicTicketComments;
@@ -196,9 +197,12 @@ async function run({ sinceDays, sinceISO, maxTickets } = {}, deps = {}) {
   const { tickets, nextCursorISO } = await listTicketsSince(cursor, { maxTickets: max });
 
   let analyzed = 0, skipped = 0, kbGaps = 0, errors = 0;
-  for (const ticket of tickets) {
+
+  // Jedan ticket = jedan Zendesk dohvat + jedan LLM poziv. Brojači se ažuriraju
+  // isto kao u sekvencijalnoj verziji; redoslijed obrade nije bitan.
+  async function processOne(ticket) {
     // Incremental Export vraća i obrisane tickete - njima komentari ne postoje (404).
-    if (ticket.status === "deleted") { skipped += 1; continue; }
+    if (ticket.status === "deleted") { skipped += 1; return; }
     try {
       const comments = await getComments(ticket.id);
       const row = await analyzeOne(ticket, comments, deps);
@@ -207,11 +211,24 @@ async function run({ sinceDays, sinceISO, maxTickets } = {}, deps = {}) {
       if (row.is_kb_gap) kbGaps += 1;
     } catch (error) {
       // 404 = ticket obrisan/nedostupan → preskoči, nije prava greška.
-      if (/\(404\)/.test(error.message || "")) { skipped += 1; continue; }
+      if (/\(404\)/.test(error.message || "")) { skipped += 1; return; }
       errors += 1;
       log.warn("ticket_analysis_failed", { ticketId: ticket.id, message: error.message });
     }
   }
+
+  // ANALYSIS_CONCURRENCY = 1 (default) je točno dosadašnje sekvencijalno ponašanje.
+  // Veće vrijednosti služe backfillu povijesti: čekanje na LLM je dominantan
+  // trošak vremena, pa N paralelnih radnika skraćuje run ~N puta uz isti broj
+  // poziva (dakle isti novac). Radnici vuku iz zajedničkog reda.
+  const workers = Math.max(1, Math.min(Number(concurrency) || CONCURRENCY, 20));
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(workers, tickets.length) }, async () => {
+    while (next < tickets.length) {
+      const ticket = tickets[next++];
+      await processOne(ticket);
+    }
+  }));
 
   // Backfill radi u prošlosti — cursor smije ići samo naprijed, inače bi dnevni
   // sync nakon backfilla ponovno analizirao sve od starog datuma.
