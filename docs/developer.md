@@ -492,3 +492,15 @@ libar-zendesk-bot-v2/
 ## Licenca
 
 MIT — Razvijeno za **Antikvarijat Libar**, Dante d.o.o., Osijek
+
+## Javni endpoint s popisom udžbenika
+
+`GET /api/popis-udzbenika.json` servira `data/popis-udzbenika-2026-27.json` —
+istu datoteku koju čita `textbookListService`. Zaglavlja: `Cache-Control:
+public, max-age=3600` i `Access-Control-Allow-Origin: *`. Kad datoteke nema,
+vraća `404` s porukom.
+
+Koristi ga WordPress plugin `libar-popis-udzbenika` (repo
+`libar-popis-udzbenika-wp`), koji jednom dnevno povlači podatke i prikazuje
+tražilicu popisa po školi i razredu na stranici Libarovog sitea. Jedan izvor
+istine za chat i web: regeneriraš JSON i deployaš bota, WordPress se uskladi sam.

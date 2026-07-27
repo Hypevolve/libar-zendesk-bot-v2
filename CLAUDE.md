@@ -24,6 +24,7 @@ Treba `.env` (vidi [.env.example](.env.example)). Deploy ide na **Render** preko
 
 ## Mapa koda
 - [index.js](index.js) — Express server, svi API endpointi, orkestracija (velik, ~jedan fajl)
+  - javni endpoint `GET /api/popis-udzbenika.json` — izvor podataka za WordPress plugin `libar-popis-udzbenika`
 - [services/](services/) — sva poslovna logika, jedan servis = jedna odgovornost:
   - `aiService` LLM pozivi · `zendeskService` tiketi · `vectorKnowledgeService` + `embeddingService` RAG · `oneDriveService` izvor znanja · `conversationService` memorija razgovora
   - `piiService` maskiranje osobnih podataka · `spamFilterService` · `intentEscalationService` eskalacija · `outputValidator` · `responseCacheService` · `tokenBudgetService` · `metricsService`/`supabaseMetricsService` · `botStateService` (kill switch)
