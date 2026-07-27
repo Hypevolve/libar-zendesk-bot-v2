@@ -79,5 +79,21 @@ describe("textbookListService", () => {
       assert.strictEqual(r.status, "match");
       assert.strictEqual(r.school.naziv, "Biskupijska klasična gimnazija Ruđera Boškovića Dubrovnik");
     });
+
+    it("ne miješa 'Ivana' s nepovezanim gradom 'Ivanec' zbog labavog prefiksa", () => {
+      // "ivana" i "ivanec" dijele samo prva 4 od 5-6 znakova — to nije padež iste riječi,
+      // već dvije različite riječi koje se slučajno podudaraju na početku.
+      const r = findSchool("Srednja škola Ivana Meštrovića");
+      assert.strictEqual(r.status, "match");
+      assert.notStrictEqual(r.school.naziv, "Srednja škola Ivanec");
+      assert.strictEqual(r.school.naziv, "Srednja škola Ivana Meštrovića Drniš");
+    });
+
+    it("ne miješa 'Petra' s nepovezanim gradom 'Petrinja' zbog labavog prefiksa", () => {
+      const r = findSchool("Srednja škola Petra Šegedina");
+      assert.strictEqual(r.status, "match");
+      assert.notStrictEqual(r.school.naziv, "Srednja škola Petrinja");
+      assert.strictEqual(r.school.naziv, "Srednja škola Petra Šegedina Korčula");
+    });
   });
 });

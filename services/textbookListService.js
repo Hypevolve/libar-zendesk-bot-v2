@@ -48,10 +48,15 @@ const DISTINCTIVE_IDF = 0.8;
 // iznad "škola Daruvar" (cov 0,71 — ali ima 2 kandidata pa ionako ne prolazi uvjet "jedini").
 // Postavljen na sredinu raspona 0,50–0,76.
 const LONE_SURVIVOR_COVERAGE = 0.65;
-// Podudaranje po prefiksu hvata padeže ("daruvaru" ~ "daruvar").
-const PREFIX_LEN = 4;
+// Podudaranje po prefiksu hvata padeže ("daruvaru" ~ "daruvar") — hrvatska deklinacija mijenja
+// samo rep riječi, obično jedno slovo ("daruvar"→"daruvaru", "gimnazija"→"gimnaziju"). Zato
+// tražimo da se tokeni podudaraju u SVIM osim najviše jednog znaka SVAKOG tokena, a ne samo
+// u fiksnih prvih N znakova — fiksni prefiks (npr. prva 4 znaka + labava razlika duljine)
+// lažno izjednačava nepovezana imena čim dijele početak: "ivana"~"ivanec" (zajedničko 4 od
+// 5,6), "petra"~"petrinja" (4 od 5,8), "marka"~"maruševcu" (3 od 5,9) — sve su odbačene niže
+// (PREFIX_MIN_LEN i dalje sprječava da vrlo kratki tokeni prođu).
+const PREFIX_MIN_LEN = 4;
 const PREFIX_WEIGHT = 0.7;
-const MAX_LEN_DIFF = 3;
 // Uređivačka udaljenost hvata tipfelere ("gimanzija" ~ "gimnazija").
 const TYPO_MIN_LEN = 4;
 const TYPO_LONG_LEN = 7;
@@ -82,10 +87,19 @@ function loadIndex(filePath = DATA_PATH) {
   return index;
 }
 
+function commonPrefixLength(a, b) {
+  const max = Math.min(a.length, b.length);
+  let i = 0;
+  while (i < max && a[i] === b[i]) i++;
+  return i;
+}
+
 function matchesByPrefix(queryToken, schoolToken) {
-  if (queryToken.length < PREFIX_LEN || schoolToken.length < PREFIX_LEN) return false;
-  if (Math.abs(queryToken.length - schoolToken.length) > MAX_LEN_DIFF) return false;
-  return queryToken.slice(0, PREFIX_LEN) === schoolToken.slice(0, PREFIX_LEN);
+  if (queryToken.length < PREFIX_MIN_LEN || schoolToken.length < PREFIX_MIN_LEN) return false;
+  const common = commonPrefixLength(queryToken, schoolToken);
+  // Zajednički prefiks mora pokriti sve osim najviše jednog znaka OBA tokena — inače su to
+  // dvije različite riječi koje se slučajno podudaraju na početku, ne padež iste riječi.
+  return common >= queryToken.length - 1 && common >= schoolToken.length - 1;
 }
 
 // Levenshtein s ranim prekidom — zanima nas samo je li udaljenost unutar praga.
