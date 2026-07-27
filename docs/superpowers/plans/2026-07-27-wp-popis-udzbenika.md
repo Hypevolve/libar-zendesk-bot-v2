@@ -659,7 +659,7 @@ Replace the whole content of `/Users/zrinko/Documents/Code Projects/libar-popis-
       .replace(/đ/g, "d")
       .replace(/Đ/g, "D")
       .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
+      .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, " ")
       .trim();
