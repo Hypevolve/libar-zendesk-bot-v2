@@ -39,6 +39,15 @@ const MARGIN = 1.35;
 // "strukovna" 2,91/6% …) ili ime grada — mora biti pokriven, inače škola ne prolazi kao
 // siguran pogodak. (Ako je "škola" jedini uvjet koji ostaje nepokriven, to ne blokira gate.)
 const DISTINCTIVE_IDF = 0.8;
+// Iznimka od gornjeg gate-a: kad je škola JEDINI kandidat u cijelom korpusu (ne samo u
+// "confident" skupu) i upit pokriva barem ovoliki udio njenog naziva, smatramo je sigurnim
+// pogotkom i bez pokrivenog prepoznatljivog tokena — hvata upite koji školu imenuju vlastitim
+// imenom bez grada ("gimnazija Antuna Vrančića", cov 0,77; "biskupijska klasična gimnazija
+// Ruđera Boškovića", cov 0,76 — oboje moraju pogoditi). Prag mora ostati iznad "ekonomska
+// škola" (cov 0,50, jedini kandidat, ali NE smije pogoditi jer grad uopće nije spomenut) i
+// iznad "škola Daruvar" (cov 0,71 — ali ima 2 kandidata pa ionako ne prolazi uvjet "jedini").
+// Postavljen na sredinu raspona 0,50–0,76.
+const LONE_SURVIVOR_COVERAGE = 0.65;
 // Podudaranje po prefiksu hvata padeže ("daruvaru" ~ "daruvar").
 const PREFIX_LEN = 4;
 const PREFIX_WEIGHT = 0.7;
@@ -141,6 +150,14 @@ function rankSchools(text, { minCoverage = MIN_COVERAGE, minScore = MIN_SCORE } 
 function findSchool(text) {
   const scored = rankSchools(text);
   if (!scored.length) return { status: "none" };
+
+  // Jedini kandidat u cijelom korpusu, s upitom koji objašnjava većinu njegovog naziva —
+  // sigurno je prepoznat i bez pokrivenog prepoznatljivog tokena (vidi LONE_SURVIVOR_COVERAGE).
+  // Mora biti JEDINI ukupno, ne samo u "confident" skupu, inače bi npr. "škola Daruvar"
+  // (dva kandidata, oba visoke pokrivenosti) lažno pogodio jednog od njih.
+  if (scored.length === 1 && scored[0].coverage >= LONE_SURVIVOR_COVERAGE) {
+    return { status: "match", school: scored[0].school };
+  }
 
   // Siguran pogodak smije biti samo škola čiji su svi prepoznatljivi tokeni pokriveni
   // upitom (vidi DISTINCTIVE_IDF) — inače je pobjeda slučajna (npr. grad ima samo jednu

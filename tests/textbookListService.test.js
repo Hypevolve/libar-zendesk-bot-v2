@@ -67,5 +67,17 @@ describe("textbookListService", () => {
       // pogoditi samo zato što je jedna škola slučajno jedina koja prijeđe prag pokrivenosti.
       assert.notStrictEqual(findSchool("ekonomska skola").status, "match");
     });
+
+    it("prepoznaje školu po vlastitom imenu bez grada, kad je jedini kandidat u korpusu", () => {
+      const r = findSchool("gimnazija Antuna Vrancica");
+      assert.strictEqual(r.status, "match");
+      assert.strictEqual(r.school.naziv, "Gimnazija Antuna Vrančića Šibenik");
+    });
+
+    it("prepoznaje školu po dugom vlastitom imenu bez grada, kad je jedini kandidat u korpusu", () => {
+      const r = findSchool("biskupijska klasicna gimnazija rudjera boskovica");
+      assert.strictEqual(r.status, "match");
+      assert.strictEqual(r.school.naziv, "Biskupijska klasična gimnazija Ruđera Boškovića Dubrovnik");
+    });
   });
 });
