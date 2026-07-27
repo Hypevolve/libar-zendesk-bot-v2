@@ -418,7 +418,8 @@ Create `/Users/zrinko/Documents/Code Projects/libar-popis-udzbenika-wp/assets/js
 Create `/Users/zrinko/Documents/Code Projects/libar-popis-udzbenika-wp/assets/css/widget.css`:
 
 ```css
-/* Osnovni stilovi; dorada dolazi na kraju plana. */
+/* Osnovni stilovi; dorada dolazi na kraju plana. Boje idu kroz tokene teme
+   kontra-libar (--wp--preset--*), s fallbackom za slučaj druge teme. */
 .lpu-widget {
   max-width: 40rem;
   margin: 0 auto;
@@ -426,29 +427,31 @@ Create `/Users/zrinko/Documents/Code Projects/libar-popis-udzbenika-wp/assets/cs
 
 .lpu-oznaka {
   display: block;
-  margin-bottom: 0.4rem;
-  font-weight: 600;
+  margin-bottom: 0.44rem;
+  font-weight: 700;
 }
 
 .lpu-polje {
   width: 100%;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  border: 1px solid #c9c9c9;
-  border-radius: 0.4rem;
+  padding: calc(0.75rem - 0.0625rem);
+  font: inherit;
+  background-color: #fcfcfc;
+  border: 0.0625rem solid #e2e2e2;
+  border-radius: 0.25rem;
 }
 
 .lpu-prijedlozi {
   list-style: none;
-  margin: 0.25rem 0 0;
+  margin: 0.44rem 0 0;
   padding: 0;
-  border: 1px solid #e0e0e0;
-  border-radius: 0.4rem;
+  background-color: var(--wp--preset--color--white, #fff);
+  border: 0.0625rem solid rgb(0 23 31 / 0.1);
+  border-radius: 0.375rem;
 }
 
 .lpu-status {
-  margin: 0.5rem 0;
-  font-size: 0.9rem;
+  margin: 0.67rem 0;
+  font-size: var(--wp--preset--font-size--smaller, 0.875rem);
 }
 ```
 
@@ -1287,6 +1290,44 @@ Create `/Users/zrinko/Documents/Code Projects/libar-popis-udzbenika-wp/tests/ruc
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ručna provjera widgeta</title>
   <link rel="stylesheet" href="../assets/css/widget.css">
+  <style>
+    /* Gruba imitacija teme kontra-libar da provjera izgleda kao na sitecu:
+       isti tokeni, ista tipografija. Font se učitava s Libarovog sitea, pa
+       harness treba mrežu; bez nje pada na sistemski sans-serif. */
+    @font-face {
+      font-family: Poppins;
+      font-weight: 500;
+      font-display: swap;
+      src: url("https://antikvarijat-libar.com/wp-content/themes/kontra-libar/assets/fonts/Poppins/Poppins-Medium.woff2") format("woff2");
+    }
+    @font-face {
+      font-family: Poppins;
+      font-weight: 700;
+      font-display: swap;
+      src: url("https://antikvarijat-libar.com/wp-content/themes/kontra-libar/assets/fonts/Poppins/Poppins-Bold.woff2") format("woff2");
+    }
+    :root {
+      --wp--preset--color--black: #00171F;
+      --wp--preset--color--white: #FFFFFF;
+      --wp--preset--color--orange: #F26A35;
+      --wp--preset--color--orange-hover: #F27935;
+      --wp--preset--color--grey-dark: #767676;
+      --wp--preset--color--grey-light-hover: #F5F5F5;
+      --wp--preset--font-size--extra-small: 0.75rem;
+      --wp--preset--font-size--smaller: 0.875rem;
+      --wp--preset--font-size--normal: 1rem;
+      --wp--preset--font-size--medium: 1.25rem;
+    }
+    body {
+      margin: 2rem 1.25rem;
+      color: var(--wp--preset--color--black);
+      font-family: Poppins, sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+    a { color: var(--wp--preset--color--orange); text-decoration: none; }
+  </style>
 </head>
 <body>
   <h1>Popis udžbenika — ručna provjera</h1>
@@ -2054,15 +2095,28 @@ Replace the whole content of `/Users/zrinko/Documents/Code Projects/libar-popis-
 ```css
 /**
  * Widget popisa udžbenika.
- * Boje i fontovi se nasljeđuju iz teme; ovdje su samo raspored, razmaci i
- * stanja. Sve klase nose prefiks lpu- da se ne sudaraju s temom.
+ *
+ * Boje, font i radijusi dolaze iz tokena teme kontra-libar
+ * (--wp--preset--color--*, Poppins iz body-ja). Vrijednosti iza zareza su
+ * fallback ako plugin završi na drugoj temi — ne mijenjaj ih u brand boje,
+ * jer bi tada widget prestao pratiti temu.
+ *
+ * Konvencije preuzete iz teme: gumbi i polja radius 0.25rem, plohe 0.375rem,
+ * obrub ploha rgb(0 23 31 / 0.1), prijelazi 0.25s ease, gumbi weight 700.
  */
 
 .lpu-widget {
+  --lpu-crna: var(--wp--preset--color--black, #00171f);
+  --lpu-naglasak: var(--wp--preset--color--orange, #f26a35);
+  --lpu-naglasak-hover: var(--wp--preset--color--orange-hover, #f27935);
+  --lpu-sivo-tekst: var(--wp--preset--color--grey-dark, #767676);
+  --lpu-sivo-podloga: var(--wp--preset--color--grey-light-hover, #f5f5f5);
+  --lpu-obrub: rgb(0 23 31 / 0.1);
+  --lpu-ploha: var(--wp--preset--color--white, #fff);
+
   max-width: 40rem;
   margin: 0 auto;
-  font-size: 1rem;
-  line-height: 1.5;
+  color: var(--lpu-crna);
 }
 
 .lpu-trazilica {
@@ -2071,22 +2125,32 @@ Replace the whole content of `/Users/zrinko/Documents/Code Projects/libar-popis-
 
 .lpu-oznaka {
   display: block;
-  margin-bottom: 0.4rem;
-  font-weight: 600;
+  margin-bottom: 0.44rem;
+  font-weight: 700;
 }
 
+/* Isti izgled kao ostala polja na sitecu. */
 .lpu-polje {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: calc(0.75rem - 0.0625rem);
   font: inherit;
-  border: 1px solid #c9c9c9;
-  border-radius: 0.4rem;
-  background: #fff;
+  color: inherit;
+  background-color: #fcfcfc;
+  border: 0.0625rem solid #e2e2e2;
+  border-radius: 0.25rem;
+  transition: border-color 0.25s ease;
 }
 
-.lpu-polje:focus {
-  outline: 2px solid currentColor;
-  outline-offset: 2px;
+.lpu-polje:hover {
+  border-color: var(--lpu-sivo-tekst);
+}
+
+/* Tema globalno gasi outline (:focus-visible { outline: none !important }),
+   pa fokus vraćamo eksplicitno — bez njega se tipkovnicom ne vidi gdje si. */
+.lpu-widget :is(.lpu-polje, .lpu-razred, a):focus-visible {
+  outline: 0.125rem solid var(--lpu-naglasak) !important;
+  outline-offset: 0.125rem;
+  border-radius: 0.25rem;
 }
 
 .lpu-prijedlozi {
@@ -2095,23 +2159,24 @@ Replace the whole content of `/Users/zrinko/Documents/Code Projects/libar-popis-
   width: 100%;
   max-height: 22rem;
   overflow-y: auto;
-  margin: 0.25rem 0 0;
+  margin: 0.44rem 0 0;
   padding: 0;
   list-style: none;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 0.4rem;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  background-color: var(--lpu-ploha);
+  border: 0.0625rem solid var(--lpu-obrub);
+  border-radius: 0.375rem;
+  box-shadow: 0 0.375rem 1.25rem rgb(0 23 31 / 0.08);
 }
 
 .lpu-prijedlog {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 0 0.75rem;
-  padding: 0.7rem 1rem;
+  gap: 0 0.67rem;
   min-height: 2.75rem;
+  padding: 0.67rem 1rem;
   cursor: pointer;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 0.0625rem solid var(--lpu-obrub);
+  transition: background-color 0.25s ease;
 }
 
 .lpu-prijedlog:last-child {
@@ -2120,7 +2185,7 @@ Replace the whole content of `/Users/zrinko/Documents/Code Projects/libar-popis-
 
 .lpu-prijedlog:hover,
 .lpu-prijedlog.lpu-oznacen {
-  background: #f5f7fa;
+  background-color: var(--lpu-sivo-podloga);
 }
 
 .lpu-prijedlog-naziv {
@@ -2129,104 +2194,162 @@ Replace the whole content of `/Users/zrinko/Documents/Code Projects/libar-popis-
 
 .lpu-prijedlog-zupanija {
   grid-column: 1;
-  font-size: 0.85rem;
-  opacity: 0.7;
+  color: var(--lpu-sivo-tekst);
+  font-size: var(--wp--preset--font-size--smaller, 0.875rem);
 }
 
 .lpu-prijedlog-oznaka {
   grid-row: 1 / span 2;
   grid-column: 2;
   align-self: center;
-  font-size: 0.8rem;
+  color: var(--lpu-naglasak);
+  font-size: var(--wp--preset--font-size--extra-small, 0.75rem);
+  font-weight: 700;
   white-space: nowrap;
-  opacity: 0.8;
 }
 
 .lpu-prijedlog-oznaka.lpu-uskoro {
+  color: var(--lpu-sivo-tekst);
+  font-weight: 500;
   font-style: italic;
 }
 
 .lpu-status {
-  margin: 0.6rem 0;
-  font-size: 0.9rem;
+  margin: 0.67rem 0;
+  color: var(--lpu-sivo-tekst);
+  font-size: var(--wp--preset--font-size--smaller, 0.875rem);
 }
 
+/* Ploha po uzoru na kartice u temi. */
 .lpu-panel {
-  margin-top: 1.25rem;
-  padding: 1.25rem;
-  border: 1px solid #e5e5e5;
-  border-radius: 0.5rem;
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background-color: var(--lpu-ploha);
+  border: 0.0625rem solid var(--lpu-obrub);
+  border-radius: 0.375rem;
 }
 
 .lpu-panel-naslov {
   margin: 0 0 0.2rem;
+  font-size: var(--wp--preset--font-size--medium, 1.25rem);
+  font-weight: 700;
 }
 
 .lpu-panel-zupanija {
-  margin: 0 0 1rem;
-  font-size: 0.9rem;
-  opacity: 0.7;
+  margin: 0 0 1.5rem;
+  color: var(--lpu-sivo-tekst);
+  font-size: var(--wp--preset--font-size--smaller, 0.875rem);
 }
 
 .lpu-razredi {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: 0.44rem;
+  margin-bottom: 1.5rem;
 }
 
+/* Neaktivan razred je obrisni gumb, aktivan poprima izgled temina gumba. */
 .lpu-razred {
   min-height: 2.75rem;
-  padding: 0.5rem 1rem;
-  font: inherit;
+  padding: 0.75rem 1.25rem;
+  color: inherit;
+  font-family: inherit;
+  font-size: var(--wp--preset--font-size--extra-small, 0.75rem);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
-  background: #fff;
-  border: 1px solid #c9c9c9;
-  border-radius: 2rem;
+  background-color: var(--lpu-ploha);
+  border: 0.0625rem solid var(--lpu-obrub);
+  border-radius: 0.25rem;
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
 }
 
-.lpu-razred-aktivan {
-  border-color: currentColor;
-  font-weight: 600;
+.lpu-razred:hover {
+  border-color: var(--lpu-naglasak);
+  color: var(--lpu-naglasak);
+}
+
+.lpu-razred-aktivan,
+.lpu-razred-aktivan:hover {
+  background-color: var(--lpu-naglasak);
+  border-color: var(--lpu-naglasak);
+  color: var(--wp--preset--color--white, #fff);
 }
 
 .lpu-dokumenti-naslov {
-  margin: 0 0 0.6rem;
-  font-size: 1rem;
+  margin: 0 0 0.67rem;
+  font-size: var(--wp--preset--font-size--normal, 1rem);
+  font-weight: 700;
 }
 
 .lpu-dokumenti {
   margin: 0 0 1rem;
-  padding-left: 1.2rem;
+  padding: 0;
+  list-style: none;
 }
 
 .lpu-dokumenti li {
-  margin-bottom: 0.4rem;
+  padding: 0.44rem 0;
+  border-bottom: 0.0625rem solid var(--lpu-obrub);
+}
+
+.lpu-dokumenti li:last-child {
+  border-bottom: 0;
+}
+
+.lpu-dokument {
+  font-weight: 600;
 }
 
 .lpu-vrsta {
-  margin-left: 0.5rem;
-  font-size: 0.75rem;
+  margin-left: 0.44rem;
+  color: var(--lpu-sivo-tekst);
+  font-size: var(--wp--preset--font-size--extra-small, 0.75rem);
   letter-spacing: 0.04em;
-  opacity: 0.6;
 }
 
 .lpu-napomena {
   margin: 1rem 0;
-  font-size: 0.85rem;
-  opacity: 0.75;
+  color: var(--lpu-sivo-tekst);
+  font-size: var(--wp--preset--font-size--smaller, 0.875rem);
+}
+
+.lpu-stranica-skole {
+  margin: 0.67rem 0;
 }
 
 .lpu-cta {
-  margin: 0.75rem 0 0;
-  font-weight: 600;
+  margin: 1rem 0 0;
+}
+
+/* CTA nosi izgled temina gumba — to je jedina radnja koja vodi u webshop. */
+.lpu-cta-veza {
+  display: inline-block;
+  padding: calc(1.125rem - 0.0625rem) calc(1.5rem - 0.0625rem);
+  color: var(--wp--preset--color--white, #fff) !important;
+  font-size: var(--wp--preset--font-size--extra-small, 0.75rem);
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  background-color: var(--lpu-naglasak);
+  border: 0.0625rem solid var(--lpu-naglasak);
+  border-radius: 0.25rem;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.lpu-cta-veza:hover {
+  background-color: var(--lpu-naglasak-hover);
+  border-color: var(--lpu-naglasak-hover);
 }
 
 .lpu-poruka {
-  margin: 0.5rem 0;
+  margin: 0.67rem 0;
 }
 
-@media (max-width: 30rem) {
+/* Ispod sm breakpointa teme (576px). */
+@media (max-width: 575.98px) {
   .lpu-panel {
     padding: 1rem;
   }
@@ -2238,6 +2361,10 @@ Replace the whole content of `/Users/zrinko/Documents/Code Projects/libar-popis-
   .lpu-prijedlog-oznaka {
     grid-row: auto;
     grid-column: 1;
+  }
+
+  .lpu-cta-veza {
+    display: block;
   }
 }
 ```
@@ -2252,7 +2379,9 @@ python3 -m http.server 8080
 Otvori `http://localhost:8080/tests/rucna-provjera.html`, u alatima za razvoj uključi prikaz mobitela (360 px širine) i provjeri:
 - ništa ne izlazi izvan ekrana i nema vodoravnog scrolla,
 - gumbi razreda i stavke prijedloga su visoki barem 44 px,
-- lista prijedloga se preklapa preko panela, ne gura sadržaj.
+- lista prijedloga se preklapa preko panela, ne gura sadržaj,
+- tipkanjem Tab kroz widget fokus je **vidljiv** na polju, gumbima razreda i poveznicama,
+- aktivan razred je narančast s bijelim tekstom, neaktivni su obrisni.
 
 Zaustavi server.
 
@@ -2329,6 +2458,7 @@ Ovo je prva provjera PHP koda — do sada se izvršavao samo JS.
 - [ ] **Osvježi sada** javlja „Podaci su osvježeni", status pokaže godinu `2026./2027.` i oko 285 škola,
 - [ ] datoteka postoji u `wp-content/uploads/libar-popis/popis-udzbenika.json`,
 - [ ] stranica sa shortcodeom prikazuje tražilicu,
+- [ ] widget je u Poppinsu i naslijeđenim brand bojama — polje izgleda kao ostala polja na sitecu, CTA kao ostali gumbi (usporedi sa `/kontakt/` i bilo kojom stranicom proizvoda),
 - [ ] pretraga, odabir razreda i otvaranje dokumenta rade kao u ručnoj provjeri,
 - [ ] disclaimer i CTA na webshop su vidljivi uz svaki popis,
 - [ ] škola bez popisa daje poruku „još nije objavljen" bez poveznice na dokument,

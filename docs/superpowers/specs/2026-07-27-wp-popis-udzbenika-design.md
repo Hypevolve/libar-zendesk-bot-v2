@@ -95,6 +95,38 @@ Nepromijenjen u odnosu na bot:
 `razred` je `"1"`–`"5"` ili `null`. `stranica` je `null` kad je nemamo.
 Škole bez potvrđenog popisa imaju prazan `dokumenti`.
 
+## Vizualni jezik
+
+Site vozi vlastita blok tema `kontra-libar` uz WooCommerce. Sav dizajn dolazi iz
+`theme.json` kao CSS varijable, pa widget **ne definira vlastitu paletu ni
+tipografiju** — čita temine tokene i time automatski prati svaku buduću promjenu
+brandinga. Fallback vrijednosti postoje samo za slučaj da plugin završi na drugoj
+temi.
+
+| | Tema | Kako ga widget koristi |
+|---|---|---|
+| Font | Poppins (self-hosted, 400/500/600/700 + kurzivi), body 500, naslovi 700 | nasljeđuje se, ne deklarira se |
+| Tekst | `--wp--preset--color--black` `#00171F` | osnovni tekst |
+| Akcent | `--wp--preset--color--orange` `#F26A35`, hover `#F27935` | poveznice, aktivan razred, CTA |
+| Sekundarni tekst | `--wp--preset--color--grey-dark` `#767676` | županija, napomena, vrsta datoteke |
+| Hover podloga | `--wp--preset--color--grey-light-hover` `#F5F5F5` | označen prijedlog |
+| Obrub ploha | `rgb(0 23 31 / 0.1)` | panel, lista prijedloga, razdjelnici |
+
+Konvencije preuzete iz teme: polja i gumbi `border-radius: 0.25rem`, plohe
+`0.375rem`, prijelazi `0.25s ease`, gumbi `font-weight: 700` uz
+`font-size: 0.75rem`, polja `background #FCFCFC` s obrubom `#E2E2E2`. Razmaci
+prate skalu `0.44 / 0.67 / 1 / 1.5rem`, prijelom na `575.98px` (`sm` breakpoint
+teme).
+
+Gumbi razreda su obrisni dok nisu odabrani, a aktivan poprima puni izgled temina
+gumba — stanje je time vidljivo bez dodatne boje izvan palete. Webshop CTA nosi
+izgled temina gumba jer je jedina radnja koja vodi natrag u trgovinu.
+
+**Fokus se vraća eksplicitno.** Tema globalno gasi obrub fokusa
+(`:focus-visible { outline: none !important }`), pa bi ga widget naslijedio i
+postao neupotrebljiv tipkovnicom. Widget zato sam iscrtava vidljiv fokus u
+akcentnoj boji.
+
 ## Pretraga
 
 Logika živi u `assets/js/pretraga.js` kao čiste funkcije bez DOM-a, pa je
