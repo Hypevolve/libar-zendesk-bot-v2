@@ -1831,8 +1831,17 @@ Then add these methods immediately before the closing `}` of the class:
         if (!wp_mkdir_p(self::mapa())) {
             return self::zabiljezi_gresku('Ne mogu stvoriti mapu u uploads.');
         }
-        if (false === file_put_contents(self::putanja(), $tijelo)) {
+
+        // Pise se u privremenu datoteku pa preimenuje. Preimenovanje je na istoj
+        // particiji atomarno, pa prekid usred pisanja (timeout, restart, pun disk)
+        // ne moze ostaviti polovican sadrzaj preko dobrih podataka.
+        $privremena = self::putanja() . '.tmp';
+        if (false === file_put_contents($privremena, $tijelo)) {
             return self::zabiljezi_gresku('Ne mogu zapisati datoteku u uploads.');
+        }
+        if (!rename($privremena, self::putanja())) {
+            @unlink($privremena);
+            return self::zabiljezi_gresku('Ne mogu zamijeniti postojecu datoteku u uploads.');
         }
 
         $s_popisom  = 0;
