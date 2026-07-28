@@ -368,13 +368,18 @@
     // Linkovi se prvo izvade u zamjenske tokene (privatni Unicode raspon, ne
     // mogu se pojaviti u stvarnoj poruci) da URL unutar njih (koji smije
     // sadržavati "**") kasnije ne bude izlomljen prolazom za podebljanje.
+    // Ako posjetitelj u poruku ipak nalijepi baš te privatne znakove, uklanjaju
+    // se odmah kod escapanja (pa ne mogu lažirati sentinel), a završna zamjena
+    // tokena je dodatno granično provjerena — bez pripadajućeg anchora izvorni
+    // tekst ostaje netaknut umjesto da se ispiše "undefined".
     function renderContent(text) {
       const escaped = String(text || "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
+        .replace(/'/g, "&#39;")
+        .replace(/\uE000|\uE001/g, "");
 
       const anchors = [];
       const withTokens = escaped.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_match, label, url) => {
@@ -386,7 +391,10 @@
       return withTokens
         .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
         .replace(/\n/g, "<br>")
-        .replace(/\uE000(\d+)\uE001/g, (_match, i) => anchors[Number(i)]);
+        .replace(/\uE000(\d+)\uE001/g, (match, i) => {
+          const anchor = anchors[Number(i)];
+          return anchor !== undefined ? anchor : match;
+        });
     }
 
     function addMessage(role, content, links) {
