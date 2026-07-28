@@ -489,6 +489,60 @@ libar-zendesk-bot-v2/
 
 ---
 
+## Popis udžbenika po školi i razredu
+
+Web chat odgovara linkom na popis udžbenika koji je škola objavila za tekuću
+školsku godinu (2026./2027.). Deterministički, bez LLM poziva.
+
+- Servis: [services/textbookListService.js](../services/textbookListService.js)
+- Podaci: `data/popis-udzbenika-2026-27.json` (generirani, commitani) — 281
+  srednja škola u opsegu, od toga 160 s potvrđenim popisom za 2026./2027.,
+  879 dokumenata ukupno
+- Gate: `_resolveAutomatedOutcome` u [index.js](../index.js), iza escalation
+  gateova (prilozi, intent) i ispred provjere referentnih činjenica i cachea;
+  aktivan samo za `channelType === "web_chat"`
+- Zastavica: `POPIS_UDZBENIKA_ENABLED` (zadano `true`, `config/env.js`)
+
+Škola se prepoznaje IDF bodovanjem tokena naziva, razred regexom. Kad je
+škola nejasna ili razred nedostaje, bot pita umjesto da pogađa. Uz svaki
+popis ide disclaimer da je informativan i preuzet iz javno dostupne baze.
+
+Nepotpun ili neuredan upis naziva škole podnosi se na tri razine: dijakritici,
+velika slova i interpunkcija otpadaju normalizacijom; padeži se hvataju
+podudaranjem po prefiksu; tipfeleri uređivačkom udaljenošću. Kad ni to ne da
+siguran pogodak, bot ponudi najbliže škole ("jeste li mislili…") umjesto da
+tiho odustane.
+
+Linkovi na dokumente idu kao markdown (`[oznaka](url)`) unutar teksta poruke,
+ne u `outcome.links` — widget ih renderira preko `renderContent()` u
+[public/index.html](../public/index.html), koji podržava upravo taj ograničen
+markdown (linkovi + podebljanje).
+
+Opseg: srednje škole u 18 županija (bez Grada Zagreba, Splitsko-dalmatinske i
+Međimurske — namjerno, neće se dodavati). Škole bez objavljenog popisa su u
+podacima s praznim `dokumenti`, pa ih bot prepozna i kaže da popis još nije
+objavljen.
+
+### Osvježavanje podataka
+
+Kad škole objave nove popise, u susjednom projektu `popis-udzbenika`
+pokrenuti pipeline pa izvoz:
+
+```bash
+cd ../popis-udzbenika
+.venv/bin/python pipeline.py --ponovi-greske
+.venv/bin/python izvoz_za_bot.py \
+  --izlaz ../libar-zendesk-bot-v2/data/popis-udzbenika-2026-27.json
+```
+
+Izvoz pada s greškom ako neki naziv škole ostane s pokvarenim dijakriticima —
+tada ga treba dodati u `RUCNI_ISPRAVCI` u `izvoz_za_bot.py`. Isto tako pada
+ako bi dvije škole nakon spajanja dobile isti `id`. Nakon izvoza commitati
+JSON u bot repo i deployati; datoteka se učitava (i kešira u memoriji) pri
+startu procesa.
+
+---
+
 ## Licenca
 
 MIT — Razvijeno za **Antikvarijat Libar**, Dante d.o.o., Osijek
