@@ -449,6 +449,40 @@ describe("textbookListService", () => {
     });
   });
 
+  // Redni broj u nazivu škole uvijek je ženskog roda ("Prva"/"Druga"), jer su "škola" i
+  // "gimnazija" ženske imenice — muški i srednji rod ne nosi nijedan od 281 naziva. U
+  // upitima su, naprotiv, svakodnevni kao prilozi: "prvo bih htio…", "prvi put pišem…",
+  // "drugo pitanje…". Dok su se i oni kanonizirali u redni broj, takva je rečenica
+  // dobivala token koji nijedna škola nije pokrivala i inače točan pogodak je padao na
+  // "nejasno" — 7 od ovih 10 rečenica. Ovo su obični početci poruke, ne rubni slučajevi.
+  describe("prilozi u prirodnom govoru ne obaraju prepoznavanje škole", () => {
+    const PRIRODNE_FORMULACIJE = [
+      "prvo bih htio popis udžbenika za Gimnaziju Daruvar",
+      "prvo mi treba popis udžbenika, Gimnazija Daruvar",
+      "drugo pitanje, popis udžbenika Gimnazija Daruvar",
+      "kao prvo, trebam popis udžbenika za Gimnaziju Daruvar",
+      "prvi put pišem, trebam popis udžbenika Gimnazija Daruvar",
+      "drugi put pitam za popis udžbenika Gimnazija Daruvar",
+      "treće, zanima me popis udžbenika Gimnazija Daruvar",
+      // Kontrolna skupina bez priloga — ove su prolazile i prije, moraju i dalje.
+      "trebam popis udžbenika za Gimnaziju Daruvar",
+      "popis udžbenika Gimnazija Daruvar",
+      "dobar dan, trebam popis udžbenika za Gimnaziju Daruvar molim"
+    ];
+
+    for (const upit of PRIRODNE_FORMULACIJE) {
+      it(`prepoznaje Gimnaziju Daruvar u: ${upit}`, () => {
+        const r = findSchool(upit);
+        assert.strictEqual(
+          r.status,
+          "match",
+          `očekivan pogodak, dobiveno ${r.status}`
+        );
+        assert.strictEqual(r.school.naziv, "Gimnazija Daruvar");
+      });
+    }
+  });
+
   describe("gate ne otima postojeće upite", () => {
     const POSTOJECI_UPITI = [
       "Kako naručiti udžbenike?",

@@ -99,12 +99,25 @@ const REDNI_RIMSKI = { i: "rb1", ii: "rb2", iii: "rb3", iv: "rb4", v: "rb5" };
 // već otpale. Map, a ne objekt: ključ je proizvoljan token iz korisnikove poruke, a
 // objekt bi na "constructor" ili "toString" vratio naslijeđenu vrijednost s
 // Object.prototype i tiho pojeo tu riječ iz upita.
+//
+// NAMJERNO SAMO ŽENSKI ROD — ne dodavati "prvi/drugi" ni "prvo/drugo".
+// Naziv škole je uvijek ženskog roda jer su "škola" i "gimnazija" ženske imenice:
+// u korpusu 8 naziva nosi "Prva"/"Druga", a MUŠKI ("prvi", "drugi", "treći",
+// "četvrti", "peti") i SREDNJI rod ("prvo", "drugo", "treće", "četvrto", "peto")
+// pojavljuju se u NULA naziva od 281 (mjereno). U upitima se, međutim, pojavljuju
+// stalno — kao prilozi i redni brojevi u običnom govoru: "prvo bih htio popis…",
+// "prvi put pišem…", "drugo pitanje…", "drugi put pitam…", "treće, zanima me…".
+// Dok su bili u ovoj mapi, takva rečenica je dobivala redni broj s visokim idf-om
+// koji nijedna škola nije pokrivala, pa je imenujeTudeObiljezje obarao inače
+// točan pogodak: 7 od 10 prirodnih formulacija za Gimnaziju Daruvar završilo je
+// na "nejasno". Muški i srednji rod nose nula vrijednosti za uparivanje i samo
+// se sudaraju s prilozima — zato ih ovdje nema.
 const REDNI_KANONSKI = new Map([
-  ["1", "rb1"], ["prva", "rb1"], ["prvi", "rb1"], ["prvo", "rb1"],
-  ["2", "rb2"], ["druga", "rb2"], ["drugi", "rb2"], ["drugo", "rb2"],
-  ["3", "rb3"], ["treca", "rb3"], ["treci", "rb3"], ["trece", "rb3"],
-  ["4", "rb4"], ["cetvrta", "rb4"], ["cetvrti", "rb4"], ["cetvrto", "rb4"],
-  ["5", "rb5"], ["peta", "rb5"], ["peti", "rb5"], ["peto", "rb5"]
+  ["1", "rb1"], ["prva", "rb1"],
+  ["2", "rb2"], ["druga", "rb2"],
+  ["3", "rb3"], ["treca", "rb3"],
+  ["4", "rb4"], ["cetvrta", "rb4"],
+  ["5", "rb5"], ["peta", "rb5"]
 ]);
 
 // Rimski oblik prepoznajemo PRIJE normalizacije, dok točka još postoji. Bez točke bi
@@ -129,6 +142,9 @@ const RIMSKI_BEZ_TOCKE = /(?<![\p{L}\p{N}])(iii|ii|iv)(?![\p{L}\p{N}])/giu;
 // to da ga gate-ovi nizvodno apsorbiraju.
 // Oblici prate parseRazred: brojčani ("2. razred", "1.a razred", "3 razreda"), kanonski
 // rimski (nakon zamjene: "rb2 razred") i riječima ("drugom razredu").
+// Ovdje muški i srednji rod NAMJERNO ostaju, za razliku od REDNI_KANONSKI: "drugi razred"
+// je posve običan način da se razred imenuje. Popis prati parseRazred, ne REDNI_KANONSKI —
+// dvije liste imaju različit posao i ne treba ih izjednačavati.
 const RAZRED_FRAZA = new RegExp(
   "\\b(?:rb[1-5]|[1-5]|prvi|prvom|prvog|prva|drugi|drugom|drugog|druga"
   + "|treci|trecem|treceg|treca|cetvrti|cetvrtom|cetvrtog|cetvrta|peti|petom|petog|peta)"
