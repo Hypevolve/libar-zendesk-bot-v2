@@ -410,6 +410,101 @@ describe("textbookListService", () => {
     });
   });
 
+  // Bot pita "Na koju školu mislite?", posjetitelj napiše naziv — i to mora biti pravi
+  // nastavak razgovora. Prije ovoga je odgovor padao kroz TEXTBOOK_RE (naziv škole ne
+  // sadrži "popis" ni "udžbenik") i završavao na generičkom fallbacku, a razred pročitan
+  // iz prve poruke bacao se pa se tražio drugi put. Slijepa ulica na najvjerojatnijem
+  // ulazu: roditelj imenuje tip škole i grad, a ne službeni naziv.
+  describe("nastavak nakon pitanja 'Na koju školu mislite?'", () => {
+    const PRVA_PORUKA = "Pozdrav, imate li popis udzbenika za 1. razred ekonomske škole Bjelovar?";
+
+    it("prva poruka pita za školu i pamti da čeka naziv, zajedno s razredom", () => {
+      const session = {};
+      const outcome = buildTextbookOutcome(PRVA_PORUKA, session);
+      assert.strictEqual(outcome.reason, "textbook_ambiguous_school");
+      assert.strictEqual(session.textbookAwaitingSchool, true, "sesija ne pamti da čeka naziv škole");
+      assert.strictEqual(session.textbookRazred, "1", "razred iz prve poruke nije prenesen");
+    });
+
+    it("uputa traži samo naziv škole kad je razred već poznat", () => {
+      const outcome = buildTextbookOutcome(PRVA_PORUKA, {});
+      assert.match(outcome.customerMessage, /Napišite puni naziv škole, pa Vam šaljem popis za 1\. razred\./);
+      assert.doesNotMatch(outcome.customerMessage, /naziv škole i razred/);
+    });
+
+    it("uputa i dalje traži naziv i razred kad razreda nema", () => {
+      const outcome = buildTextbookOutcome("popis udžbenika srednja škola Šibenik", {});
+      assert.strictEqual(outcome.reason, "textbook_ambiguous_school");
+      assert.match(outcome.customerMessage, /Napišite puni naziv škole i razred/);
+    });
+
+    it("puni naziv škole u odgovoru daje popis, s razredom prenesenim iz prve poruke", () => {
+      const session = {};
+      buildTextbookOutcome(PRVA_PORUKA, session);
+      const outcome = buildTextbookOutcome("Ekonomska i birotehnička škola Bjelovar", session);
+      assert.strictEqual(outcome.reason, "textbook_list");
+      assert.match(outcome.customerMessage, /Ekonomska i birotehnička škola Bjelovar/);
+      assert.match(outcome.customerMessage, /1\. razred/);
+      assert.doesNotMatch(outcome.customerMessage, /za koji razred/i);
+    });
+
+    it("skraćeni naziv u odgovoru također razrješava školu", () => {
+      const session = {};
+      buildTextbookOutcome(PRVA_PORUKA, session);
+      const outcome = buildTextbookOutcome("Ekonomska i birotehnička", session);
+      assert.strictEqual(outcome.reason, "textbook_list");
+      assert.match(outcome.customerMessage, /Ekonomska i birotehnička škola Bjelovar/);
+      assert.match(outcome.customerMessage, /1\. razred/);
+    });
+
+    it("razred iz nove poruke ima prednost pred prenesenim", () => {
+      const session = {};
+      buildTextbookOutcome(PRVA_PORUKA, session);
+      const outcome = buildTextbookOutcome("Ekonomska i birotehnička škola Bjelovar, 2. razred", session);
+      assert.strictEqual(outcome.reason, "textbook_list");
+      assert.match(outcome.customerMessage, /2\. razred/);
+      assert.doesNotMatch(outcome.customerMessage, /za 1\. razred/);
+    });
+
+    it("bez prenesenog razreda odgovor s nazivom škole pita za razred", () => {
+      const session = {};
+      buildTextbookOutcome("popis udžbenika srednja škola Šibenik", session);
+      assert.strictEqual(session.textbookRazred, undefined, "razreda nije bilo, a ipak je prenesen");
+      const outcome = buildTextbookOutcome("Gimnazija Antuna Vrančića Šibenik", session);
+      assert.strictEqual(outcome.reason, "textbook_need_razred");
+      assert.ok(session.textbookSchoolId, "škola nije zapamćena za sljedeći krug");
+    });
+
+    // Najvažniji test ovog kruga: nemarna izvedba ove značajke vuče posjetitelja natrag
+    // u temu koju je napustio.
+    for (const odustajanje of ["hvala", "Hvala Vam!", "koliko košta dostava?", "a koliko košta dostava?", "ok", "ne treba, hvala"]) {
+      it(`promjena teme nakon popisa kandidata ne dobiva odgovor o udžbenicima: ${odustajanje}`, () => {
+        const session = {};
+        buildTextbookOutcome(PRVA_PORUKA, session);
+        const outcome = buildTextbookOutcome(odustajanje, session);
+        assert.strictEqual(outcome, null, `gate se aktivirao na: ${odustajanje}`);
+        assert.strictEqual(session.textbookAwaitingSchool, undefined, "marker je preživio promjenu teme");
+        assert.strictEqual(session.textbookRazred, undefined, "razred je preživio promjenu teme");
+      });
+    }
+
+    it("marker vrijedi samo jednu poruku — naziv škole dvije poruke kasnije više ne opali", () => {
+      const session = {};
+      buildTextbookOutcome(PRVA_PORUKA, session);
+      buildTextbookOutcome("hvala", session);
+      const outcome = buildTextbookOutcome("Ekonomska i birotehnička škola Bjelovar", session);
+      assert.strictEqual(outcome, null, "potrošeni marker je opalio na kasnijoj poruci");
+    });
+
+    it("i 'jeste li mislili' pamti da čeka naziv škole", () => {
+      const session = {};
+      const outcome = buildTextbookOutcome("trebam popis udžbenika za medicinsku u Bjelovaru", session);
+      assert.ok(outcome, "očekivan je odgovor s kandidatima");
+      if (outcome.reason === "textbook_need_razred") return; // matcher je školu ipak razriješio
+      assert.strictEqual(session.textbookAwaitingSchool, true, "sesija ne pamti da čeka naziv škole");
+    });
+  });
+
   // Otkad se redni broj normalizira, broj razreda iz upita ("za 2. razred") izgleda
   // matcheru isto kao redni broj u nazivu škole — pa bi "Druga gimnazija Varaždin" i
   // "II. gimnazija Osijek" postale suparnice koje pokrivaju obilježje koje pobjednik

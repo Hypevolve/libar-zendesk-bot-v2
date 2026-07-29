@@ -537,14 +537,29 @@ function buildAskRazredAnswer(skola, session) {
   );
 }
 
-function buildCandidatesAnswer(candidates, session, uvod, reason) {
-  delete session.textbookSchoolId;
+// Bot upravo pita "Na koju školu mislite?" — sljedeća poruka je odgovor na to pitanje,
+// pa ga sesija mora zapamtiti. Bez markera je posjetitelj koji učini točno ono što mu
+// je rečeno ("Ekonomska i birotehnička škola Bjelovar") padao kroz TEXTBOOK_RE gate i
+// dobivao generički fallback — slijepa ulica na najvjerojatnijem ulazu u ovu značajku.
+// Marker je zrcalna slika postojećeg textbookSchoolId (škola poznata, treba razred);
+// oba čisti buildTextbookOutcome na ulazu, pa vrijede točno jednu poruku i ne mogu
+// istovremeno biti postavljena.
+function buildCandidatesAnswer(candidates, session, uvod, reason, razred = null) {
+  session.textbookAwaitingSchool = true;
+  // Razred pročitan iz poruke koja je pitanje izazvala nosimo dalje — inače bismo ga
+  // tražili drugi put od nekoga tko ga je već napisao ("…za 1. razred ekonomske škole
+  // Bjelovar" nosi razred 1, samo je škola bila nejasna).
+  if (razred) session.textbookRazred = razred;
+
+  const uputa = razred
+    ? `Napišite puni naziv škole, pa Vam šaljem popis za ${razred}. razred.`
+    : "Napišite puni naziv škole i razred, pa Vam šaljem popis.";
   const redci = [
     uvod,
     "",
     ...candidates.map((skola) => `- ${skola.naziv}`),
     "",
-    "Napišite puni naziv škole i razred, pa Vam šaljem popis."
+    uputa
   ];
   return safeAnswer(redci.join("\n"), reason);
 }
@@ -554,16 +569,24 @@ function buildTextbookOutcome(userMessage, session = {}) {
   const razred = parseRazred(userMessage);
   const norm = normalizeForSearch(userMessage);
 
+  // Markeri sesije vrijede točno JEDNU poruku — onu koja neposredno slijedi botovo
+  // pitanje. Čitamo ih i odmah brišemo, prije ijedne grane, pa nijedan izlaz iz ove
+  // funkcije (uključujući rani return i null) ne može ostaviti marker da opali na
+  // kasnijoj, nevezanoj poruci. Grane koje razgovor stvarno nastavljaju postavljaju
+  // marker iznova, kroz buildAskRazredAnswer / buildCandidatesAnswer.
+  const zapamcena = session.textbookSchoolId;
+  const cekamoSkolu = session.textbookAwaitingSchool;
+  const prenesenRazred = session.textbookRazred;
+  delete session.textbookSchoolId;
+  delete session.textbookAwaitingSchool;
+  delete session.textbookRazred;
+
   // Nastavak razgovora: školu smo zapamtili, korisnik je dopisao razred (ili spomenuo
   // posve drugu školu). Grana odgovara za sva tri moguća ishoda findSchool-a ovdje —
   // ne smije propasti do TEXTBOOK_RE gate-a ispod, jer bi to za pouzdan pogodak bez
   // riječi "popis"/"udžbenik" izgubilo kontekst i vratilo null, a za "ambiguous" bi
   // moglo pasti natrag na zapamćenu školu i odgovoriti krivim popisom.
-  if (session.textbookSchoolId) {
-    const zapamcena = session.textbookSchoolId;
-    // Marker vrijedi samo za sljedeću poruku — inače bi kasniji spomen razreda
-    // u nevezanom razgovoru izvukao popis niotkuda.
-    delete session.textbookSchoolId;
+  if (zapamcena) {
     const pogodakUPoruci = findSchool(userMessage);
 
     if (pogodakUPoruci.status === "match") {
@@ -580,7 +603,7 @@ function buildTextbookOutcome(userMessage, session = {}) {
       // bez grada) — nikad ne padati natrag na zapamćenu školu, to bi bio siguran
       // odgovor za pogrešnu školu.
       return buildCandidatesAnswer(
-        pogodakUPoruci.candidates, session, "Na koju školu mislite?", "textbook_ambiguous_school"
+        pogodakUPoruci.candidates, session, "Na koju školu mislite?", "textbook_ambiguous_school", razred
       );
     }
 
@@ -596,13 +619,46 @@ function buildTextbookOutcome(userMessage, session = {}) {
     }
   }
 
+  // Zrcalni nastavak: bot je pitao KOJA je škola i čeka naziv. Odgovor na to pitanje
+  // gotovo nikad ne sadrži "popis" ni "udžbenik" — posjetitelj napiše samo naziv, jer
+  // mu je upravo tako rečeno — pa ovdje namjerno NE tražimo TEXTBOOK_RE. To gate ne
+  // popušta: grana opali samo na poruci koja neposredno slijedi botovo pitanje i samo
+  // ako findSchool u njoj prepozna školu. (Nijedan od 76 upita iz e2e korpusa stvarnih
+  // tiketa ne daje findSchool ništa osim "none", pa ni s postavljenim markerom nema
+  // poruke koju bi ova grana otela.)
+  if (cekamoSkolu) {
+    const pogodakUOdgovoru = findSchool(userMessage);
+    // Razred iz nove poruke ima prednost pred prenesenim — ako ga posjetitelj ponovi
+    // ili ispravi, vrijedi zadnje što je napisao.
+    const koristeniRazred = razred || prenesenRazred || null;
+
+    if (pogodakUOdgovoru.status === "match") {
+      const skola = pogodakUOdgovoru.school;
+      if (!skola.dokumenti.length) return buildNoListAnswer(skola, idx.godina);
+      if (!koristeniRazred) return buildAskRazredAnswer(skola, session);
+      return buildListAnswer(skola, koristeniRazred, idx.godina);
+    }
+
+    if (pogodakUOdgovoru.status === "ambiguous") {
+      // I dalje ne znamo koja je — pitamo opet, ali razred nosimo dalje.
+      return buildCandidatesAnswer(
+        pogodakUOdgovoru.candidates, session, "Na koju školu mislite?",
+        "textbook_ambiguous_school", koristeniRazred
+      );
+    }
+
+    // status === "none": poruka ne imenuje nijednu školu. Posjetitelj je promijenio
+    // temu ("hvala", "koliko košta dostava?") ili odustao — ništa ne forsiramo. Marker
+    // je već potrošen, pa padamo u redoviti tok ispod i pipeline teče kao i dosad.
+  }
+
   if (!TEXTBOOK_RE.test(norm)) return null;
 
   const pogodak = findSchool(userMessage);
 
   if (pogodak.status === "ambiguous") {
     return buildCandidatesAnswer(
-      pogodak.candidates, session, "Na koju školu mislite?", "textbook_ambiguous_school"
+      pogodak.candidates, session, "Na koju školu mislite?", "textbook_ambiguous_school", razred
     );
   }
 
@@ -614,7 +670,7 @@ function buildTextbookOutcome(userMessage, session = {}) {
     return buildCandidatesAnswer(
       blizi.map((row) => row.school), session,
       "Nisam siguran na koju školu mislite. Jeste li mislili na neku od ovih?",
-      "textbook_did_you_mean"
+      "textbook_did_you_mean", razred
     );
   }
 
