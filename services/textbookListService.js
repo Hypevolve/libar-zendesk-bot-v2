@@ -606,6 +606,87 @@ function parseRazred(text) {
   return null;
 }
 
+// ─── GOLI RAZRED (samo kad bot upravo pita za razred) ────────────────────────
+// Bot pita "za koji razred trebate popis udžbenika?", posjetitelj odgovori "2." — i to
+// je jedini prirodan način da se na to pitanje odgovori. parseRazred traži doslovnu riječ
+// "razred", pa je odgovor padao u generički fallback: bot pita, čovjek odgovori, bot ga ne
+// čuje. Zato razred bez te riječi čitamo ZASEBNOM funkcijom, a ne popuštanjem parseRazred-a.
+//
+// parseRazred se koristi i na prvoj poruci razgovora, gdje je znamenka bilo što ("do 1.9.",
+// "imam 2 djeteta", "2 kom"), pa bi popuštanje ondje vratilo točno onu regresiju koju je
+// ova grana već jednom platila: broj bilo gdje u poruci vuče škole s rednim brojem u nazivu
+// u bodovanje i obara točne pogotke. Ova funkcija zato:
+//   1. se zove SAMO iz grane u kojoj je session.textbookAwaitingRazred postavljen — a taj
+//      marker postavlja isključivo buildAskRazredAnswer (botovo pitanje) i troši se na ulazu
+//      u buildTextbookOutcome, dakle vrijedi točno jednu poruku;
+//   2. gleda CIJELU poruku, ne komadić: sve riječi osim rednog broja moraju biti punjenje
+//      ("za drugi", "u 2."), inače nije odgovor na pitanje nego nova rečenica;
+//   3. odustaje kad poruka nosi dva različita broja ("1. i 2.") — tada ne znamo koji je
+//      tražen, pa radije pitamo dalje nego da pogodimo krivi popis.
+// Nijedan drugi poziv ove funkcije ne postoji i ne smije postojati bez tog markera.
+const GOLI_RAZRED_RIJEC = new Map([
+  // Ovdje su SVI rodovi i padeži, za razliku od REDNI_RIJEC (koji dira prepoznavanje škole
+  // i zato smije samo ženski rod). Prilog "prvo" ovdje ne škodi: poruka koja se sastoji
+  // samo od njega, i to točno nakon botova pitanja o razredu, je odgovor "prvi razred".
+  ["prvi", "1"], ["prva", "1"], ["prvo", "1"], ["prvu", "1"], ["prve", "1"],
+  ["prvom", "1"], ["prvog", "1"], ["prvome", "1"], ["prvoga", "1"],
+  ["drugi", "2"], ["druga", "2"], ["drugo", "2"], ["drugu", "2"], ["druge", "2"],
+  ["drugom", "2"], ["drugog", "2"], ["drugome", "2"], ["drugoga", "2"],
+  ["treci", "3"], ["treca", "3"], ["trece", "3"], ["trecu", "3"],
+  ["trecem", "3"], ["treceg", "3"], ["trecoj", "3"],
+  ["cetvrti", "4"], ["cetvrta", "4"], ["cetvrto", "4"], ["cetvrtu", "4"], ["cetvrte", "4"],
+  ["cetvrtom", "4"], ["cetvrtog", "4"],
+  ["peti", "5"], ["peta", "5"], ["peto", "5"], ["petu", "5"], ["pete", "5"],
+  ["petom", "5"], ["petog", "5"]
+]);
+
+// Riječi koje smiju stajati uz goli redni broj a da poruka i dalje bude odgovor na pitanje:
+// prijedlozi i uljudnost ("za drugi", "u 2.", "3. molim", "2. hvala"), riječ "razred" u svim
+// oblicima (parseRazred je pročita prije ove funkcije, ali "razreda" u "za 2. razreda" ne
+// smije oboriti čitanje) i slovo odjeljenja ("1.a" nakon normalizacije daje "1 a").
+// Popis je namjerno kratak: svaka riječ koja nosi vlastito značenje ("puta", "djeteta",
+// "komada", "kn") mora poruku izbaciti iz čitanja, jer tada broj nije razred.
+const GOLI_RAZRED_PUNJENJE = new Set([
+  "za", "u", "od", "je", "to", "molim", "hvala",
+  "razred", "razreda", "razredu", "razrede",
+  "a", "b", "c", "d", "e"
+]);
+
+function citajGoliRazred(text) {
+  const rijeci = normalizeForSearch(text).split(" ").filter(Boolean);
+  if (!rijeci.length) return null;
+  let nadeni = null;
+  for (const rijec of rijeci) {
+    const znamenka = /^[1-5]$/.test(rijec) ? rijec : null;
+    const kandidat = znamenka || GOLI_RAZRED_RIJEC.get(rijec) || null;
+    if (kandidat) {
+      // Dva različita razreda u istoj poruci ("1. i 2.") — ne pogađamo koji je tražen.
+      if (nadeni && nadeni !== kandidat) return null;
+      nadeni = kandidat;
+      continue;
+    }
+    if (!GOLI_RAZRED_PUNJENJE.has(rijec)) return null;
+  }
+  return nadeni;
+}
+
+// ─── POTVRDA JEDNOG PONUĐENOG KANDIDATA ──────────────────────────────────────
+// Kad je kandidat samo jedan, pitanje glasi "Je li to ta škola?" — pa golo "da" mora
+// vrijediti kao odgovor. Rječnik je uzak i mjeri se nad CIJELOM porukom: potvrda je kratka
+// i sama za sebe, a sve duže nosi vlastito značenje. "ok" namjerno NIJE ovdje — u
+// postojećim testovima stoji kao odustajanje ("ok", "ne treba, hvala") i takvo mora ostati.
+// Razred uz potvrdu je dopušten ("da, 2. razred") jer ga parseRazred čita zasebno, pa ga
+// prije provjere uklanjamo iz teksta istom frazom kojom se uklanja i za matcher.
+const POTVRDA_RE = new RegExp(
+  "^(?:da|da da|tako je|to je to|to je ta|to je ta skola|upravo tako|tocno|tocno tako"
+  + "|jest|jeste|potvrdujem|moze)(?: hvala| molim| hvala lijepa)?$"
+);
+
+function jePotvrda(norm) {
+  const bezRazreda = norm.replace(RAZRED_FRAZA, " ").replace(/\s+/g, " ").trim();
+  return POTVRDA_RE.test(bezRazreda);
+}
+
 function markdownLink(label, url) {
   return `- [${label}](${url})`;
 }
@@ -664,6 +745,9 @@ function buildNoListAnswer(skola, godina) {
 
 function buildAskRazredAnswer(skola, session) {
   session.textbookSchoolId = skola.id;
+  // Jedino mjesto koje postavlja ovaj marker: bot je upravo pitao za razred, pa sljedeća
+  // poruka smije biti gol redni broj ("2.", "drugi", "za drugu"). Vidi citajGoliRazred.
+  session.textbookAwaitingRazred = true;
   const razredi = [...new Set(skola.dokumenti.map((d) => d.razred).filter(Boolean))].sort();
   const popisRazreda = razredi.length ? ` Imam popise za: ${razredi.map((r) => `${r}. razred`).join(", ")}.` : "";
   return safeAnswer(
@@ -685,6 +769,29 @@ function buildCandidatesAnswer(candidates, session, uvod, reason, razred = null)
   // tražili drugi put od nekoga tko ga je već napisao ("…za 1. razred ekonomske škole
   // Bjelovar" nosi razred 1, samo je škola bila nejasna).
   if (razred) session.textbookRazred = razred;
+
+  // Jedan kandidat nije izbor. "Na koju školu mislite? — Ekonomska škola Pula" pita koja
+  // je od jedne i posjetitelju ne kaže što bi drukčije napisao. Školu zato imenujemo u
+  // pitanju i pamtimo je kao ponuđenu, pa je i golo "da" potvrđuje (vidi jePotvrda).
+  // Popis NE šaljemo odmah: matcher je nije prepoznao pouzdano — upravo zato smo i pitali —
+  // a jedini kandidat znači samo "jedina koja je prešla prag", ne "sigurno ta".
+  // Naziv stoji iza dvotočja, u nominativu: hrvatski padež se iz podataka ne može izvesti
+  // ("mislite li na Ekonomska škola Pula?" bi bilo negramatično).
+  if (candidates.length === 1) {
+    const [jedina] = candidates;
+    session.textbookPotvrdaSkolaId = jedina.id;
+    const potvrda = razred
+      ? `Ako jest, napišite "da" i šaljem Vam popis za ${razred}. razred.`
+      : 'Ako jest, napišite "da" i razred.';
+    return safeAnswer(
+      [
+        `Imam samo jednu školu koja bi mogla odgovarati: ${jedina.naziv}. Je li to ta škola?`,
+        "",
+        `${potvrda} Ako nije, napišite puni naziv škole.`
+      ].join("\n"),
+      reason
+    );
+  }
 
   const uputa = razred
     ? `Napišite puni naziv škole, pa Vam šaljem popis za ${razred}. razred.`
@@ -726,10 +833,14 @@ function buildTextbookOutcome(userMessage, session = {}) {
   // kasnijoj, nevezanoj poruci. Grane koje razgovor stvarno nastavljaju postavljaju
   // marker iznova, kroz buildAskRazredAnswer / buildCandidatesAnswer.
   const zapamcena = session.textbookSchoolId;
+  const cekamoRazred = session.textbookAwaitingRazred;
   const cekamoSkolu = session.textbookAwaitingSchool;
+  const ponudenaSkola = session.textbookPotvrdaSkolaId;
   const prenesenRazred = session.textbookRazred;
   delete session.textbookSchoolId;
+  delete session.textbookAwaitingRazred;
   delete session.textbookAwaitingSchool;
+  delete session.textbookPotvrdaSkolaId;
   delete session.textbookRazred;
 
   // Žalba nije upit o popisu — vidi ZALBA_UZORCI. Stoji ISPRED svih grana, uključujući
@@ -766,12 +877,14 @@ function buildTextbookOutcome(userMessage, session = {}) {
     }
 
     // status === "none": poruka ne imenuje nijednu školu — pravi nastavak razgovora,
-    // korisnik je odgovorio samo razredom.
-    if (razred) {
+    // korisnik je odgovorio samo razredom. Gol redni broj ("2.", "drugi", "za drugu")
+    // čitamo samo ako je bot razred upravo i pitao — vidi citajGoliRazred.
+    const odgovoreniRazred = razred || (cekamoRazred ? citajGoliRazred(userMessage) : null);
+    if (odgovoreniRazred) {
       const skola = idx.skole.find((s) => s.id === zapamcena);
       if (skola) {
         return skola.dokumenti.length
-          ? buildListAnswer(skola, razred, idx.godina, session)
+          ? buildListAnswer(skola, odgovoreniRazred, idx.godina, session)
           : buildNoListAnswer(skola, idx.godina);
       }
     }
@@ -803,6 +916,18 @@ function buildTextbookOutcome(userMessage, session = {}) {
         pogodakUOdgovoru.candidates, session, "Na koju školu mislite?",
         "textbook_ambiguous_school", koristeniRazred
       );
+    }
+
+    // Bot je ponudio jednu jedinu školu i pitao "Je li to ta škola?" — golo "da" je odgovor
+    // na to pitanje. Vrijedi samo uz marker (dakle točno jednu poruku, i samo ako je pitanje
+    // stvarno postavljeno) i samo na potvrdi koja je cijela poruka — vidi jePotvrda.
+    if (ponudenaSkola && jePotvrda(norm)) {
+      const skola = idx.skole.find((s) => s.id === ponudenaSkola);
+      if (skola) {
+        if (!skola.dokumenti.length) return buildNoListAnswer(skola, idx.godina);
+        if (!koristeniRazred) return buildAskRazredAnswer(skola, session);
+        return buildListAnswer(skola, koristeniRazred, idx.godina, session);
+      }
     }
 
     // status === "none": poruka ne imenuje nijednu školu. Posjetitelj je promijenio

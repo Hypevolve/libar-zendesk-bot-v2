@@ -675,6 +675,259 @@ describe("textbookListService", () => {
     });
   });
 
+  // Bot pita "za koji razred trebate popis udžbenika?", posjetitelj odgovori "2." — i to
+  // je jedini prirodan način da se na to pitanje odgovori. Prije ovoga je parseRazred
+  // tražio doslovnu riječ "razred", pa je odgovor padao u generički fallback: bot pita,
+  // čovjek odgovori, bot ga ne čuje (prijavljeno s produkcije, Graditeljska Varaždin).
+  describe("gol redni broj kao odgovor na botovo pitanje o razredu", () => {
+    // Doslovna škola iz prijavljenog razgovora — ima popise za 1., 2. i 3. razred.
+    const PITANJE = "popis udzbenika Graditeljska, prirodoslovna i rudarska škola Varaždin";
+    const ODGOVORI = ["2.", "2", "drugi", "drugu", "za drugi", "2. razred", "u drugom razredu"];
+
+    for (const odgovor of ODGOVORI) {
+      it(`odgovor "${odgovor}" daje popis za 2. razred te škole`, () => {
+        const session = {};
+        const pitanje = buildTextbookOutcome(PITANJE, session);
+        assert.strictEqual(pitanje.reason, "textbook_need_razred");
+        assert.strictEqual(session.textbookAwaitingRazred, true, "sesija ne pamti da čeka razred");
+
+        const outcome = buildTextbookOutcome(odgovor, session);
+        assert.ok(outcome, `odgovor je ostao bez odgovora: ${odgovor}`);
+        assert.strictEqual(outcome.reason, "textbook_list");
+        assert.match(outcome.customerMessage, /Graditeljska, prirodoslovna i rudarska škola Varaždin/);
+        assert.match(outcome.customerMessage, /2\. razred/);
+        assert.match(outcome.customerMessage, /\[[^\]]+\]\(https:\/\/[^)]+\)/);
+      });
+    }
+
+    it("svi oblici vode na isti razred, ne na neki drugi", () => {
+      const linkovi = new Set();
+      for (const odgovor of ODGOVORI) {
+        const session = {};
+        buildTextbookOutcome(PITANJE, session);
+        const outcome = buildTextbookOutcome(odgovor, session);
+        linkovi.add((outcome.customerMessage.match(/\((https?:\/\/[^\s)]+)\)/g) || []).join("|"));
+      }
+      assert.strictEqual(linkovi.size, 1, `oblici daju različite popise:\n${[...linkovi].join("\n")}`);
+    });
+
+    it("i drugi razredi se čitaju iz golog oblika", () => {
+      for (const [odgovor, ocekivani] of [["1.", "1"], ["prvi", "1"], ["3", "3"], ["treći", "3"]]) {
+        const session = {};
+        buildTextbookOutcome(PITANJE, session);
+        const outcome = buildTextbookOutcome(odgovor, session);
+        assert.strictEqual(outcome.reason, "textbook_list", `bez popisa na: ${odgovor}`);
+        assert.match(outcome.customerMessage, new RegExp(`${ocekivani}\\. razred`));
+      }
+    });
+
+    it("dva različita broja u istoj poruci ne pogađaju razred", () => {
+      // "1. i 2." ne kaže koji je tražen — radije ništa nego krivi popis.
+      const session = {};
+      buildTextbookOutcome(PITANJE, session);
+      assert.strictEqual(buildTextbookOutcome("1. i 2.", session), null);
+    });
+
+    it("marker vrijedi točno jednu poruku — gol razred dvije poruke kasnije više ne opali", () => {
+      const session = {};
+      buildTextbookOutcome(PITANJE, session);
+      buildTextbookOutcome("hvala", session);
+      assert.strictEqual(buildTextbookOutcome("2.", session), null);
+    });
+
+    for (const odustajanje of ["hvala", "Hvala Vam!", "koliko košta dostava?", "ok", "ne treba, hvala"]) {
+      it(`promjena teme nakon pitanja za razred i dalje ne dobiva popis: ${odustajanje}`, () => {
+        const session = {};
+        buildTextbookOutcome(PITANJE, session);
+        assert.strictEqual(buildTextbookOutcome(odustajanje, session), null);
+        assert.strictEqual(session.textbookAwaitingRazred, undefined, "marker je preživio promjenu teme");
+        assert.strictEqual(session.textbookSchoolId, undefined, "sesija nije očišćena");
+      });
+    }
+  });
+
+  // NAJVAŽNIJI blok ovog kruga. Gol redni broj smije značiti razred SAMO dok bot na njega
+  // čeka. Izvan tog stanja mora ostati bezznačajan — ova je grana već jednom platila
+  // regresiju u kojoj je znamenka bilo gdje u poruci ("imam 2 djeteta", "do 1.9.") vukla
+  // škole s rednim brojem u nazivu u bodovanje i obarala točne pogotke.
+  describe("gol redni broj izvan stanja čekanja ne znači ništa", () => {
+    const GOLI_ODGOVORI = ["2.", "2", "drugi", "drugu", "za drugi", "2. razred", "u drugom razredu"];
+
+    for (const odgovor of GOLI_ODGOVORI) {
+      it(`prazna sesija: "${odgovor}" ne dobiva odgovor o udžbenicima`, () => {
+        const session = {};
+        assert.strictEqual(buildTextbookOutcome(odgovor, session), null, `gate se aktivirao na: ${odgovor}`);
+        assert.deepStrictEqual(session, {}, "poruka izvan toka je postavila marker");
+      });
+    }
+
+    for (const odgovor of GOLI_ODGOVORI) {
+      it(`nakon poslanog popisa (bot ništa ne pita): "${odgovor}" ne dobiva novi popis`, () => {
+        // Popis pamti školu zbog drugog djeteta ("a 3. razred?"), ali bot NIJE postavio
+        // pitanje o razredu — pa gol broj ovdje ne smije vrijediti kao odgovor.
+        const session = {};
+        const prvi = buildTextbookOutcome("popis udžbenika Gimnazija Daruvar 1. razred", session);
+        assert.strictEqual(prvi.reason, "textbook_list");
+        assert.strictEqual(session.textbookAwaitingRazred, undefined, "popis je postavio marker čekanja razreda");
+        const outcome = buildTextbookOutcome(odgovor, session);
+        if (odgovor === "2. razred" || odgovor === "u drugom razredu") {
+          // Ovi oblici nose riječ "razred" pa ih parseRazred čita i bez ovog rada —
+          // ponašanje je nepromijenjeno i namjerno ostaje.
+          assert.strictEqual(outcome.reason, "textbook_list");
+          return;
+        }
+        assert.strictEqual(outcome, null, `gol broj je opalio izvan pitanja: ${odgovor}`);
+      });
+    }
+
+    for (const odgovor of ["2.", "2", "drugi", "drugu", "za drugi"]) {
+      it(`dok bot čeka NAZIV ŠKOLE, "${odgovor}" ne dobiva popis`, () => {
+        const session = {};
+        buildTextbookOutcome("trebam popis udžbenika", session);
+        assert.strictEqual(session.textbookAwaitingSchool, true);
+        assert.strictEqual(buildTextbookOutcome(odgovor, session), null, `gol broj je opalio: ${odgovor}`);
+      });
+    }
+
+    it("parseRazred ostaje nepromijenjen — gol oblik i dalje nije razred", () => {
+      // Zajednička funkcija se koristi i na prvoj poruci razgovora, gdje je znamenka bilo
+      // što ("do 1.9.", "imam 2 djeteta"). Popuštanje OVDJE je zabranjeno; goli oblik čita
+      // zasebna, stanjem omeđena funkcija.
+      for (const tekst of ["2.", "2", "drugi", "drugu", "za drugi"]) {
+        assert.strictEqual(parseRazred(tekst), null, `parseRazred je popustio na: ${tekst}`);
+      }
+    });
+
+    it("rečenice s brojem izvan fraze razreda i dalje prepoznaju školu", () => {
+      // Ista regresija, druga strana: gol broj se čita samo u stanju čekanja, pa prva
+      // poruka razgovora ostaje netaknuta.
+      for (const upit of [
+        "popis udžbenika za 1. i 2. razred Gimnazija Daruvar",
+        "popis udžbenika Gimnazija Daruvar, imam 2 djeteta",
+        "trebam popis udžbenika za Gimnaziju Daruvar do 1.9."
+      ]) {
+        const r = findSchool(upit);
+        assert.strictEqual(r.status, "match", `${upit} -> ${r.status}`);
+        assert.strictEqual(r.school.naziv, "Gimnazija Daruvar");
+      }
+    });
+  });
+
+  // "Na koju školu mislite? — Ekonomska škola Pula" pita koja je od jedne: čita se kao
+  // kvar, a posjetitelj ne zna što bi drukčije napisao. Matcher školu ipak NIJE prepoznao
+  // pouzdano, pa je ne smijemo samo poslati — pitamo za potvrdu i imenujemo je u pitanju.
+  describe("jedan kandidat: pitanje s imenom škole i potvrda s 'da'", () => {
+    const JEDAN = "popis udzbenika ekonomska škola";
+
+    it("pitanje imenuje školu i ne izgleda kao izbor iz jednog", () => {
+      const session = {};
+      const outcome = buildTextbookOutcome(JEDAN, session);
+      assert.strictEqual(outcome.reason, "textbook_ambiguous_school");
+      assert.match(outcome.customerMessage, /Ekonomska škola Pula/);
+      assert.match(outcome.customerMessage, /Je li to ta škola\?/);
+      assert.doesNotMatch(outcome.customerMessage, /Na koju školu mislite\?/);
+      assert.doesNotMatch(outcome.customerMessage, /^- /m, "jedan kandidat je ponuđen kao popis za izbor");
+      assert.strictEqual(session.textbookAwaitingSchool, true);
+      assert.strictEqual(session.textbookPotvrdaSkolaId, "ekonomska-skola-pula");
+    });
+
+    for (const potvrda of ["da", "to je to", "tako je", "može", "Da, hvala", "Tako je."]) {
+      it(`potvrda "${potvrda}" razrješava školu`, () => {
+        const session = {};
+        buildTextbookOutcome(JEDAN, session);
+        const outcome = buildTextbookOutcome(potvrda, session);
+        assert.ok(outcome, `potvrda je ostala bez odgovora: ${potvrda}`);
+        assert.strictEqual(outcome.reason, "textbook_need_razred");
+        assert.match(outcome.customerMessage, /Ekonomska škola Pula/);
+      });
+    }
+
+    it("potvrda uz poznat razred odmah šalje popis", () => {
+      const session = {};
+      const pitanje = buildTextbookOutcome("popis udzbenika ekonomska škola 1. razred", session);
+      assert.match(pitanje.customerMessage, /Ako jest, napišite "da" i šaljem Vam popis za 1\. razred\./);
+      const outcome = buildTextbookOutcome("da", session);
+      assert.strictEqual(outcome.reason, "textbook_list");
+      assert.match(outcome.customerMessage, /Ekonomska škola Pula/);
+      assert.match(outcome.customerMessage, /1\. razred/);
+    });
+
+    it("potvrda i razred u istoj poruci vode na taj razred", () => {
+      const session = {};
+      buildTextbookOutcome(JEDAN, session);
+      const outcome = buildTextbookOutcome("da, 1. razred", session);
+      assert.strictEqual(outcome.reason, "textbook_list");
+      assert.match(outcome.customerMessage, /Ekonomska škola Pula/);
+      assert.match(outcome.customerMessage, /1\. razred/);
+    });
+
+    it("cijeli lanac: pitanje → 'da' → gol razred", () => {
+      const session = {};
+      buildTextbookOutcome(JEDAN, session);
+      buildTextbookOutcome("da", session);
+      const outcome = buildTextbookOutcome("1.", session);
+      assert.strictEqual(outcome.reason, "textbook_list");
+      assert.match(outcome.customerMessage, /Ekonomska škola Pula/);
+      assert.match(outcome.customerMessage, /1\. razred/);
+    });
+
+    it("puni naziv škole i dalje razrješava, kao i dosad", () => {
+      const session = {};
+      buildTextbookOutcome(JEDAN, session);
+      const outcome = buildTextbookOutcome("Ekonomska škola Pula", session);
+      assert.strictEqual(outcome.reason, "textbook_need_razred");
+      assert.match(outcome.customerMessage, /Ekonomska škola Pula/);
+    });
+
+    it("druga škola u odgovoru pobjeđuje ponuđenu", () => {
+      const session = {};
+      buildTextbookOutcome(JEDAN, session);
+      const outcome = buildTextbookOutcome("Gimnazija Daruvar, 2. razred", session);
+      assert.strictEqual(outcome.reason, "textbook_list");
+      assert.match(outcome.customerMessage, /Gimnazija Daruvar/);
+      assert.doesNotMatch(outcome.customerMessage, /Ekonomska škola Pula/);
+    });
+
+    for (const odustajanje of ["hvala", "Hvala Vam!", "koliko košta dostava?", "ok", "ne treba, hvala"]) {
+      it(`odustajanje nakon pitanja za potvrdu ne dobiva popis: ${odustajanje}`, () => {
+        const session = {};
+        buildTextbookOutcome(JEDAN, session);
+        assert.strictEqual(buildTextbookOutcome(odustajanje, session), null, `gate se aktivirao na: ${odustajanje}`);
+        assert.strictEqual(session.textbookPotvrdaSkolaId, undefined, "marker je preživio promjenu teme");
+        assert.strictEqual(session.textbookAwaitingSchool, undefined, "marker je preživio promjenu teme");
+      });
+    }
+
+    it("marker potvrde vrijedi točno jednu poruku", () => {
+      const session = {};
+      buildTextbookOutcome(JEDAN, session);
+      buildTextbookOutcome("hvala", session);
+      assert.strictEqual(buildTextbookOutcome("da", session), null, "potrošeni marker je opalio kasnije");
+    });
+
+    it("žalba umjesto potvrde ne dobiva popis", () => {
+      const session = {};
+      buildTextbookOutcome(JEDAN, session);
+      const outcome = buildTextbookOutcome("da, ali paket mi nije stigao", session);
+      assert.strictEqual(outcome, null, "žalba je dobila popis");
+      assert.strictEqual(session.textbookPotvrdaSkolaId, undefined, "sesija nije očišćena");
+    });
+
+    // Druga strana: potvrda vrijedi samo tamo gdje je ponuđena JEDNA škola.
+    it("dva ili više kandidata zadržavaju postojeću formulaciju i ne primaju 'da'", () => {
+      const session = {};
+      const outcome = buildTextbookOutcome(
+        "Pozdrav, imate li popis udzbenika za 1. razred ekonomske škole Bjelovar?", session
+      );
+      assert.strictEqual(outcome.reason, "textbook_ambiguous_school");
+      assert.match(outcome.customerMessage, /^Na koju školu mislite\?$/m);
+      assert.ok((outcome.customerMessage.match(/^- /gm) || []).length >= 2, "očekivan popis kandidata");
+      assert.match(outcome.customerMessage, /Napišite puni naziv škole, pa Vam šaljem popis za 1\. razred\./);
+      assert.strictEqual(session.textbookPotvrdaSkolaId, undefined, "potvrda je ponuđena na više kandidata");
+      assert.strictEqual(buildTextbookOutcome("da", session), null, "'da' je razriješilo izbor iz više škola");
+    });
+  });
+
   // Otkad se redni broj normalizira, broj razreda iz upita ("za 2. razred") izgleda
   // matcheru isto kao redni broj u nazivu škole — pa bi "Druga gimnazija Varaždin" i
   // "II. gimnazija Osijek" postale suparnice koje pokrivaju obilježje koje pobjednik
