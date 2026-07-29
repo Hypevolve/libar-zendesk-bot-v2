@@ -473,23 +473,29 @@ const ZALBA_UZORCI = [
   /prevar/, /prijevar/,
   // Izrečeno nezadovoljstvo. Nijedna od ovih riječi ne postoji u upitu za popisom.
   /nezadovolj/, /katastrof/, /sramot/, /skandal/, /uzasn/,
-  // Izostala uplata ("nisu mi platili", "niste mi platili za poslane knjige").
-  /(nisu|niste|nije|nismo) .{0,20}plati/,
+  // Izostala uplata ("nisu mi platili", "nije plaćeno"). Ide i "plac", jer se t
+  // jotacijom gubi u pridjevu trpnom: platiti -> plaćeno.
+  /(nisu|niste|nije|nismo) .{0,20}pla(ti|c)/,
   // Čekanje — vezano uz imenicu, ne samo "čekam". "Čekam popis" je strpljivo pitanje,
   // "čekam uplatu" je žalba; escalation ima samo uži "cekam vec" / "dugo cekam".
-  /\bceka(m|mo|nje|nja|ju)?\b.{0,25}(uplat|isplat|novac|povrat|paket|posiljk|narudzb|odgovor)/,
-  /(uplat|isplat|novac|paket|posiljk|narudzb|knjig|udzbenic).{0,25}\bceka/,
-  // Kašnjenje. Granice riječi drže "kasnije" i "kasniji" izvan gard (ondje je "kasni"
-  // samo početak riječi, ne cijela riječ).
-  /\bkasni\b/, /\bkasne\b/, /kasnjenj/,
+  // Nastavci pokrivaju i prošlo vrijeme ("čekao sam uplatu", "čekali smo isplatu").
+  /\bceka(m|mo|nje|nja|ju|o|la|li|le)?\b.{0,25}(upla|ispla|novac|novc|povrat|paket|posilj|narudzb|odgovor)/,
+  /(upla|ispla|novac|novc|paket|posilj|narudzb|knjig|udzbeni).{0,25}\bceka/,
+  // Kašnjenje. Granice riječi drže "kasnije", "kasniji" i "kasnim" izvan garda (ondje
+  // je "kasni" samo početak riječi, ne cijela riječ) — provjereno, moraju ostati vani.
+  // Prošlo vrijeme ("paket je kasnio", "uplata je kasnila") mora biti unutra.
+  /\bkasni\b/, /\bkasne\b/, /\bkasnil?[oa]\b/, /kasnjenj/,
   // "Paket nije stigao" / "uplata nije stigla" — vezano uz imenicu s obje strane, da
   // "nisam dobio popis udžbenika" (posve legitiman upit) ne padne u gard.
-  /(paket|posiljk|narudzb|uplat|isplat|novac|knjig|udzbenic).{0,20}(nije|nisu) stigl/,
-  /(nije|nisu) stigl.{0,25}(paket|posiljk|narudzb|uplat|isplat|novac|knjig|udzbenic)/,
-  // Krivo isporučeno i zahtjev za zamjenom (GEN-41, GEN-44, GEN-45).
-  /\bzamjen/,
-  /(kriv|pogresn)\w*\s+(udzbenik|udzbenic|knjig|artikl|naslov|paket|posiljk|narudzb|izdanj)/,
-  /(poslali|poslao|poslala|dobio|dobila|stiglo|stigla|stigli|stigle).{0,20}(kriv|pogresn)/,
+  // Muški rod glasi "stigao", a ne "stigl-": l na kraju sloga prelazi u o. Bez te
+  // grane je najčešći oblik ("paket nije stigao", GEN-19 "dio nije stigao") promašen.
+  /(paket|posilj|narudzb|upla|ispla|novac|novc|knjig|udzbeni).{0,20}(nije|nisu) stig(l|ao)/,
+  /(nije|nisu) stig(l|ao).{0,25}(paket|posilj|narudzb|upla|ispla|novac|novc|knjig|udzbeni)/,
+  // Krivo isporučeno i zahtjev za zamjenom (GEN-41, GEN-44, GEN-45). Uz imenicu
+  // "zamjena" ide i glagol "zamijeniti" — drugi korijen, isti zahtjev.
+  /\bzamjen/, /\bzamijen/,
+  /(kriv|pogresn)\w*\s+(udzbeni|knjig|artikl|naslov|paket|posilj|narudzb|izdanj)/,
+  /(poslali|poslao|poslala|dobio|dobila|stigao|stiglo|stigla|stigli|stigle).{0,20}(kriv|pogresn)/,
   // Nitko se ne javlja.
   /nitko (mi )?se ne javlja/, /nitko (mi )?ne odgovara/,
   /ne javljate se/, /se ne javljate/, /ne odgovarate/,
@@ -498,8 +504,18 @@ const ZALBA_UZORCI = [
   // Traženje izgubljene pošiljke ("gdje mi je paket", "gdje je moja narudžba").
   // Namjerno bez "knjige"/"udžbenici": "gdje su udžbenici za 1. razred" je pitanje o
   // ponudi, ne žalba, i mora i dalje teći kroz bazu znanja kao dosad.
-  /\bgdje\b.{0,25}(paket|posiljk|narudzb|uplat|isplat)/
+  /\bgdje\b.{0,25}(paket|posilj|narudzb|upla|ispla)/
 ];
+
+// Korijeni gore su birani tako da prežive hrvatsku deklinaciju i palatalizaciju —
+// provjereno oblik po oblik (vidi izvještaj):
+//   posilj  jer "pošiljka" u dativu/lokativu daje "pošiljci" (k → c)
+//   udzbeni jer množina daje "udžbenici/udžbenicima" (k → c) — isti razlog kao TEXTBOOK_RE
+//   novac|novc jer se "a" gubi u kosim padežima ("novca", "novcu", "novcem")
+//   upla|ispla jer trpni pridjev glasi "uplaćeno"/"isplaćeno" (t → ć)
+// "knjig" je namjerno ostavljen bez "knjiz" ("u knjizi"): taj je oblik dativ/lokativ i
+// ne može biti subjekt uz "nije stigla" ni objekt uz "čekam", a "knjiz" bi usput
+// pokupio "knjižnicu". Rupa je stvarna, ali u ovim konstrukcijama nedostižna.
 
 function imaZalbu(norm) {
   return ZALBA_UZORCI.some((uzorak) => uzorak.test(norm));
@@ -517,7 +533,20 @@ const DISCLAIMER = [
 // o dostavi, narudžbi i otkupu ("Koliko dugo traje dostava knjiga?", "Kupio sam knjigu i
 // stigla je druga") pa je taj okidač otimao postojeće upite, a nije donosio ništa —
 // tko traži popis, napiše "popis" ili "udžbenik".
-const TEXTBOOK_RE = /\budzbenik|\bpopis/;
+//
+// Korijen je "udzbeni", ne "udzbenik": hrvatska palatalizacija mijenja k → c ispred i,
+// pa množina ispada iz užeg korijena. Izmjereno nad oblicima riječi:
+//   udžbenik, udžbenika, udžbeniku, udžbenikom, udžbenike   -> udzbenik…   hvatao i prije
+//   udžbenici, udžbenicima                                  -> udzbenic…   NIJE hvatao
+//   udžbeniče (vokativ), udžbenički                         -> udzbenic…   NIJE hvatao
+// "Trebaju mi udžbenici za 1. razred medicinske škole u Bjelovaru" je posve obična
+// formulacija: matcher je i školu i razred pogađao točno, a gate je to bacao i slao
+// posjetitelja u generički fallback — ista slijepa ulica kao kod odgovora na "Na koju
+// školu mislite?". Nijedna druga hrvatska riječ ne počinje s "udzbeni", pa širi korijen
+// ne otvara nijedan novi lažni pogodak.
+// "popis" je provjeren istim popisom oblika i nema tu rupu — s se ne palatalizira, pa
+// popis/popisa/popisu/popise/popisi/popisom/popisima svi zadržavaju korijen.
+const TEXTBOOK_RE = /\budzbeni|\bpopis/;
 
 // Blaži prag za "jeste li mislili" — popušta se samo pokrivenost, nikad
 // MIN_SCORE, da nedovoljno određen upit ne izvuče nasumične kandidate.

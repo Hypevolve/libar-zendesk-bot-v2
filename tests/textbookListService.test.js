@@ -780,6 +780,62 @@ describe("textbookListService", () => {
     });
   });
 
+  // Hrvatska palatalizacija: k prelazi u c ispred i, pa množina "udžbenici/udžbenicima"
+  // ispada iz korijena "udzbenik". Okidač je zato "udzbeni". Bez toga je
+  // "trebaju mi udžbenici za 1. razred medicinske škole u Bjelovaru" — posve obična
+  // rečenica — prolazila kroz matcher (točna škola, točan razred) i završila u
+  // generičkom fallbacku, jer gate nikad nije opalio.
+  describe("okidač hvata sve oblike riječi udžbenik", () => {
+    // Po jedan test za svaki oblik, da buduća izmjena izraza ne može tiho ispustiti padež.
+    const OBLICI = [
+      "udžbenik", "udžbenika", "udžbeniku", "udžbenikom", "udžbenike",
+      "udžbenici", "udžbenicima"
+    ];
+
+    for (const oblik of OBLICI) {
+      it(`oblik "${oblik}" aktivira gate uz imenovanu školu`, () => {
+        const outcome = buildTextbookOutcome(`trebaju mi ${oblik} za 2. razred Gimnazija Daruvar`, {});
+        assert.ok(outcome, `oblik "${oblik}" ne aktivira gate`);
+        assert.strictEqual(outcome.reason, "textbook_list");
+        assert.match(outcome.customerMessage, /Gimnazija Daruvar/);
+      });
+    }
+
+    it("prijavljena rečenica daje popis za 1. razred Medicinske škole Bjelovar", () => {
+      const outcome = buildTextbookOutcome(
+        "trebaju mi udžbenici za 1. razred medicinske škole u Bjelovaru", {}
+      );
+      assert.ok(outcome, "gate nije opalio");
+      assert.strictEqual(outcome.reason, "textbook_list");
+      assert.match(outcome.customerMessage, /Medicinska škola Bjelovar/);
+      assert.match(outcome.customerMessage, /1\. razred/);
+      assert.match(outcome.customerMessage, /\[[^\]]+\]\(https:\/\/[^)]+\)/);
+    });
+
+    it("i dalje hvata sve oblike riječi popis (s se ne palatalizira)", () => {
+      for (const oblik of ["popis", "popisa", "popisu", "popise", "popisi", "popisom", "popisima"]) {
+        const outcome = buildTextbookOutcome(`${oblik} za 2. razred Gimnazija Daruvar`, {});
+        assert.ok(outcome, `oblik "${oblik}" ne aktivira gate`);
+      }
+    });
+
+    // Druga strana: širi korijen ne smije oteti poruku koja školu ne imenuje.
+    const BEZ_SKOLE = [
+      "Otkupljujete li udžbenici?",
+      "Koji udžbenici se otkupljuju ove godine?",
+      "Trebaju mi udžbenici za 1. razred",
+      "Koliko koštaju udžbenici?",
+      "Što je s udžbenicima koje sam poslao?",
+      "Radim s udžbenicima u školi"
+    ];
+
+    for (const upit of BEZ_SKOLE) {
+      it(`množina bez imenovane škole ne aktivira gate: ${upit}`, () => {
+        assert.strictEqual(buildTextbookOutcome(upit, {}), null);
+      });
+    }
+  });
+
   // Žalba koja usput imenuje školu nije upit o popisu. Prije garda je "Krivi udžbenik
   // ste mi poslali za 2. razred Gimnazije Daruvar, tražim zamjenu" dobivao vedar popis
   // za 2. razred — samouvjeren odgovor na posve drugu temu, i to čovjeku koji se žali.
@@ -849,6 +905,28 @@ describe("textbookListService", () => {
         const outcome = buildTextbookOutcome(upit, {});
         assert.ok(outcome, "gard je ugasio legitiman upit za popisom");
         assert.match(outcome.customerMessage, /Gimnazija Daruvar/);
+      });
+    }
+
+    // Korijeni u ZALBA_UZORCI moraju preživjeti deklinaciju i palatalizaciju isto kao
+    // okidač. Svaki redak je oblik koji je uži korijen promašivao: "stigao" (muški rod,
+    // l → o), "pošiljci" (k → c), "uplaćeno" (t → ć), "novca" (nepostojano a),
+    // "udžbenik" uz korijen množine, "zamijeniti" (drugi korijen), "kasnio"/"čekao"
+    // (prošlo vrijeme).
+    const OBLICI_ZALBE = [
+      "Paket s udžbenicima nije stigao, popis Gimnazija Daruvar",
+      "Udžbenik nije stigao, popis Gimnazija Daruvar",
+      "Gdje je moja pošiljci udžbenika, Gimnazija Daruvar",
+      "Popis udžbenika Gimnazija Daruvar — nije mi uplaćeno za poslane knjige",
+      "Čekam novca za udžbenike, Gimnazija Daruvar",
+      "Želim zamijeniti udžbenik za Gimnaziju Daruvar, popis",
+      "Paket je kasnio 10 dana, popis udžbenika Gimnazija Daruvar",
+      "Čekao sam uplatu mjesec dana, popis udžbenika Gimnazija Daruvar"
+    ];
+
+    for (const zalba of OBLICI_ZALBE) {
+      it(`padež i palatalizacija ne propuštaju žalbu: ${zalba}`, () => {
+        assert.strictEqual(buildTextbookOutcome(zalba, {}), null);
       });
     }
   });
