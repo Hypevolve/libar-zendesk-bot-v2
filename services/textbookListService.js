@@ -442,6 +442,69 @@ function findSchool(text) {
   return { status: "match", school: best.school };
 }
 
+// ─── ŽALBE I PRIGOVORI ───────────────────────────────────────────────────────
+// Tko se žali, ne smije dobiti popis udžbenika. Prije ove grane je "Krivi udžbenik
+// ste mi poslali za 2. razred Gimnazije Daruvar, tražim zamjenu" dobivao vedar popis
+// za 2. razred: gate vidi "udžbenik" + naziv škole i odgovori s punim povjerenjem na
+// posve drugu temu. Prije ove značajke je ista poruka odlazila u bazu znanja i dobivala
+// općenit odgovor — gard vraća točno taj ishod (`null`), ne uvodi novi.
+//
+// Gard NE eskalira i NE odgovara ništa. Eskalacija je posao intentEscalationService,
+// koji u pipelineu stoji ISPRED ovog gate-a (index.js, _resolveAutomatedOutcome) i
+// koji ne diramo. Ono što on ne uhvati, ovdje samo prestaje biti "upit o popisu".
+//
+// Rječnik je izvađen iz stvarnih tiketa, ne izmišljen:
+//   · tests/e2e-generated.test.js (76 upita destiliranih iz 200 tiketa) — GEN-03
+//     "Uplata kasni…", GEN-19 "dio nije stigao", GEN-31 "Nedostaje artikl u paketu –
+//     tražim rješenje", GEN-41 "želim zamjenu", GEN-44 "Poslali ste mi pogrešne knjige
+//     — kako napraviti zamjenu?", GEN-45 "zamjene/povrata pogrešno isporučenih",
+//     GEN-66 "uplata nije stigla", GEN-67 "isplata kasni", GEN-69 "pravnu pritužbu".
+//   · tests/e2e.test.js — D2 "Primio sam oštećenu knjigu", J3 "Kupio sam oštećenu
+//     knjigu, želim je vratiti".
+//   · services/intentEscalationService.js — klijentom odobren rječnik, samo ČITAN:
+//     "nitko se ne javlja", "ne javljate se", "ne odgovarate", "cekam vec",
+//     "kriv[aeiou]? narudzb", "poslali ste (mi )?pogresn", "podnosim prigovor".
+//
+// Namjerno se NE ponavlja ono što escalation već hvata ("reklamacij", "povrat novca",
+// "ostecen", "hitno") — to nikad ne stigne dovde. Gard pokriva rupu: žalbe koje
+// escalation propušta, a koje ovaj gate inače samouvjereno presretne.
+const ZALBA_UZORCI = [
+  // Optužba za prijevaru. Oba korijena su potrebna: "prijevara" ne sadrži "prevar".
+  /prevar/, /prijevar/,
+  // Izrečeno nezadovoljstvo. Nijedna od ovih riječi ne postoji u upitu za popisom.
+  /nezadovolj/, /katastrof/, /sramot/, /skandal/, /uzasn/,
+  // Izostala uplata ("nisu mi platili", "niste mi platili za poslane knjige").
+  /(nisu|niste|nije|nismo) .{0,20}plati/,
+  // Čekanje — vezano uz imenicu, ne samo "čekam". "Čekam popis" je strpljivo pitanje,
+  // "čekam uplatu" je žalba; escalation ima samo uži "cekam vec" / "dugo cekam".
+  /\bceka(m|mo|nje|nja|ju)?\b.{0,25}(uplat|isplat|novac|povrat|paket|posiljk|narudzb|odgovor)/,
+  /(uplat|isplat|novac|paket|posiljk|narudzb|knjig|udzbenic).{0,25}\bceka/,
+  // Kašnjenje. Granice riječi drže "kasnije" i "kasniji" izvan gard (ondje je "kasni"
+  // samo početak riječi, ne cijela riječ).
+  /\bkasni\b/, /\bkasne\b/, /kasnjenj/,
+  // "Paket nije stigao" / "uplata nije stigla" — vezano uz imenicu s obje strane, da
+  // "nisam dobio popis udžbenika" (posve legitiman upit) ne padne u gard.
+  /(paket|posiljk|narudzb|uplat|isplat|novac|knjig|udzbenic).{0,20}(nije|nisu) stigl/,
+  /(nije|nisu) stigl.{0,25}(paket|posiljk|narudzb|uplat|isplat|novac|knjig|udzbenic)/,
+  // Krivo isporučeno i zahtjev za zamjenom (GEN-41, GEN-44, GEN-45).
+  /\bzamjen/,
+  /(kriv|pogresn)\w*\s+(udzbenik|udzbenic|knjig|artikl|naslov|paket|posiljk|narudzb|izdanj)/,
+  /(poslali|poslao|poslala|dobio|dobila|stiglo|stigla|stigli|stigle).{0,20}(kriv|pogresn)/,
+  // Nitko se ne javlja.
+  /nitko (mi )?se ne javlja/, /nitko (mi )?ne odgovara/,
+  /ne javljate se/, /se ne javljate/, /ne odgovarate/,
+  // Formalni prigovor (GEN-69).
+  /prituzb/, /\bzalb[aeiou]/, /prigovor/,
+  // Traženje izgubljene pošiljke ("gdje mi je paket", "gdje je moja narudžba").
+  // Namjerno bez "knjige"/"udžbenici": "gdje su udžbenici za 1. razred" je pitanje o
+  // ponudi, ne žalba, i mora i dalje teći kroz bazu znanja kao dosad.
+  /\bgdje\b.{0,25}(paket|posiljk|narudzb|uplat|isplat)/
+];
+
+function imaZalbu(norm) {
+  return ZALBA_UZORCI.some((uzorak) => uzorak.test(norm));
+}
+
 const DISCLAIMER = [
   "Napomena: popis je informativnog karaktera i preuzet je iz javno dostupne baze",
   "podataka (stranice škola). Antikvarijat Libar ne odgovara za eventualne netočnosti",
@@ -580,6 +643,13 @@ function buildTextbookOutcome(userMessage, session = {}) {
   delete session.textbookSchoolId;
   delete session.textbookAwaitingSchool;
   delete session.textbookRazred;
+
+  // Žalba nije upit o popisu — vidi ZALBA_UZORCI. Stoji ISPRED svih grana, uključujući
+  // obje koje nastavljaju razgovor: posjetitelj koji je usred biranja razreda skrenuo na
+  // "čekam uplatu već tjedan dana i nitko se ne javlja" ne smije dobiti popis ništa manje
+  // od onoga koji je žalbom i počeo. Markeri su već potrošeni gore, pa ih ovaj izlaz ne
+  // ostavlja da opale na sljedećoj poruci — tema razgovora je promijenjena.
+  if (imaZalbu(norm)) return null;
 
   // Nastavak razgovora: školu smo zapamtili, korisnik je dopisao razred (ili spomenuo
   // posve drugu školu). Grana odgovara za sva tri moguća ishoda findSchool-a ovdje —

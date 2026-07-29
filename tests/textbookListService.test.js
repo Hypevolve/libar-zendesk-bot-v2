@@ -752,6 +752,25 @@ describe("textbookListService", () => {
       assert.deepStrictEqual(bezLinka, [], `odgovori bez klikabilnog linka:\n${bezLinka.join("\n")}`);
     });
 
+    it("gard za žalbe ne gasi nijedan legitiman upit za popisom, ni na jednoj školi", () => {
+      // Sonda preko cijelog korpusa: gard smije ušutkati samo žalbe. Ako neki uzorak
+      // slučajno pogodi običnu formulaciju ("Poštovani…", "Hvala"), ovdje pada odmah,
+      // a ne tek na produkciji na jednoj jedinoj školi.
+      const SABLONE = [
+        (naziv) => `popis udžbenika ${naziv}`,
+        (naziv) => `trebam popis udžbenika za ${naziv}, 1. razred`,
+        (naziv) => `Poštovani, imate li popis udžbenika za 3. razred, ${naziv}? Hvala`
+      ];
+      const ugaseni = [];
+      for (const skola of loadIndex().skole) {
+        for (const sablona of SABLONE) {
+          const upit = sablona(skola.naziv);
+          if (buildTextbookOutcome(upit, {}) === null) ugaseni.push(upit);
+        }
+      }
+      assert.deepStrictEqual(ugaseni, [], `gard je ugasio legitimne upite:\n${ugaseni.slice(0, 10).join("\n")}`);
+    });
+
     it("nijedan upit iz e2e korpusa stvarnih tiketa ne aktivira gate", () => {
       const oteti = GENERATED_SCENARIOS
         .map((scenarij) => ({ scenarij, outcome: buildTextbookOutcome(scenarij.query, {}) }))
@@ -759,5 +778,78 @@ describe("textbookListService", () => {
         .map((r) => `${r.scenarij.id} (${r.outcome.reason}): ${r.scenarij.query}`);
       assert.deepStrictEqual(oteti, [], `gate je oteo postojeće upite:\n${oteti.join("\n")}`);
     });
+  });
+
+  // Žalba koja usput imenuje školu nije upit o popisu. Prije garda je "Krivi udžbenik
+  // ste mi poslali za 2. razred Gimnazije Daruvar, tražim zamjenu" dobivao vedar popis
+  // za 2. razred — samouvjeren odgovor na posve drugu temu, i to čovjeku koji se žali.
+  // Ispravan ishod je onaj koji je vrijedio prije ove značajke: null, pa poruka teče
+  // dalje kroz pipeline. Gard ne eskalira — eskalacija je posao
+  // intentEscalationServicea, koji u pipelineu stoji ispred i koji ne diramo.
+  describe("žalbe ne dobivaju popis udžbenika", () => {
+    const ZALBE = [
+      "Poslao sam udžbenike iz Gimnazije Daruvar i nisu mi platili, ovo je prijevara!",
+      "Krivi udžbenik ste mi poslali za 2. razred Gimnazije Daruvar, tražim zamjenu",
+      "Već tjedan dana čekam uplatu za udžbenike, Gimnazija Daruvar",
+      "Nezadovoljan sam uslugom, naručio sam za Gimnaziju Daruvar",
+      "Prevarili ste me s udžbenicima za Gimnaziju Daruvar",
+      "Gdje mi je paket za Gimnaziju Daruvar, kasni već 10 dana",
+      "Ovo je katastrofa, Gimnazija Daruvar, nitko se ne javlja"
+    ];
+
+    for (const zalba of ZALBE) {
+      it(`vraća null na: ${zalba}`, () => {
+        assert.strictEqual(
+          buildTextbookOutcome(zalba, {}),
+          null,
+          "žalba je dobila odgovor o popisu udžbenika"
+        );
+      });
+    }
+
+    // Gard mora stajati ispred OBJE grane koje nastavljaju razgovor, inače posjetitelj
+    // koji je ušao kao običan upit pa skrenuo na žalbu i dalje dobije popis.
+    it("nastavak sesije: žalba uz razred ne dobiva popis zapamćene škole", () => {
+      const session = {};
+      const pitanje = buildTextbookOutcome("popis udžbenika Gimnazija Daruvar", session);
+      assert.strictEqual(pitanje.reason, "textbook_need_razred");
+      const outcome = buildTextbookOutcome(
+        "2. razred, ali čekam uplatu već tjedan dana i nitko se ne javlja", session
+      );
+      assert.strictEqual(outcome, null, "žalba usred razgovora je dobila popis");
+      assert.strictEqual(session.textbookSchoolId, undefined, "sesija nije očišćena");
+    });
+
+    it("nastavak sesije: žalba uz naziv škole ne dobiva popis (grana čekanja naziva)", () => {
+      const session = {};
+      buildTextbookOutcome("Pozdrav, imate li popis udzbenika za 1. razred ekonomske škole Bjelovar?", session);
+      assert.strictEqual(session.textbookAwaitingSchool, true);
+      const outcome = buildTextbookOutcome(
+        "Ekonomska i birotehnička škola Bjelovar, ali čekam uplatu već tjedan dana i nitko se ne javlja", session
+      );
+      assert.strictEqual(outcome, null, "žalba usred razgovora je dobila popis");
+      assert.strictEqual(session.textbookAwaitingSchool, undefined, "marker je preživio žalbu");
+      assert.strictEqual(session.textbookRazred, undefined, "razred je preživio žalbu");
+    });
+
+    // Druga strana garda: rječnik je namjerno uzak. Ovo su rečenice koje dijele korijen
+    // s nekim uzorkom ("kasnije" ~ "kasni", "čekam popis" ~ "čekam uplatu", "gdje je
+    // popis" ~ "gdje je paket") i moraju i dalje dobiti popis.
+    const NISU_ZALBE = [
+      "Javit ću se kasnije za popis udžbenika, Gimnazija Daruvar",
+      "Trebam popis udžbenika za Gimnaziju Daruvar, kasnim s kupnjom",
+      "Nisam dobio popis udžbenika za Gimnaziju Daruvar",
+      "Čekam popis udžbenika za Gimnaziju Daruvar",
+      "Gdje mogu naći popis udžbenika za Gimnaziju Daruvar?",
+      "Gdje je popis udžbenika za Gimnaziju Daruvar?"
+    ];
+
+    for (const upit of NISU_ZALBE) {
+      it(`i dalje odgovara na: ${upit}`, () => {
+        const outcome = buildTextbookOutcome(upit, {});
+        assert.ok(outcome, "gard je ugasio legitiman upit za popisom");
+        assert.match(outcome.customerMessage, /Gimnazija Daruvar/);
+      });
+    }
   });
 });
