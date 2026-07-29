@@ -1,6 +1,6 @@
 {
   "godina": "2026./2027.",
-  "generirano": "2026-07-27",
+  "generirano": "2026-07-29",
   "skole": [
     {
       "id": "biskupijska-klasicna-gimnazija-rudera-boskovica-dubrovnik",
@@ -810,37 +810,37 @@
         {
           "razred": "1",
           "oznaka": "PRVI DIPLOMATSKE GIMNAZIJE",
-          "url": "https://gek-opatija.hr/admin/documents/PRVI RAZRED DIPLOMATSKE GIMNAZIJE.pdf"
+          "url": "https://gek-opatija.hr/admin/documents/PRVI%20RAZRED%20DIPLOMATSKE%20GIMNAZIJE.pdf"
         },
         {
           "razred": "1",
           "oznaka": "PRVI OPĆE GIMNAZIJE",
-          "url": "https://gek-opatija.hr/admin/documents/PRVI RAZRED OPĆE GIMNAZIJE.pdf"
+          "url": "https://gek-opatija.hr/admin/documents/PRVI%20RAZRED%20OPĆE%20GIMNAZIJE.pdf"
         },
         {
           "razred": "2",
           "oznaka": "DRUGI OPĆE GIMNAZIJE",
-          "url": "https://gek-opatija.hr/admin/documents/DRUGI RAZRED OPĆE GIMNAZIJE.pdf"
+          "url": "https://gek-opatija.hr/admin/documents/DRUGI%20RAZRED%20OPĆE%20GIMNAZIJE.pdf"
         },
         {
           "razred": "3",
           "oznaka": "TREĆI JEZIČNE GIMNAZIJE",
-          "url": "https://gek-opatija.hr/admin/documents/TREĆI RAZRED JEZIČNE GIMNAZIJE.pdf"
+          "url": "https://gek-opatija.hr/admin/documents/TREĆI%20RAZRED%20JEZIČNE%20GIMNAZIJE.pdf"
         },
         {
           "razred": "3",
           "oznaka": "TREĆI OPĆE GIMNAZIJE",
-          "url": "https://gek-opatija.hr/admin/documents/TREĆI RAZRED OPĆE GIMNAZIJE.pdf"
+          "url": "https://gek-opatija.hr/admin/documents/TREĆI%20RAZRED%20OPĆE%20GIMNAZIJE.pdf"
         },
         {
           "razred": "4",
           "oznaka": "ČETVRTI JEZIČNEGIMNAZIJE",
-          "url": "https://gek-opatija.hr/admin/documents/ČETVRTI RAZRED JEZIČNEGIMNAZIJE .pdf"
+          "url": "https://gek-opatija.hr/admin/documents/ČETVRTI%20RAZRED%20JEZIČNEGIMNAZIJE%20.pdf"
         },
         {
           "razred": "4",
           "oznaka": "ČETVRTI OPĆE GIMNAZIJE",
-          "url": "https://gek-opatija.hr/admin/documents/ČETVRTI RAZRED OPĆE GIMNAZIJE .pdf"
+          "url": "https://gek-opatija.hr/admin/documents/ČETVRTI%20RAZRED%20OPĆE%20GIMNAZIJE%20.pdf"
         }
       ]
     },
@@ -2396,13 +2396,7 @@
       "naziv": "Obrtničko-tehnička škola Slavonski Brod",
       "zupanija": "Brodsko-posavska",
       "stranica": "https://ss-obrtnicko-tehnicka-sb.skole.hr/udzbenici/",
-      "dokumenti": [
-        {
-          "razred": null,
-          "oznaka": "Popis udžbenika",
-          "url": "ručni unos: tehnicka-sb/Udžbenici za školsku godinu 2026._2027.xlsx"
-        }
-      ]
+      "dokumenti": []
     },
     {
       "id": "pazinski-kolegij-klasicna-gimnazija",
@@ -2429,163 +2423,7 @@
       "naziv": "Poljoprivredna, prehrambena i veterinarska škola Stanka Ožanića Zadar",
       "zupanija": "Zadarska",
       "stranica": "https://ppvs-ozanic.hr/popis-udzbenika-za-skolsku-godinu-2026-27/",
-      "dokumenti": [
-        {
-          "razred": "1",
-          "oznaka": "1. razred — CVJEĆAR",
-          "url": "ručni unos: ozanic-zadar/1.r._-CVJEĆAR.xls"
-        },
-        {
-          "razred": "1",
-          "oznaka": "1. razred — agrotehničar",
-          "url": "ručni unos: ozanic-zadar/1.r_-_agrotehničar.xlsx"
-        },
-        {
-          "razred": "1",
-          "oznaka": "1. razred — arhitektonski tehničar",
-          "url": "ručni unos: ozanic-zadar/1.r_-_arhitektonski_tehničar.xlsx"
-        },
-        {
-          "razred": "1",
-          "oznaka": "1. razred — fizioterapeutski tehničar",
-          "url": "ručni unos: ozanic-zadar/1.r_-_fizioterapeutski_tehničar.xlsx"
-        },
-        {
-          "razred": "1",
-          "oznaka": "1. razred — građevinski radnik održivoj gradnji",
-          "url": "ručni unos: ozanic-zadar/1.r._-_građevinski_radnik_u_održivoj_gradnji.xlsx"
-        },
-        {
-          "razred": "1",
-          "oznaka": "1. razred — građevinski radnik zgradarstvu",
-          "url": "ručni unos: ozanic-zadar/1.r._-_građevinski_radnik_u_zgradarstvu.xlsx"
-        },
-        {
-          "razred": "1",
-          "oznaka": "1. razred — med sestra opće njege med tehničar opće njege",
-          "url": "ručni unos: ozanic-zadar/1.r._-_med.sestra_opće_njege-med.tehničar_opće_njege.xlsx"
-        },
-        {
-          "razred": "1",
-          "oznaka": "1. razred — mehaničar poljoprivredne mehanizacije",
-          "url": "ručni unos: ozanic-zadar/1.r._-_mehaničar_poljoprivredne_mehanizacije.xlsx"
-        },
-        {
-          "razred": "2",
-          "oznaka": "2. razred — agrotehničar",
-          "url": "ručni unos: ozanic-zadar/2.r_-_agrotehničar.xlsx"
-        },
-        {
-          "razred": "2",
-          "oznaka": "2. razred — arhitektonski tehničar",
-          "url": "ručni unos: ozanic-zadar/2.r_-_arhitektonski__tehničar.xlsx"
-        },
-        {
-          "razred": "2",
-          "oznaka": "2. razred — cvjećar",
-          "url": "ručni unos: ozanic-zadar/2.r._-_cvjećar.xlsx"
-        },
-        {
-          "razred": "2",
-          "oznaka": "2. razred — fizioterapeutski tehničar",
-          "url": "ručni unos: ozanic-zadar/2.r._-_fizioterapeutski_tehničar.xlsx"
-        },
-        {
-          "razred": "2",
-          "oznaka": "2. razred — građevinski radnik održivoj gradnji",
-          "url": "ručni unos: ozanic-zadar/2.r._-_građevinski_radnik_u_održivoj_gradnji.xlsx"
-        },
-        {
-          "razred": "2",
-          "oznaka": "2. razred — med sestra opce njege med tehnicar opce njege",
-          "url": "ručni unos: ozanic-zadar/2.r._-_med.sestra_opce_njege-med.tehnicar_opce_njege.xlsx"
-        },
-        {
-          "razred": "2",
-          "oznaka": "2. razred — poljoprivredni gospodarstvenik",
-          "url": "ručni unos: ozanic-zadar/2.r._-poljoprivredni_gospodarstvenik.xlsx"
-        },
-        {
-          "razred": "2",
-          "oznaka": "2. razred — soboslikar ličilac dekorater",
-          "url": "ručni unos: ozanic-zadar/2.r._-_soboslikar_ličilac_dekorater.xlsx"
-        },
-        {
-          "razred": "3",
-          "oznaka": "3. razred — agrotehničar",
-          "url": "ručni unos: ozanic-zadar/3.r._-_agrotehničar.xls"
-        },
-        {
-          "razred": "3",
-          "oznaka": "3. razred — arhitektonski tehničar",
-          "url": "ručni unos: ozanic-zadar/3.r_-_arhitektonski_tehničar.xlsx"
-        },
-        {
-          "razred": "3",
-          "oznaka": "3. razred — cvjećar",
-          "url": "ručni unos: ozanic-zadar/3.r._-_cvjećar.xlsx"
-        },
-        {
-          "razred": "3",
-          "oznaka": "3. razred — fizioterapeutski tehničar",
-          "url": "ručni unos: ozanic-zadar/3.r_-_fizioterapeutski_tehničar.xlsx"
-        },
-        {
-          "razred": "3",
-          "oznaka": "3. razred — građevinski tehničar",
-          "url": "ručni unos: ozanic-zadar/3.r._-_građevinski_tehničar.xlsx"
-        },
-        {
-          "razred": "3",
-          "oznaka": "3. razred — instalater grijanja klimatizacije",
-          "url": "ručni unos: ozanic-zadar/3.r._-_instalater_grijanja_i_klimatizacije.xlsx"
-        },
-        {
-          "razred": "3",
-          "oznaka": "3. razred — med sestra opće njege med tehničar opće njege",
-          "url": "ručni unos: ozanic-zadar/3.r._-_med.sestra_opće_njege-med.tehničar_opće_njege.xlsx"
-        },
-        {
-          "razred": "3",
-          "oznaka": "3. razred — monter suhe gradnje",
-          "url": "ručni unos: ozanic-zadar/3.r-monter_suhe_gradnje.xlsx"
-        },
-        {
-          "razred": "3",
-          "oznaka": "3. razred — rukovatelj samohodnim građevinskim strojevima",
-          "url": "ručni unos: ozanic-zadar/3.r._-_rukovatelj_samohodnim_građevinskim_strojevima.xlsx"
-        },
-        {
-          "razred": "4",
-          "oznaka": "4. razred — agrotehničar",
-          "url": "ručni unos: ozanic-zadar/4.r._-_agrotehničar.xlsx"
-        },
-        {
-          "razred": "4",
-          "oznaka": "4. razred — arhitektonski tehničar",
-          "url": "ručni unos: ozanic-zadar/4.r_-_arhitektonski_tehničar.xlsx"
-        },
-        {
-          "razred": "4",
-          "oznaka": "4. razred — fizioterapeutski tehničar",
-          "url": "ručni unos: ozanic-zadar/4.r._-_fizioterapeutski_tehničar.xls"
-        },
-        {
-          "razred": "4",
-          "oznaka": "4. razred — građevinski tehničar",
-          "url": "ručni unos: ozanic-zadar/4.r_-_građevinski_tehničar.xlsx"
-        },
-        {
-          "razred": "4",
-          "oznaka": "4. razred — med sestra opće njege med tehničar opće njege",
-          "url": "ručni unos: ozanic-zadar/4.r._-_med.sestra_opće_njege-med.tehničar_opće_njege.xlsx"
-        },
-        {
-          "razred": "5",
-          "oznaka": "5. razred — med sestra opće njege med tehničar opće njege",
-          "url": "ručni unos: ozanic-zadar/5.r._-_med.sestra_opće_njege-med.tehničar_opće_njege.xlsx"
-        }
-      ]
+      "dokumenti": []
     },
     {
       "id": "poljoprivredno-prehrambena-skola-pozega",
@@ -3007,32 +2845,32 @@
         {
           "razred": "1",
           "oznaka": "plesači udžb",
-          "url": "https://www.pshg.net/documents/nastava/plesači udžb 03072024.pdf"
+          "url": "https://www.pshg.net/documents/nastava/plesači%20udžb%2003072024.pdf"
         },
         {
           "razred": "2",
           "oznaka": "2. razred",
-          "url": "https://www.pshg.net/documents/nastava/udzbenici 2 r.pdf"
+          "url": "https://www.pshg.net/documents/nastava/udzbenici%202%20r.pdf"
         },
         {
           "razred": "2",
           "oznaka": "2. razred — plesači udžb",
-          "url": "https://www.pshg.net/documents/nastava/plesači udžb 2 razred.pdf"
+          "url": "https://www.pshg.net/documents/nastava/plesači%20udžb%202%20razred.pdf"
         },
         {
           "razred": "3",
           "oznaka": "3. razred",
-          "url": "https://www.pshg.net/documents/nastava/udzbenici 3 r.pdf"
+          "url": "https://www.pshg.net/documents/nastava/udzbenici%203%20r.pdf"
         },
         {
           "razred": "3",
           "oznaka": "3. razred",
-          "url": "https://www.pshg.net/documents/nastava/3.h udžbenici.pdf"
+          "url": "https://www.pshg.net/documents/nastava/3.h%20udžbenici.pdf"
         },
         {
           "razred": "4",
           "oznaka": "4. razred",
-          "url": "https://www.pshg.net/documents/nastava/udzbenici 4 r.pdf"
+          "url": "https://www.pshg.net/documents/nastava/udzbenici%204%20r.pdf"
         }
       ]
     },
@@ -3657,133 +3495,7 @@
       "naziv": "Srednja škola Bedekovčina",
       "zupanija": "Krapinsko-zagorska",
       "stranica": "https://ss-bedekovcina.skole.hr/udzbenici-2026-2027/",
-      "dokumenti": [
-        {
-          "razred": "1",
-          "oznaka": "AGROTURISTIČKI TEHNIČAR",
-          "url": "ručni unos: bedekovcina/1. A AGROTURISTIČKI TEHNIČAR.pdf"
-        },
-        {
-          "razred": "1",
-          "oznaka": "CVJEĆAR",
-          "url": "ručni unos: bedekovcina/1. E CVJEĆAR.pdf"
-        },
-        {
-          "razred": "1",
-          "oznaka": "FITOMEDICINSKI TEHNIČAR",
-          "url": "ručni unos: bedekovcina/1. A FITOMEDICINSKI TEHNIČAR.pdf"
-        },
-        {
-          "razred": "1",
-          "oznaka": "MESAR",
-          "url": "ručni unos: bedekovcina/1. E MESAR.pdf"
-        },
-        {
-          "razred": "1",
-          "oznaka": "NUTRICIONIST",
-          "url": "ručni unos: bedekovcina/1. B NUTRICIONIST.pdf"
-        },
-        {
-          "razred": "1",
-          "oznaka": "PEKAR SLASTIČAR",
-          "url": "ručni unos: bedekovcina/1. E PEKAR- SLASTIČAR.pdf"
-        },
-        {
-          "razred": "1",
-          "oznaka": "POMOĆNI CVJEĆAR",
-          "url": "ručni unos: bedekovcina/1. D POMOĆNI CVJEĆAR.pdf"
-        },
-        {
-          "razred": "1",
-          "oznaka": "VETERINARSKI TEHNIČAR",
-          "url": "ručni unos: bedekovcina/1. C VETERINARSKI TEHNIČAR.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "AGROTURISTIČKI TEHNIČAR",
-          "url": "ručni unos: bedekovcina/2. A AGROTURISTIČKI TEHNIČAR.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "CVJEĆAR",
-          "url": "ručni unos: bedekovcina/2. E CVJEĆAR.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "MESAR",
-          "url": "ručni unos: bedekovcina/2. E MESAR.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "PEKAR SLASTIČAR",
-          "url": "ručni unos: bedekovcina/2. E PEKAR- SLASTIČAR.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "POMOĆNI CVJEĆAR",
-          "url": "ručni unos: bedekovcina/2. D POMOĆNI CVJEĆAR.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "TEHNIČAR NUTRICIONIST",
-          "url": "ručni unos: bedekovcina/2. B TEHNIČAR NUTRICIONIST.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "VETERINARSKI TEHNIČAR",
-          "url": "ručni unos: bedekovcina/2. C VETERINARSKI TEHNIČAR.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "VRTLAR",
-          "url": "ručni unos: bedekovcina/2. E VRTLAR.pdf"
-        },
-        {
-          "razred": "3",
-          "oznaka": "AGROTURISTIČKI TEHNIČAR",
-          "url": "ručni unos: bedekovcina/3. A AGROTURISTIČKI TEHNIČAR.pdf"
-        },
-        {
-          "razred": "3",
-          "oznaka": "CVJEĆAR",
-          "url": "ručni unos: bedekovcina/3. E CVJEĆAR.pdf"
-        },
-        {
-          "razred": "3",
-          "oznaka": "MESAR",
-          "url": "ručni unos: bedekovcina/3. E MESAR.pdf"
-        },
-        {
-          "razred": "3",
-          "oznaka": "POMOĆNI CVJEĆAR",
-          "url": "ručni unos: bedekovcina/3. D POMOĆNI CVJEĆAR.pdf"
-        },
-        {
-          "razred": "3",
-          "oznaka": "TEHNIČAR NUTRICIONIST",
-          "url": "ručni unos: bedekovcina/3. B TEHNIČAR NUTRICIONIST.pdf"
-        },
-        {
-          "razred": "3",
-          "oznaka": "VETERINARSKI TEHNIČAR",
-          "url": "ručni unos: bedekovcina/3. C VETERINARSKI TEHNIČAR.pdf"
-        },
-        {
-          "razred": "4",
-          "oznaka": "AGROTURISTIČKI TEHNIČAR",
-          "url": "ručni unos: bedekovcina/4. A AGROTURISTIČKI TEHNIČAR.pdf"
-        },
-        {
-          "razred": "4",
-          "oznaka": "TEHNIČAR NUTRICIONIST",
-          "url": "ručni unos: bedekovcina/4. B TEHNIČAR NUTRICIONIST.pdf"
-        },
-        {
-          "razred": "4",
-          "oznaka": "VETERINARSKI TEHNIČAR",
-          "url": "ručni unos: bedekovcina/4. C VETERINARSKI TEHNIČAR.pdf"
-        }
-      ]
+      "dokumenti": []
     },
     {
       "id": "srednja-skola-biograd-na-moru",
@@ -3820,133 +3532,7 @@
       "naziv": "Srednja škola Dalj",
       "zupanija": "Osječko-baranjska",
       "stranica": null,
-      "dokumenti": [
-        {
-          "razred": "1",
-          "oznaka": "AGROTURISTIČKI TEHNIČAR",
-          "url": "ručni unos: bedekovcina/1. A AGROTURISTIČKI TEHNIČAR.pdf"
-        },
-        {
-          "razred": "1",
-          "oznaka": "CVJEĆAR",
-          "url": "ručni unos: bedekovcina/1. E CVJEĆAR.pdf"
-        },
-        {
-          "razred": "1",
-          "oznaka": "FITOMEDICINSKI TEHNIČAR",
-          "url": "ručni unos: bedekovcina/1. A FITOMEDICINSKI TEHNIČAR.pdf"
-        },
-        {
-          "razred": "1",
-          "oznaka": "MESAR",
-          "url": "ručni unos: bedekovcina/1. E MESAR.pdf"
-        },
-        {
-          "razred": "1",
-          "oznaka": "NUTRICIONIST",
-          "url": "ručni unos: bedekovcina/1. B NUTRICIONIST.pdf"
-        },
-        {
-          "razred": "1",
-          "oznaka": "PEKAR SLASTIČAR",
-          "url": "ručni unos: bedekovcina/1. E PEKAR- SLASTIČAR.pdf"
-        },
-        {
-          "razred": "1",
-          "oznaka": "POMOĆNI CVJEĆAR",
-          "url": "ručni unos: bedekovcina/1. D POMOĆNI CVJEĆAR.pdf"
-        },
-        {
-          "razred": "1",
-          "oznaka": "VETERINARSKI TEHNIČAR",
-          "url": "ručni unos: bedekovcina/1. C VETERINARSKI TEHNIČAR.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "AGROTURISTIČKI TEHNIČAR",
-          "url": "ručni unos: bedekovcina/2. A AGROTURISTIČKI TEHNIČAR.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "CVJEĆAR",
-          "url": "ručni unos: bedekovcina/2. E CVJEĆAR.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "MESAR",
-          "url": "ručni unos: bedekovcina/2. E MESAR.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "PEKAR SLASTIČAR",
-          "url": "ručni unos: bedekovcina/2. E PEKAR- SLASTIČAR.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "POMOĆNI CVJEĆAR",
-          "url": "ručni unos: bedekovcina/2. D POMOĆNI CVJEĆAR.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "TEHNIČAR NUTRICIONIST",
-          "url": "ručni unos: bedekovcina/2. B TEHNIČAR NUTRICIONIST.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "VETERINARSKI TEHNIČAR",
-          "url": "ručni unos: bedekovcina/2. C VETERINARSKI TEHNIČAR.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "VRTLAR",
-          "url": "ručni unos: bedekovcina/2. E VRTLAR.pdf"
-        },
-        {
-          "razred": "3",
-          "oznaka": "AGROTURISTIČKI TEHNIČAR",
-          "url": "ručni unos: bedekovcina/3. A AGROTURISTIČKI TEHNIČAR.pdf"
-        },
-        {
-          "razred": "3",
-          "oznaka": "CVJEĆAR",
-          "url": "ručni unos: bedekovcina/3. E CVJEĆAR.pdf"
-        },
-        {
-          "razred": "3",
-          "oznaka": "MESAR",
-          "url": "ručni unos: bedekovcina/3. E MESAR.pdf"
-        },
-        {
-          "razred": "3",
-          "oznaka": "POMOĆNI CVJEĆAR",
-          "url": "ručni unos: bedekovcina/3. D POMOĆNI CVJEĆAR.pdf"
-        },
-        {
-          "razred": "3",
-          "oznaka": "TEHNIČAR NUTRICIONIST",
-          "url": "ručni unos: bedekovcina/3. B TEHNIČAR NUTRICIONIST.pdf"
-        },
-        {
-          "razred": "3",
-          "oznaka": "VETERINARSKI TEHNIČAR",
-          "url": "ručni unos: bedekovcina/3. C VETERINARSKI TEHNIČAR.pdf"
-        },
-        {
-          "razred": "4",
-          "oznaka": "AGROTURISTIČKI TEHNIČAR",
-          "url": "ručni unos: bedekovcina/4. A AGROTURISTIČKI TEHNIČAR.pdf"
-        },
-        {
-          "razred": "4",
-          "oznaka": "TEHNIČAR NUTRICIONIST",
-          "url": "ručni unos: bedekovcina/4. B TEHNIČAR NUTRICIONIST.pdf"
-        },
-        {
-          "razred": "4",
-          "oznaka": "VETERINARSKI TEHNIČAR",
-          "url": "ručni unos: bedekovcina/4. C VETERINARSKI TEHNIČAR.pdf"
-        }
-      ]
+      "dokumenti": []
     },
     {
       "id": "srednja-skola-delnice",
@@ -4544,7 +4130,7 @@
         {
           "razred": "1",
           "oznaka": "raz Cvjećar",
-          "url": "https://www.ssmar.hr/data/source/file/dokumenti/udzbenici/1_raz_-Cvje%C4%87ar-26-27(1).pdf"
+          "url": "https://www.ssmar.hr/data/source/file/dokumenti/udzbenici/1_raz_-Cvje%C4%87ar-26-27(1%29.pdf"
         },
         {
           "razred": "1",
@@ -6026,13 +5612,7 @@
       "naziv": "Tehnička škola Slavonski Brod",
       "zupanija": "Brodsko-posavska",
       "stranica": "https://tssb.hr/udzbenici-za-skol-god-2026-2027/",
-      "dokumenti": [
-        {
-          "razred": null,
-          "oznaka": "Popis udžbenika",
-          "url": "ručni unos: tehnicka-sb/Udžbenici za školsku godinu 2026._2027.xlsx"
-        }
-      ]
+      "dokumenti": []
     },
     {
       "id": "tehnicka-skola-virovitica",
