@@ -7,7 +7,8 @@ const {
   parseRazred,
   buildTextbookOutcome,
   loadIndex,
-  DISCLAIMER
+  DISCLAIMER,
+  NERAZLIKOVNI_TOKENI
 } = require("../services/textbookListService");
 const { GENERATED_SCENARIOS } = require("./e2e-generated.test.js");
 
@@ -481,6 +482,95 @@ describe("textbookListService", () => {
         assert.strictEqual(r.school.naziv, "Gimnazija Daruvar");
       });
     }
+  });
+
+  // Redni broj se kanonizira samo kad stoji ispred vrste škole. Bez tog uvjeta je svaka
+  // znamenka 1–5 bilo gdje u poruci dobivala token iznad DISTINCTIVE_IDF, pa je
+  // imenujeTudeObiljezje obarao pogodak na školu koju je posjetitelj imenovao točno —
+  // 19 od 50 realnih kombinacija škola × formulacija završilo bi s "Na koju školu
+  // mislite?", uz popis dviju škola koje posjetitelj nikad nije spomenuo. RAZRED_FRAZA
+  // te slučajeve ne doseže jer riječi "razred" ondje nema.
+  describe("broj izvan fraze razreda ne obara prepoznavanje škole", () => {
+    const BROJEVI_U_PORUCI = [
+      // Roditelj dvoje djece, zadnji tjedan srpnja — vršno opterećenje, ne rubni slučaj.
+      "popis udžbenika za 1. i 2. razred Gimnazija Daruvar",
+      "popis udžbenika Gimnazija Daruvar za 2. r.",
+      "popis udžbenika Gimnazija Daruvar, 2. godina",
+      "trebam popis udžbenika za Gimnaziju Daruvar do 1.9.",
+      "popis udžbenika Gimnazija Daruvar, imam 2 djeteta",
+      "treća stvar, treba mi popis udžbenika Gimnazija Daruvar"
+    ];
+
+    for (const upit of BROJEVI_U_PORUCI) {
+      it(`prepoznaje Gimnaziju Daruvar u: ${upit}`, () => {
+        const r = findSchool(upit);
+        assert.strictEqual(r.status, "match", `očekivan pogodak, dobiveno ${r.status}`);
+        assert.strictEqual(r.school.naziv, "Gimnazija Daruvar");
+      });
+    }
+
+    it("dvostruki razred i dalje daje popis, s razredom iz poruke", () => {
+      const outcome = buildTextbookOutcome("popis udžbenika za 1. i 2. razred Gimnazija Daruvar", {});
+      assert.strictEqual(outcome.reason, "textbook_list");
+      assert.match(outcome.customerMessage, /Gimnazija Daruvar/);
+    });
+  });
+
+  // Kanarinac za osvježenje baze. Odluka da se kanonizira samo ženski rod počiva na
+  // činjenici o KORPUSU (0 muških i 0 srednjih oblika u 281 nazivu), a ne na nečemu što
+  // kod jamči — sljedeće ljeto to može tiho prestati vrijediti. Naziv poput "Drugi centar
+  // Zadar" dao bi token "drugi" s idf 5,75 izvan NERAZLIKOVNI_TOKENI, pa bi
+  // "popis udžbenika drugi centar" nosio siguran pogodak bez ijednog imenovanog grada —
+  // točno onaj razred greške ("II. gimnazija Split") koji je ovaj rad zatvorio, ponovno
+  // otvoren podacima, uz zelen cijeli paket testova. (Provjereno nad sintetskim korpusom.)
+  describe("kanarinac: osvježena baza ne smije unijeti redni broj izvan NERAZLIKOVNI_TOKENI", () => {
+    const OBLICI_REDNOG_BROJA = new Set([
+      // ženski rod — kanonizacija ih pretvara u rb1–rb5; ako neki preživi, pravilo
+      // susjedstva ga nije dohvatilo i treba proširiti VRSTE_SKOLE
+      "prva", "druga", "treca", "cetvrta", "peta",
+      // muški i srednji rod — namjerno se ne kanoniziraju (sudaraju se s prilozima),
+      // pa u nazivu škole ne smiju završiti kao razlikovan token
+      "prvi", "drugi", "treci", "cetvrti", "peti",
+      "prvo", "drugo", "trece", "cetvrto", "peto",
+      // rimski, uključujući više brojeve koje kanonizacija ne pokriva
+      "i", "ii", "iii", "iv", "v", "vi", "vii", "viii",
+      "rb1", "rb2", "rb3", "rb4", "rb5"
+    ]);
+
+    function redniBrojeviIzvanSkupa(skole) {
+      const nadeni = [];
+      for (const skola of skole) {
+        for (const token of skola.tokens) {
+          if (OBLICI_REDNOG_BROJA.has(token) && !NERAZLIKOVNI_TOKENI.has(token)) {
+            nadeni.push(`${skola.naziv}: ${token}`);
+          }
+        }
+      }
+      return nadeni;
+    }
+
+    it("trenutna baza je čista", () => {
+      const nadeni = redniBrojeviIzvanSkupa(loadIndex().skole);
+      assert.deepStrictEqual(
+        nadeni,
+        [],
+        "naziv škole nosi redni broj koji nije nerazlikovan — takav token sam može nositi "
+        + `siguran pogodak bez imenovanog grada:\n${nadeni.join("\n")}`
+      );
+    });
+
+    it("kanarinac ima zube — hvata muški i srednji rod u nazivu", () => {
+      // Da provjera ne postane tiho beskorisna, dokazujemo da na sumnjivim nazivima pada.
+      const sintetske = [
+        { naziv: "Prvo učilište Osijek", tokens: ["prvo", "uciliste", "osijek"] },
+        { naziv: "Drugi centar Zadar", tokens: ["drugi", "centar", "zadar"] },
+        { naziv: "Gimnazija Daruvar", tokens: ["gimnazija", "daruvar"] }
+      ];
+      assert.deepStrictEqual(redniBrojeviIzvanSkupa(sintetske), [
+        "Prvo učilište Osijek: prvo",
+        "Drugi centar Zadar: drugi"
+      ]);
+    });
   });
 
   describe("gate ne otima postojeće upite", () => {

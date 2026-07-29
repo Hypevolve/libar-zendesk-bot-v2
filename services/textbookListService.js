@@ -71,14 +71,21 @@ const LONE_SURVIVOR_COVERAGE = 0.65;
 // pokriva, a nijedna škola u bazi nije u Splitu. Redni broj razlikuje škole UNUTAR grada
 // i o gradu ne govori ništa, pa ne smije biti jedini oslonac.
 // Zato kanonski redni brojevi (rb1–rb5, vidi REDNI_* niže) moraju biti OVDJE: normalizacija
-// im daje visok idf (rb1 df 7/281 → idf 3,79; rb2 df 4 → 4,35; rb3 df 1 → 5,74), svaki
+// im daje visok idf (rb1 df 7/281 → idf 3,79; rb2 df 3 → 4,63; rb3 df 1 → 5,74), svaki
 // znatno iznad DISTINCTIVE_IDF, pa bi bez ovog skupa "II. gimnazija Split" opet nosila
 // siguran pogodak u krivom gradu — samo sada i u arapskom i u riječnom obliku.
+// Uz njih su i goli rimski brojevi: kad redni broj NE stoji uz vrstu škole, kanonizacija
+// ga ne dira (vidi DOMET_* niže) pa ostane doslovan token — tako "ii" preživi u
+// "Klasična gimnazija Ivana Pavla II Zadar", gdje je papinski, a ne školski redni broj.
+// vi/vii/viii danas ne postoje ni u jednom nazivu, ali su ovdje kao brana za osvježenje
+// baze: ako sljedeće ljeto stigne "VI. gimnazija", ne smije nositi pogodak sama.
 const NERAZLIKOVNI_TOKENI = new Set([
   // tip škole
   "skola", "skole", "srednja", "gimnazija",
   // kanonski redni broj (rimski, arapski i riječima svode se na isti token)
-  "rb1", "rb2", "rb3", "rb4", "rb5"
+  "rb1", "rb2", "rb3", "rb4", "rb5",
+  // goli rimski broj koji kanonizacija nije dirala jer ne stoji uz vrstu škole
+  "i", "ii", "iii", "iv", "v", "vi", "vii", "viii"
 ]);
 
 // Redni broj nosi 11 od 281 naziva u korpusu, u dva pravopisna oblika: rimskom
@@ -90,11 +97,15 @@ const NERAZLIKOVNI_TOKENI = new Set([
 // token, pa je "I. gimnazija Osijek" matcheru stizala kao {gimnazija, osijek} — pravi
 // podskup svake druge osječke gimnazije s rednim brojem, s pokrivenošću 1,00 na svakom
 // ordinalnom upitu, dok su II./III. padale na nepokrivenom prepoznatljivom tokenu.
-// Dvanaesti naziv, "Klasična gimnazija Ivana Pavla II Zadar", dobiva rb2 iako to nije
-// redni broj škole nego papinski. To ništa ne mijenja: i prije je "ii" bio zaseban token
-// u NERAZLIKOVNI_TOKENI, s istim ponašanjem — škola se i dalje prepoznaje po vlastitom
-// imenu, a "2. gimnazija Zadar" ostaje nejasan upit (mjereno).
-const REDNI_RIMSKI = { i: "rb1", ii: "rb2", iii: "rb3", iv: "rb4", v: "rb5" };
+// Rimski oblik se u tekstu prvo označi markerom (ri1–ri5), pa se tek u tokenima odlučuje
+// hoće li postati redni broj — vidi uzVrstuSkole. Ako ne postane, vraća se doslovan zapis:
+// tako "Klasična gimnazija Ivana Pavla II Zadar" zadrži "ii" (papinski, ne školski broj),
+// a "I." se, kao i prije ovog rada, izgubi na filtru duljine.
+const RIMSKI_MARKER = { i: "ri1", ii: "ri2", iii: "ri3", iv: "ri4", v: "ri5" };
+const RIMSKI_IZVORNO = new Map([
+  ["ri1", "i"], ["ri2", "ii"], ["ri3", "iii"], ["ri4", "iv"], ["ri5", "v"]
+]);
+
 // Arapski oblik i riječi kanoniziramo nakon normalizacije, kad su točka i dijakritika
 // već otpale. Map, a ne objekt: ključ je proizvoljan token iz korisnikove poruke, a
 // objekt bi na "constructor" ili "toString" vratio naslijeđenu vrijednost s
@@ -112,13 +123,41 @@ const REDNI_RIMSKI = { i: "rb1", ii: "rb2", iii: "rb3", iv: "rb4", v: "rb5" };
 // točan pogodak: 7 od 10 prirodnih formulacija za Gimnaziju Daruvar završilo je
 // na "nejasno". Muški i srednji rod nose nula vrijednosti za uparivanje i samo
 // se sudaraju s prilozima — zato ih ovdje nema.
-const REDNI_KANONSKI = new Map([
-  ["1", "rb1"], ["prva", "rb1"],
-  ["2", "rb2"], ["druga", "rb2"],
-  ["3", "rb3"], ["treca", "rb3"],
-  ["4", "rb4"], ["cetvrta", "rb4"],
-  ["5", "rb5"], ["peta", "rb5"]
+const REDNI_ZNAMENKA = new Map([
+  ["1", "rb1"], ["2", "rb2"], ["3", "rb3"], ["4", "rb4"], ["5", "rb5"]
 ]);
+const REDNI_RIJEC = new Map([
+  ["prva", "rb1"], ["druga", "rb2"], ["treca", "rb3"], ["cetvrta", "rb4"], ["peta", "rb5"]
+]);
+
+// Redni broj postaje redni broj samo ako ISPRED VRSTE ŠKOLE stoji. Bez tog uvjeta je svaka
+// znamenka 1–5 bilo gdje u poruci dobivala token iznad DISTINCTIVE_IDF, pa je posjetitelj
+// koji je školu imenovao točno dobivao "Na koju školu mislite?" — mjereno je padalo 19 od
+// 50 realnih kombinacija škola × formulacija, među njima "za 1. i 2. razred Gimnazija
+// Daruvar" (roditelj dvoje djece, zadnji tjedan srpnja), "Gimnazija Daruvar, 2. godina",
+// "do 1.9." i "imam 2 djeteta". RAZRED_FRAZA te slučajeve ne može dohvatiti jer riječi
+// "razred" ondje nema.
+//
+// Vrste škole su izmjerene iz korpusa, ne pogođene: "škola" 229/281 naziva, "srednja" 91,
+// "gimnazija" 51, "centar" 4 — to su jedine imenice koje u ovoj bazi imenuju ustanovu.
+// Provjeravamo po korijenu jer upit dolazi u padežu ("3. gimnaziju Osijek").
+const VRSTE_SKOLE = ["skol", "srednj", "gimnazij", "centar", "centr"];
+
+// Koliko tokena unaprijed smije biti vrsta škole. Dva dometa, jer dva zapisa nose različit
+// rizik — oboje izmjereno nad korpusom, ne procijenjeno:
+//
+// ZNAMENKE, domet 1: nijedan od 281 naziva ne sadrži arapsku znamenku. Arapski oblik je
+// isključivo ono što posjetitelj utipka umjesto rimskog/riječnog ("3. gimnazija Osijek"),
+// a to je uvijek neposredno ispred vrste škole. Strogi domet zato ne košta nijedan naziv,
+// a upravo znamenke su te koje se u običnom tekstu pojavljuju kao datum, količina i razred.
+// RIJEČI I RIMSKI, domet 3: u nazivima redni broj stoji na udaljenosti 1 ("Druga gimnazija
+// Varaždin", sva tri rimska osječka), 2 ("Prva privatna gimnazija Varaždin") i 3 ("Prva
+// riječka hrvatska gimnazija", "Prva sušačka hrvatska gimnazija u Rijeci") — najveća
+// izmjerena udaljenost je 3, pa je to domet. Strogi domet 1 bi ta tri naziva slomio.
+// Domet 3 usput izbacuje "Ivana Pavla II Zadar" (iza "ii" nema vrste škole uopće) i
+// "treća stvar, treba mi popis…" (udaljenost 6).
+const DOMET_ZNAMENKA = 1;
+const DOMET_RIJEC = 3;
 
 // Rimski oblik prepoznajemo PRIJE normalizacije, dok točka još postoji. Bez točke bi
 // jednoslovni "i" postao redni broj u svakoj drugoj rečenici — to je najčešća hrvatska
@@ -140,13 +179,13 @@ const RIMSKI_BEZ_TOCKE = /(?<![\p{L}\p{N}])(iii|ii|iv)(?![\p{L}\p{N}])/giu;
 // nema, pa imenujeTudeObiljezje obori inače točan pogodak na "nejasno". Razred ionako
 // zasebno čita parseRazred, pa ga je čisto ukloniti na izvoru umjesto se oslanjati na
 // to da ga gate-ovi nizvodno apsorbiraju.
-// Oblici prate parseRazred: brojčani ("2. razred", "1.a razred", "3 razreda"), kanonski
-// rimski (nakon zamjene: "rb2 razred") i riječima ("drugom razredu").
+// Oblici prate parseRazred: brojčani ("2. razred", "1.a razred", "3 razreda"), rimski
+// marker (nakon zamjene: "ri2 razred") i riječima ("drugom razredu").
 // Ovdje muški i srednji rod NAMJERNO ostaju, za razliku od REDNI_KANONSKI: "drugi razred"
 // je posve običan način da se razred imenuje. Popis prati parseRazred, ne REDNI_KANONSKI —
 // dvije liste imaju različit posao i ne treba ih izjednačavati.
 const RAZRED_FRAZA = new RegExp(
-  "\\b(?:rb[1-5]|[1-5]|prvi|prvom|prvog|prva|drugi|drugom|drugog|druga"
+  "\\b(?:ri[1-5]|[1-5]|prvi|prvom|prvog|prva|drugi|drugom|drugog|druga"
   + "|treci|trecem|treceg|treca|cetvrti|cetvrtom|cetvrtog|cetvrta|peti|petom|petog|peta)"
   + "\\s*(?:[a-e]\\s+)?razred\\w*",
   "g"
@@ -177,12 +216,32 @@ let index = null;
 
 function oznaciRimskeRedneBrojeve(text) {
   return String(text || "")
-    .replace(RIMSKI_S_TOCKOM, (_, oblik) => ` ${REDNI_RIMSKI[oblik.toLowerCase()]} `)
-    .replace(RIMSKI_BEZ_TOCKE, (_, oblik) => ` ${REDNI_RIMSKI[oblik.toLowerCase()]} `);
+    .replace(RIMSKI_S_TOCKOM, (_, oblik) => ` ${RIMSKI_MARKER[oblik.toLowerCase()]} `)
+    .replace(RIMSKI_BEZ_TOCKE, (_, oblik) => ` ${RIMSKI_MARKER[oblik.toLowerCase()]} `);
 }
 
-function kanonskiRedniBroj(token) {
-  return REDNI_KANONSKI.get(token) || token;
+// Stoji li unutar dometa iza tokena i neka vrsta škole. Prazni tokeni (ostatak nakon
+// uklanjanja fraze razreda) se NE preskaču — svaki troši domet, pa je pravilo strože,
+// a ne labavije, na upitima koji su prošli kroz RAZRED_FRAZA.
+function uzVrstuSkole(tokeni, i, domet) {
+  for (let j = i + 1; j <= i + domet && j < tokeni.length; j++) {
+    if (VRSTE_SKOLE.some((korijen) => tokeni[j].startsWith(korijen))) return true;
+  }
+  return false;
+}
+
+function kanonskiRedniBroj(token, tokeni, i) {
+  if (RIMSKI_IZVORNO.has(token)) {
+    // Marker uvijek nestaje: ili postane redni broj, ili se vrati u doslovan zapis.
+    return uzVrstuSkole(tokeni, i, DOMET_RIJEC)
+      ? `rb${token.slice(2)}`
+      : RIMSKI_IZVORNO.get(token);
+  }
+  const znamenka = REDNI_ZNAMENKA.get(token);
+  if (znamenka) return uzVrstuSkole(tokeni, i, DOMET_ZNAMENKA) ? znamenka : token;
+  const rijec = REDNI_RIJEC.get(token);
+  if (rijec) return uzVrstuSkole(tokeni, i, DOMET_RIJEC) ? rijec : token;
+  return token;
 }
 
 // bezRazreda se koristi samo za tekst upita — naziv škole nikad ne sadrži "razred".
@@ -190,8 +249,12 @@ function tokenize(value, { bezRazreda = false } = {}) {
   let norm = normalizeForSearch(oznaciRimskeRedneBrojeve(value));
   if (bezRazreda) norm = norm.replace(RAZRED_FRAZA, " ");
   // Kanonizacija ide PRIJE filtra duljine: "1" i "3" su prekratki, ali rb1/rb3 nisu —
-  // upravo to arapskom obliku vraća glas koji je dosad tiho nestajao.
-  return norm.split(" ").map(kanonskiRedniBroj).filter((token) => token.length >= 2);
+  // upravo to arapskom obliku vraća glas koji je dosad tiho nestajao. Nekanonizirana
+  // znamenka ostaje jednoznakovna pa je filtar odbaci, kao i prije ovog rada.
+  const tokeni = norm.split(" ");
+  return tokeni
+    .map((token, i) => kanonskiRedniBroj(token, tokeni, i))
+    .filter((token) => token.length >= 2);
 }
 
 function loadIndex(filePath = DATA_PATH) {
@@ -567,5 +630,8 @@ module.exports = {
   findSchool,
   parseRazred,
   buildTextbookOutcome,
-  DISCLAIMER
+  DISCLAIMER,
+  // Izvezeno zbog kanarinca u testovima: baza se osvježava svako ljeto i test mora moći
+  // provjeriti da nijedan novi naziv ne unese redni broj izvan ovog skupa.
+  NERAZLIKOVNI_TOKENI
 };
