@@ -170,6 +170,83 @@ describe("textbookListService", () => {
         assert.strictEqual(r.school.naziv, ocekivana);
       });
     }
+
+    // Redni broj u nazivu piše se rimski ("III. gimnazija Osijek") ili riječima
+    // ("Druga gimnazija Varaždin"), a posjetitelji tipkaju arapski ("3. gimnazija
+    // Osijek"). Sva tri oblika svode se na isti kanonski token, pa moraju dati istu
+    // školu. Prije toga je arapski oblik tiho nestajao (token "3" prekratak), a
+    // "I. gimnazija Osijek" je bila univerzalni donor koja je odnosila SVAKI ordinalni
+    // upit u Osijeku — najvjerojatnijem gradu upita, jer je to grad antikvarijata.
+    const REDNI_BROJ_OBLICI = [
+      ["popis udžbenika 1. gimnazija Osijek", "I. gimnazija Osijek"],
+      ["popis udžbenika I. gimnazija Osijek", "I. gimnazija Osijek"],
+      ["popis udžbenika prva gimnazija Osijek", "I. gimnazija Osijek"],
+      ["popis udžbenika 2. gimnazija Osijek", "II. gimnazija Osijek"],
+      ["popis udžbenika II. gimnazija Osijek", "II. gimnazija Osijek"],
+      ["popis udžbenika druga gimnazija Osijek", "II. gimnazija Osijek"],
+      ["popis udžbenika 3. gimnazija Osijek", "III. gimnazija Osijek"],
+      ["popis udžbenika III. gimnazija Osijek", "III. gimnazija Osijek"],
+      ["popis udžbenika treća gimnazija Osijek", "III. gimnazija Osijek"],
+      ["popis udžbenika 2. gimnazija Varaždin", "Druga gimnazija Varaždin"],
+      ["popis udžbenika Druga gimnazija Varaždin", "Druga gimnazija Varaždin"],
+      // Rimski broj bez točke i pisan malim slovima — oba su česta u chatu.
+      ["popis udzbenika II gimnazija Osijek", "II. gimnazija Osijek"],
+      ["popis udzbenika iii. gimnazija osijek", "III. gimnazija Osijek"]
+    ];
+
+    for (const [upit, ocekivana] of REDNI_BROJ_OBLICI) {
+      it(`redni broj u bilo kojem obliku vodi na istu školu: ${upit}`, () => {
+        const r = findSchool(upit);
+        assert.strictEqual(
+          r.status,
+          "match",
+          `očekivan pogodak, dobiveno ${r.status}`
+        );
+        assert.strictEqual(r.school.naziv, ocekivana);
+      });
+    }
+
+    // Par uz RIMSKI_IZVAN_KORPUSA: normalizacija rednog broja ne smije arapskom ni
+    // riječnom obliku dati ono što rimskom nikad nije bilo dopušteno — redni broj
+    // razlikuje škole UNUTAR grada i o gradu ne govori ništa.
+    const REDNI_BROJ_IZVAN_KORPUSA = [
+      "popis udžbenika 3. gimnazija Split",
+      "popis udžbenika treća gimnazija Split",
+      "popis udžbenika 2. gimnazija Zagreb",
+      "popis udžbenika druga gimnazija Zagreb",
+      "popis udžbenika 2. gimnazija Čakovec",
+      "popis udžbenika 3. gimnazija Solin",
+      "popis udžbenika 2. gimnazija Sinj",
+      "popis udžbenika 3. gimnazija Trogir",
+      "popis udžbenika 2. gimnazija Imotski",
+      "popis udžbenika 3. gimnazija Sesvete",
+      "popis udžbenika 2. gimnazija Zaprešić"
+    ];
+
+    for (const upit of REDNI_BROJ_IZVAN_KORPUSA) {
+      it(`ne šalje popis škole iz korpusa na: ${upit}`, () => {
+        const r = findSchool(upit);
+        assert.notStrictEqual(
+          r.status,
+          "match",
+          `siguran pogodak u krivom gradu: ${r.school && r.school.naziv}`
+        );
+      });
+    }
+
+    // Granica riječi za rimski broj mora poznavati dijakritiku: s ASCII \b bi "Ivšić"
+    // pukao na "Iv" (= redni broj 4) + "šić", a svaka riječ koja završi na "ći." bi na
+    // kraju rečenice ispalila redni broj 1.
+    it("dijakritika ne raspada naziv škole na lažni redni broj", () => {
+      const r = findSchool("popis udžbenika Srednja škola Stjepan Ivšić Orahovica");
+      assert.strictEqual(r.status, "match");
+      assert.match(r.school.naziv, /Ivšić/);
+    });
+
+    it("riječ koja završava na 'ći.' ne postaje redni broj", () => {
+      assert.strictEqual(buildTextbookOutcome("Kada mogu doći po knjige.", {}), null);
+      assert.strictEqual(buildTextbookOutcome("Nije moguće doći.", {}), null);
+    });
   });
 
   describe("parseRazred", () => {
@@ -329,6 +406,46 @@ describe("textbookListService", () => {
       const outcome = buildTextbookOutcome("Ekonomska škola, 3. razred popis udžbenika", session);
       assert.strictEqual(outcome.reason, "textbook_ambiguous_school");
       assert.doesNotMatch(outcome.customerMessage, /Gimnazija Daruvar/);
+    });
+  });
+
+  // Otkad se redni broj normalizira, broj razreda iz upita ("za 2. razred") izgleda
+  // matcheru isto kao redni broj u nazivu škole — pa bi "Druga gimnazija Varaždin" i
+  // "II. gimnazija Osijek" postale suparnice koje pokrivaju obilježje koje pobjednik
+  // nema i oborile bi inače točan pogodak na "nejasno". Zato se razred uklanja iz teksta
+  // prije prepoznavanja škole; parseRazred ga i dalje čita iz izvorne poruke.
+  describe("broj razreda ne curi u prepoznavanje škole", () => {
+    const RAZRED_UPITI = [
+      ["popis udžbenika za 2. razred Gimnazija Daruvar", "Gimnazija Daruvar", "2"],
+      ["popis udžbenika Gimnazija Daruvar 1. razred", "Gimnazija Daruvar", "1"],
+      ["trebam popis za 3. razred u Gimnaziji Daruvar", "Gimnazija Daruvar", "3"],
+      ["popis udžbenika za drugi razred Gimnazija Daruvar", "Gimnazija Daruvar", "2"],
+      ["popis udžbenika Gimnazija Daruvar 1.a razred", "Gimnazija Daruvar", "1"],
+      ["popis udžbenika za 3. razred Medicinska škola Bjelovar", "Medicinska škola Bjelovar", "3"],
+      ["popis udžbenika za 2. razred Ekonomska škola Pula", "Ekonomska škola Pula", "2"]
+    ];
+
+    for (const [upit, ocekivana, razred] of RAZRED_UPITI) {
+      it(`prepoznaje školu i razred: ${upit}`, () => {
+        const r = findSchool(upit);
+        assert.strictEqual(r.status, "match", `očekivan pogodak, dobiveno ${r.status}`);
+        assert.strictEqual(r.school.naziv, ocekivana);
+        assert.strictEqual(parseRazred(upit), razred);
+      });
+    }
+
+    it("broj razreda ne izvlači školu s tim rednim brojem u nazivu", () => {
+      const outcome = buildTextbookOutcome("popis udžbenika za 2. razred Gimnazija Daruvar", {});
+      assert.strictEqual(outcome.reason, "textbook_list");
+      assert.match(outcome.customerMessage, /Gimnazija Daruvar/);
+      assert.doesNotMatch(outcome.customerMessage, /Druga gimnazija Varaždin|II\. gimnazija Osijek/);
+    });
+
+    it("razred i redni broj škole u istom upitu se ne miješaju", () => {
+      const r = findSchool("popis udžbenika 3. gimnazija Osijek 2. razred");
+      assert.strictEqual(r.status, "match");
+      assert.strictEqual(r.school.naziv, "III. gimnazija Osijek");
+      assert.strictEqual(parseRazred("popis udžbenika 3. gimnazija Osijek 2. razred"), "2");
     });
   });
 

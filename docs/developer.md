@@ -546,8 +546,13 @@ upitom — sonda koja mijenja grad u svakom nazivu daje 91 školu, ali većina t
 upita nije realna; uža sonda daje 3. Stvarni je broj između, i namjerno nije
 fiksiran ovdje jer nijedna od te dvije mjere nije obranjiva.
 
-Rimski brojevi (`II. gimnazija Split`) su **riješeni** — redni broj sam ne može
-nositi siguran pogodak, vidi `NERAZLIKOVNI_TOKENI` u servisu.
+Redni brojevi (`II. gimnazija Split`) su **riješeni** — redni broj sam ne može
+nositi siguran pogodak, vidi `NERAZLIKOVNI_TOKENI` u servisu. Sva tri zapisa
+rednog broja — rimski (`III.`), arapski (`3.`) i riječima (`treća`) — svode se
+pri tokenizaciji na isti kanonski token (`rb1`–`rb5`), i u nazivima škola i u
+tekstu upita, pa `3. gimnazija Osijek` vodi na `III. gimnaziju Osijek`. Broj
+razreda (`za 2. razred`) uklanja se iz teksta prije prepoznavanja škole, inače
+bi ga matcher čitao kao redni broj u nazivu; razred i dalje čita `parseRazred`.
 
 **Kako se ovo ispravlja kad dođe na red.** Ne duljom crnom listom nego
 pozitivnom provjerom: `output/Registar_skola.xlsx` u projektu `popis-udzbenika`
