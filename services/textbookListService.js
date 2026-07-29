@@ -552,6 +552,41 @@ const TEXTBOOK_RE = /\budzbeni|\bpopis/;
 // MIN_SCORE, da nedovoljno određen upit ne izvuče nasumične kandidate.
 const RELAXED_COVERAGE = 0.34;
 
+// ─── UPIT ZA POPISOM BEZ IMENOVANE ŠKOLE ─────────────────────────────────────
+// "trebam popis udžbenika" ne imenuje školu, pa findSchool vraća "none" i poruka je
+// dosad padala u generički fallback. Posjetitelj je očito u ovom toku — pitamo ga za
+// školu i pamtimo da čekamo naziv (isti marker kao kod "Na koju školu mislite?").
+//
+// Razlikovanje je cijeli rizik ove grane: findSchool vraća "none" i za "Kako naručiti
+// udžbenike?", "Otkupljujete li udžbenike?" i "Koja je cijena udžbenika za 3. razred
+// gimnazije?" — postojeće putanje odgovora koje se ne smiju oteti. Zato pravilo NIJE
+// izvedeno iz intuicije nego izmjereno nad stvarnim upitima: 76 iz
+// tests/e2e-generated.test.js (destilirani iz 200 tiketa) + 31 iz tests/e2e.test.js
+// = 107 upita.
+//   · 15 ih spominje udžbenik (GEN-02, 07, 09, 13, 14, 24, 36, 37, 66, 67, A6, C1,
+//     G3, J1, K2) — svi su o otkupu, narudžbi, cijeni, dostavi ili uplati.
+//   · 1 spominje popis (GEN-12 "…vrijednost mojih knjiga po popisu ili fotografijama?").
+//   · 0 ih ima obje riječi, a kamoli u kolokaciji "popis (…) udžbenika".
+// Kolokacija je dakle jedina crta koja stvarno razdvaja "daj mi popis" od "kako
+// naručiti / otkupljujete li / koliko košta": tražena je RIJEČ POPIS UZ UDŽBENIKE, ne
+// bilo koja od njih. Sama riječ "udžbenik" ne znači ništa (15/107 upita je ima, nijedan
+// ne traži popis), a sama riječ "popis" hvata GEN-12.
+// Domet od najviše dvije riječi između njih pokriva "popis školskih udžbenika" i
+// "popis potrebnih udžbenika", a ne dopušta da se dvije riječi iz različitih rečenica
+// slučajno spoje ("…poslao popis. Otkupljujete li udžbenike?").
+// Obrnuti redoslijed ("udžbenici — gdje je popis") namjerno NE hvatamo: dobitak je
+// hipotetski, a upravo bi taj oblik spojio otkupnu rečenicu s naknadnim "popis".
+const TRAZI_POPIS_RE = /\bpopis\w*(?:\s+\w+){0,2}\s+udzbeni/;
+
+// Iznimka: kolokacija se pojavljuje i u otkupnom smjeru — "šaljem vam popis udžbenika
+// za otkup", "evo popisa udžbenika koje želim prodati". Takva poruka nije traženje
+// školskog popisa i mora i dalje teći u bazu znanja (GEN-06 i GEN-12 posjetitelja
+// izrijekom upućuju da pošalje popis naslova/ISBN za procjenu). Korijeni prate
+// deklinaciju: "prodaj" pokriva prodaja/prodajem/prodaje, a prošlo vrijeme
+// ("prodao/prodala/prodati") ide zasebno. Riječi kupnje ovdje NEMA — tko traži popis,
+// najčešće ga traži baš da bi kupio.
+const OTKUPNI_KONTEKST_RE = /otkup|prodaj|proda[olt]|procijen|procjen|\bisbn\b/;
+
 const RAZRED_RIJECI = {
   prvi: "1", prvom: "1", prvog: "1", prva: "1",
   drugi: "2", drugom: "2", drugog: "2", druga: "2",
@@ -587,9 +622,17 @@ function safeAnswer(customerMessage, reason) {
   };
 }
 
-function buildListAnswer(skola, razred, godina) {
+function buildListAnswer(skola, razred, godina, session = {}) {
   const dokumenti = skola.dokumenti.filter((d) => d.razred === razred || d.razred === null);
   if (!dokumenti.length) return buildNoRazredAnswer(skola, razred, godina);
+
+  // Roditelj dvoje djece pita za drugo dijete odmah nakon prvog popisa ("a za drugo
+  // dijete treba 3. razred iste škole", "a 3. razred?"). Zato školu pamtimo i NAKON
+  // poslanog popisa, istim markerom kojim je pamti buildAskRazredAnswer — pa vrijede
+  // iste zaštite: buildTextbookOutcome ga troši na ulazu (vrijedi točno jednu poruku),
+  // škola pouzdano imenovana u novoj poruci ga pobjeđuje, a poruka bez škole, razreda
+  // i žalbe pada u redoviti tok kao i dosad.
+  session.textbookSchoolId = skola.id;
 
   const uvod = dokumenti.length > 1
     ? `${skola.naziv} objavljuje popis po smjerovima. Evo svih popisa za ${razred}. razred (${godina}):`
@@ -656,6 +699,22 @@ function buildCandidatesAnswer(candidates, session, uvod, reason, razred = null)
   return safeAnswer(redci.join("\n"), reason);
 }
 
+// Upit očito traži popis, ali školu ne imenuje ni približno (findSchool "none", a ni
+// blaži prag nije izvukao nijednog kandidata). Umjesto tihog odustajanja pitamo za školu
+// i pamtimo da čekamo naziv — sljedeća poruka ("Gimnazija Daruvar") tako ulazi u
+// postojeću granu cekamoSkolu umjesto da padne kroz TEXTBOOK_RE.
+function buildAskSchoolAnswer(session, razred) {
+  session.textbookAwaitingSchool = true;
+  if (razred) session.textbookRazred = razred;
+  const uputa = razred
+    ? `Napišite naziv škole, pa Vam šaljem popis za ${razred}. razred.`
+    : "Napišite naziv škole i razred, pa Vam šaljem popis.";
+  return safeAnswer(
+    `Za koju školu trebate popis udžbenika? ${uputa}`,
+    "textbook_need_school"
+  );
+}
+
 function buildTextbookOutcome(userMessage, session = {}) {
   const idx = loadIndex();
   const razred = parseRazred(userMessage);
@@ -694,7 +753,7 @@ function buildTextbookOutcome(userMessage, session = {}) {
       const skola = pogodakUPoruci.school;
       if (!skola.dokumenti.length) return buildNoListAnswer(skola, idx.godina);
       if (!razred) return buildAskRazredAnswer(skola, session);
-      return buildListAnswer(skola, razred, idx.godina);
+      return buildListAnswer(skola, razred, idx.godina, session);
     }
 
     if (pogodakUPoruci.status === "ambiguous") {
@@ -712,7 +771,7 @@ function buildTextbookOutcome(userMessage, session = {}) {
       const skola = idx.skole.find((s) => s.id === zapamcena);
       if (skola) {
         return skola.dokumenti.length
-          ? buildListAnswer(skola, razred, idx.godina)
+          ? buildListAnswer(skola, razred, idx.godina, session)
           : buildNoListAnswer(skola, idx.godina);
       }
     }
@@ -735,7 +794,7 @@ function buildTextbookOutcome(userMessage, session = {}) {
       const skola = pogodakUOdgovoru.school;
       if (!skola.dokumenti.length) return buildNoListAnswer(skola, idx.godina);
       if (!koristeniRazred) return buildAskRazredAnswer(skola, session);
-      return buildListAnswer(skola, koristeniRazred, idx.godina);
+      return buildListAnswer(skola, koristeniRazred, idx.godina, session);
     }
 
     if (pogodakUOdgovoru.status === "ambiguous") {
@@ -765,7 +824,15 @@ function buildTextbookOutcome(userMessage, session = {}) {
     // Strogi prag nije prošao, a upit očito traži popis — vjerojatno je naziv
     // upisan nepotpuno ili s greškom. Ponudi najbliže umjesto tihog odustajanja.
     const blizi = rankSchools(userMessage, { minCoverage: RELAXED_COVERAGE }).slice(0, 3);
-    if (!blizi.length) return null;
+    if (!blizi.length) {
+      // Nijedna škola nije ni blizu — ako poruka jasno traži popis udžbenika (a ne
+      // šalje ga za otkup), pitamo za školu umjesto da posjetitelja pustimo u
+      // generički fallback. Vidi TRAZI_POPIS_RE.
+      if (TRAZI_POPIS_RE.test(norm) && !OTKUPNI_KONTEKST_RE.test(norm)) {
+        return buildAskSchoolAnswer(session, razred);
+      }
+      return null;
+    }
     return buildCandidatesAnswer(
       blizi.map((row) => row.school), session,
       "Nisam siguran na koju školu mislite. Jeste li mislili na neku od ovih?",
@@ -776,7 +843,7 @@ function buildTextbookOutcome(userMessage, session = {}) {
   const skola = pogodak.school;
   if (!skola.dokumenti.length) return buildNoListAnswer(skola, idx.godina);
   if (!razred) return buildAskRazredAnswer(skola, session);
-  return buildListAnswer(skola, razred, idx.godina);
+  return buildListAnswer(skola, razred, idx.godina, session);
 }
 
 module.exports = {
