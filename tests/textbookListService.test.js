@@ -120,13 +120,54 @@ describe("textbookListService", () => {
     ];
 
     for (const [upit, kriva] of PODSKUP_UPITI) {
-      it(`ne pogađa "${kriva}" na: ${upit}`, () => {
+      it(`pita umjesto da pošalje "${kriva}" na: ${upit}`, () => {
+        // Tvrdimo točan ishod, ne samo "nije ta škola" — inače bi test prošao i da kod
+        // regresira na neku TREĆU krivu školu, ili da se ova preimenuje sljedeće ljeto.
+        const r = findSchool(upit);
+        assert.strictEqual(
+          r.status,
+          "ambiguous",
+          `očekivano pitanje, dobiveno ${r.status}${r.school ? `: ${r.school.naziv}` : ""}`
+        );
+      });
+    }
+
+    // Redni broj razlikuje škole unutar grada i ne kaže ništa o gradu. Par je nerazdvojiv:
+    // ispravak koji ušutka Split, a usput obori Osijek, nije ispravak.
+    const RIMSKI_IZVAN_KORPUSA = [
+      "popis udžbenika za III. gimnaziju Split",
+      "popis udžbenika II. gimnazija Zagreb",
+      "popis udžbenika II. gimnazija Čakovec",
+      "popis udžbenika III. gimnazija Solin",
+      "popis udžbenika II. gimnazija Sinj",
+      "popis udžbenika III. gimnazija Trogir",
+      "popis udžbenika II. gimnazija Imotski",
+      "popis udžbenika III. gimnazija Sesvete",
+      "popis udžbenika II. gimnazija Zaprešić"
+    ];
+
+    for (const upit of RIMSKI_IZVAN_KORPUSA) {
+      it(`ne šalje popis osječke škole na: ${upit}`, () => {
         const r = findSchool(upit);
         assert.notStrictEqual(
-          r.status === "match" ? r.school.naziv : null,
-          kriva,
-          `poslan je popis krive škole: ${kriva}`
+          r.status,
+          "match",
+          `siguran pogodak u krivom gradu: ${r.school && r.school.naziv}`
         );
+      });
+    }
+
+    const RIMSKI_U_KORPUSU = [
+      ["popis udžbenika I. gimnazija Osijek", "I. gimnazija Osijek"],
+      ["popis udžbenika II. gimnazija Osijek", "II. gimnazija Osijek"],
+      ["popis udžbenika III. gimnazija Osijek", "III. gimnazija Osijek"]
+    ];
+
+    for (const [upit, ocekivana] of RIMSKI_U_KORPUSU) {
+      it(`i dalje prepoznaje: ${upit}`, () => {
+        const r = findSchool(upit);
+        assert.strictEqual(r.status, "match");
+        assert.strictEqual(r.school.naziv, ocekivana);
       });
     }
   });

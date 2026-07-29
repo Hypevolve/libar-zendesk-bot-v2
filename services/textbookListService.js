@@ -62,6 +62,24 @@ const DISTINCTIVE_IDF = 0.8;
 // iznad "škola Daruvar" (cov 0,71 — ali ima 2 kandidata pa ionako ne prolazi uvjet "jedini").
 // Postavljen na sredinu raspona 0,50–0,76.
 const LONE_SURVIVOR_COVERAGE = 0.65;
+// Tokeni koji školu svrstavaju u tip ili redoslijed, ali ne govore KOJA je i GDJE je.
+// Siguran pogodak mora pokriti barem jedan token izvan ovog skupa — u praksi grad ili
+// vlastito ime. Bez toga redni broj sam nosi pogodak: "III. gimnazija Split" je vraćala
+// III. gimnaziju Osijek jer je "iii" ultrarijedak token (idf dovoljan da sam prijeđe
+// MIN_SCORE) i uz "gimnazija" zadovoljava MIN_MATCHED_TOKENS, dok "split" u korpusu ne
+// postoji pa ga ni imenujeTudeObiljezje ne vidi — ta provjera traži suparnika koji token
+// pokriva, a nijedna škola u bazi nije u Splitu. Redni broj razlikuje škole UNUTAR grada
+// i o gradu ne govori ništa, pa ne smije biti jedini oslonac.
+// Jednoslovni oblici ("i", "v") su ovdje radi potpunosti — tokenize ih ionako odbacuje
+// kao prekratke, zbog čega se "I. gimnazija Osijek" i ponaša drukčije od "II.".
+const NERAZLIKOVNI_TOKENI = new Set([
+  // tip škole
+  "skola", "skole", "srednja", "gimnazija",
+  // redni broj, rimski i riječima
+  "i", "ii", "iii", "iv", "v",
+  "prva", "prvi", "druga", "drugi", "treca", "treci", "cetvrta", "cetvrti", "peta", "peti"
+]);
+
 // Podudaranje po prefiksu hvata padeže ("daruvaru" ~ "daruvar") — hrvatska deklinacija mijenja
 // samo rep riječi, obično jedno slovo ("daruvar"→"daruvaru", "gimnazija"→"gimnaziju"). Zato
 // tražimo da se tokeni podudaraju u SVIM osim najviše jednog znaka SVAKOG tokena, a ne samo
@@ -164,6 +182,9 @@ function scoreSchool(skola, queryTokens, idf) {
   let score = 0;
   // Koliko je RAZLIČITIH tokena naziva upit pogodio — vidi MIN_MATCHED_TOKENS.
   let matchedTokens = 0;
+  // Je li upit pogodio barem jedan token koji nosi identitet škole (grad ili vlastito
+  // ime), a ne samo tip i redni broj — vidi NERAZLIKOVNI_TOKENI.
+  let razlikovniPogodak = false;
   // Je li neki prepoznatljiv token naziva (iznad DISTINCTIVE_IDF) ostao nepokriven upitom.
   // Takva škola ne može biti siguran pogodak — vidi findSchool.
   let uncoveredDistinctive = false;
@@ -180,7 +201,10 @@ function scoreSchool(skola, queryTokens, idf) {
       score += weight * TYPO_WEIGHT;
       matched = true;
     }
-    if (matched) matchedTokens += 1;
+    if (matched) {
+      matchedTokens += 1;
+      if (!NERAZLIKOVNI_TOKENI.has(schoolToken)) razlikovniPogodak = true;
+    }
     if (!matched && weight > DISTINCTIVE_IDF) {
       uncoveredDistinctive = true;
     }
@@ -189,6 +213,7 @@ function scoreSchool(skola, queryTokens, idf) {
     score,
     coverage: skola.maxScore ? score / skola.maxScore : 0,
     matchedTokens,
+    razlikovniPogodak,
     uncoveredDistinctive
   };
 }
@@ -216,12 +241,12 @@ function rankSchools(
 // konkurent ispadne — pa ostane sama, MARGIN nema s čime usporediti i korisnik dobije
 // popis krive škole ("Isusovačka gimnazija Osijek" → "I. gimnazija Osijek", jer tokenize
 // odbacuje "I." kao prekratak token).
-function imenujeTudeObiljezje(best, scored, queryTokens, idf) {
+function imenujeTudeObiljezje(best, suparnici, queryTokens, idf) {
   return queryTokens.some((queryToken) => {
     const weight = idf.get(queryToken);
     if (!(weight > DISTINCTIVE_IDF)) return false;
     if (pokrivaToken(best.school, queryToken)) return false;
-    return scored.some((row) => row.school.id !== best.school.id && pokrivaToken(row.school, queryToken));
+    return suparnici.some((row) => row.school.id !== best.school.id && pokrivaToken(row.school, queryToken));
   });
 }
 
@@ -255,6 +280,10 @@ function findSchool(text) {
     }
     best = prvi;
   }
+
+  // Pogodak koji počiva samo na tipu i rednom broju ("II. gimnazija") ne kaže o kojem je
+  // gradu riječ — radije pitamo nego da popis ode u krivi grad (vidi NERAZLIKOVNI_TOKENI).
+  if (!best.razlikovniPogodak) return nejasno();
 
   const idx = loadIndex();
   if (imenujeTudeObiljezje(best, suparnici, tokenize(text), idx.idf)) return nejasno();
