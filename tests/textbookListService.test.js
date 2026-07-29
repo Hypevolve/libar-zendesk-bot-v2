@@ -913,6 +913,107 @@ describe("textbookListService", () => {
       assert.strictEqual(session.textbookPotvrdaSkolaId, undefined, "sesija nije očišćena");
     });
 
+    // Uputa mora opisivati točno ono što kod prima. Prva izvedba je tražila '"da" i razred',
+    // a onda odbijala "da 2." i "2." — isti kvar kao onaj koji ovaj rad popravlja, samo
+    // jedno stanje ulijevo. Ovaj blok je zaključava: svaki oblik ima svoju tvrdnju, da
+    // nijedan ne može tiho ispasti.
+    describe("odgovor na pitanje o jednoj školi — svaki oblik", () => {
+      // Škola iz prijavljenog razgovora; ima popise za 1., 2. i 3. razred, pa se razred
+      // pročitan iz odgovora vidi u samom popisu.
+      const PONUDA = "Može i za Graditeljsku, prirodoslovnu i rudarsku školu";
+      const NAZIV = "Graditeljska, prirodoslovna i rudarska škola Varaždin";
+
+      function pitanjeSJednomSkolom() {
+        const session = {};
+        const pitanje = buildTextbookOutcome("trebam popis udžbenika", session);
+        assert.strictEqual(pitanje.reason, "textbook_need_school");
+        const ponuda = buildTextbookOutcome(PONUDA, session);
+        assert.strictEqual(ponuda.reason, "textbook_ambiguous_school");
+        assert.match(ponuda.customerMessage, /Je li to ta škola\?/);
+        assert.ok(session.textbookPotvrdaSkolaId, "škola nije zapamćena kao ponuđena");
+        return session;
+      }
+
+      // Potvrda s razredom i gol razred — oba moraju dati popis za taj razred.
+      for (const odgovor of ["da 2.", "da 2", "da, 2. razred", "da drugi", "2.", "2", "2. razred", "drugi"]) {
+        it(`"${odgovor}" daje popis za 2. razred`, () => {
+          const session = pitanjeSJednomSkolom();
+          const outcome = buildTextbookOutcome(odgovor, session);
+          assert.ok(outcome, `odgovor je ostao bez odgovora: ${odgovor}`);
+          assert.strictEqual(outcome.reason, "textbook_list");
+          assert.match(outcome.customerMessage, new RegExp(NAZIV.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+          assert.match(outcome.customerMessage, /2\. razred/);
+          assert.match(outcome.customerMessage, /\[[^\]]+\]\(https:\/\/[^)]+\)/);
+        });
+      }
+
+      // Gola potvrda — škola je razriješena, razred se traži kao i dosad.
+      for (const odgovor of ["da", "to je to", "tako je", "može", "Da, hvala"]) {
+        it(`"${odgovor}" potvrđuje školu i pita za razred`, () => {
+          const session = pitanjeSJednomSkolom();
+          const outcome = buildTextbookOutcome(odgovor, session);
+          assert.ok(outcome, `potvrda je ostala bez odgovora: ${odgovor}`);
+          assert.strictEqual(outcome.reason, "textbook_need_razred");
+          assert.match(outcome.customerMessage, /Graditeljska/);
+          assert.strictEqual(session.textbookAwaitingRazred, true, "sesija ne pamti da čeka razred");
+        });
+      }
+
+      it("prijavljeni razgovor u cijelosti završava popisom za 2. razred", () => {
+        const session = {};
+        const prvo = buildTextbookOutcome("trebam popis udžbenika", session);
+        assert.match(prvo.customerMessage, /Za koju školu trebate popis udžbenika\?/);
+        const drugo = buildTextbookOutcome("Može i za Graditeljsku, prirodoslovnu i rudarsku školu", session);
+        assert.match(drugo.customerMessage, /Je li to ta škola\?/);
+        const trece = buildTextbookOutcome("2.", session);
+        assert.strictEqual(trece.reason, "textbook_list");
+        assert.match(trece.customerMessage, /Graditeljska, prirodoslovna i rudarska škola Varaždin/);
+        assert.match(trece.customerMessage, /2\. razred/);
+      });
+
+      it("uputa traži samo ono što kod prima (razred, ili puni naziv druge škole)", () => {
+        const session = {};
+        buildTextbookOutcome("trebam popis udžbenika", session);
+        const ponuda = buildTextbookOutcome(PONUDA, session);
+        assert.match(ponuda.customerMessage, /Ako jest, napišite razred \(npr\. "2\."\) i šaljem Vam popis\./);
+        assert.match(ponuda.customerMessage, /Ako nije, napišite puni naziv škole\./);
+        assert.doesNotMatch(ponuda.customerMessage, /napišite "da" i razred/);
+      });
+
+      it("druga imenovana škola pobjeđuje ponuđenu", () => {
+        const session = pitanjeSJednomSkolom();
+        const outcome = buildTextbookOutcome("Gimnazija Daruvar, 2. razred", session);
+        assert.strictEqual(outcome.reason, "textbook_list");
+        assert.match(outcome.customerMessage, /Gimnazija Daruvar/);
+        assert.doesNotMatch(outcome.customerMessage, /Graditeljska/);
+      });
+
+      for (const odustajanje of ["hvala", "Hvala Vam!", "koliko košta dostava?", "ok", "ne treba, hvala"]) {
+        it(`odustajanje i dalje ne dobiva popis: ${odustajanje}`, () => {
+          const session = pitanjeSJednomSkolom();
+          assert.strictEqual(buildTextbookOutcome(odustajanje, session), null, `gate se aktivirao na: ${odustajanje}`);
+          assert.strictEqual(session.textbookPotvrdaSkolaId, undefined, "marker je preživio promjenu teme");
+          assert.strictEqual(session.textbookAwaitingSchool, undefined, "marker je preživio promjenu teme");
+          assert.strictEqual(session.textbookRazred, undefined, "razred je preživio promjenu teme");
+        });
+      }
+
+      it("broj s vlastitim značenjem nije razred ni ovdje", () => {
+        for (const poruka of ["2 djeteta", "2 puta", "3 komada"]) {
+          const session = pitanjeSJednomSkolom();
+          assert.strictEqual(buildTextbookOutcome(poruka, session), null, `gate se aktivirao na: ${poruka}`);
+        }
+      });
+
+      it("gol razred izvan ovog stanja i dalje ne znači ništa", () => {
+        for (const poruka of ["da 2.", "2.", "drugi", "da"]) {
+          const session = {};
+          assert.strictEqual(buildTextbookOutcome(poruka, session), null, `gate se aktivirao na: ${poruka}`);
+          assert.deepStrictEqual(session, {}, `poruka je postavila marker: ${poruka}`);
+        }
+      });
+    });
+
     // Druga strana: potvrda vrijedi samo tamo gdje je ponuđena JEDNA škola.
     it("dva ili više kandidata zadržavaju postojeću formulaciju i ne primaju 'da'", () => {
       const session = {};

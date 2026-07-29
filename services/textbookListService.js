@@ -652,39 +652,68 @@ const GOLI_RAZRED_PUNJENJE = new Set([
   "a", "b", "c", "d", "e"
 ]);
 
-function citajGoliRazred(text) {
+// Vraća { samoRazred, razred }: "samoRazred" znači da poruka NE sadrži ništa osim rednog
+// broja i punjenja (dakle da je cijela odgovor na pitanje, a ne nova rečenica), a "razred"
+// je pročitani broj ili null ako ga u poruci nema ("da hvala" je samoRazred bez razreda).
+function citajOdgovorORazredu(text) {
   const rijeci = normalizeForSearch(text).split(" ").filter(Boolean);
-  if (!rijeci.length) return null;
   let nadeni = null;
   for (const rijec of rijeci) {
     const znamenka = /^[1-5]$/.test(rijec) ? rijec : null;
     const kandidat = znamenka || GOLI_RAZRED_RIJEC.get(rijec) || null;
     if (kandidat) {
       // Dva različita razreda u istoj poruci ("1. i 2.") — ne pogađamo koji je tražen.
-      if (nadeni && nadeni !== kandidat) return null;
+      if (nadeni && nadeni !== kandidat) return { samoRazred: false, razred: null };
       nadeni = kandidat;
       continue;
     }
-    if (!GOLI_RAZRED_PUNJENJE.has(rijec)) return null;
+    if (!GOLI_RAZRED_PUNJENJE.has(rijec)) return { samoRazred: false, razred: null };
   }
-  return nadeni;
+  return { samoRazred: true, razred: nadeni };
+}
+
+function citajGoliRazred(text) {
+  const { samoRazred, razred } = citajOdgovorORazredu(text);
+  return samoRazred ? razred : null;
 }
 
 // ─── POTVRDA JEDNOG PONUĐENOG KANDIDATA ──────────────────────────────────────
-// Kad je kandidat samo jedan, pitanje glasi "Je li to ta škola?" — pa golo "da" mora
-// vrijediti kao odgovor. Rječnik je uzak i mjeri se nad CIJELOM porukom: potvrda je kratka
-// i sama za sebe, a sve duže nosi vlastito značenje. "ok" namjerno NIJE ovdje — u
-// postojećim testovima stoji kao odustajanje ("ok", "ne treba, hvala") i takvo mora ostati.
-// Razred uz potvrdu je dopušten ("da, 2. razred") jer ga parseRazred čita zasebno, pa ga
-// prije provjere uklanjamo iz teksta istom frazom kojom se uklanja i za matcher.
-const POTVRDA_RE = new RegExp(
-  "^(?:da|da da|tako je|to je to|to je ta|to je ta skola|upravo tako|tocno|tocno tako"
-  + "|jest|jeste|potvrdujem|moze)(?: hvala| molim| hvala lijepa)?$"
+// Kad je kandidat samo jedan, pitanje glasi "Je li to ta škola?" — pa moramo primiti svaki
+// smislen odgovor na TO pitanje, a ne samo jedan njegov oblik. Prvi pokušaj je primao samo
+// golu potvrdu ("da") i potvrdu s punom frazom razreda ("da, 2. razred"), a odbijao "da 2.",
+// "da 2", "2." i "2. razred" — dakle i ono što je sam tražio od posjetitelja. To je isti
+// kvar koji ova izmjena i popravlja, samo jedno stanje ulijevo.
+//
+// Primamo, uz postavljen marker textbookPotvrdaSkolaId (dakle točno jednu poruku nakon
+// pitanja):
+//   · golu potvrdu                      "da", "to je to", "tako je", "može"
+//   · potvrdu s razredom                "da 2.", "da 2", "da, 2. razred", "da drugi"
+//   · gol razred bez potvrde            "2.", "2", "2. razred", "drugi"
+//     (posjetitelj potvrđuje i precizira u istom dahu — druge škole ionako nema)
+//   · puni naziv škole (± razred)       obrađen prije ovoga, kroz findSchool
+// Razred se čita ISTIM, stanjem omeđenim čitačem kao u grani "bot pita za razred"
+// (citajOdgovorORazredu), da mehanizam ostane jedan i da granice ostanu iste: cijela
+// poruka mora biti potvrda, redni broj i punjenje. Izvan ovih stanja gol broj i dalje ne
+// znači ništa.
+//
+// Rječnik potvrde je uzak i vezan uz POČETAK poruke. "ok" namjerno NIJE u njemu — u
+// postojećim testovima stoji kao odustajanje ("ok", "ne treba, hvala") i takvo ostaje.
+const POTVRDA_PREFIKS_RE = new RegExp(
+  "^(?:da|to je to|to je ta(?: skola)?|tako je|upravo tako|tocno(?: tako)?"
+  + "|jest|jeste|potvrdujem|moze)\\b\\s*"
 );
 
-function jePotvrda(norm) {
-  const bezRazreda = norm.replace(RAZRED_FRAZA, " ").replace(/\s+/g, " ").trim();
-  return POTVRDA_RE.test(bezRazreda);
+// Vraća pročitani razred (ili null) kad je poruka odgovor na "Je li to ta škola?", a
+// undefined kad nije — pa pozivatelj razlikuje "potvrda bez razreda" od "nije potvrda".
+function citajPotvrdu(userMessage) {
+  const norm = normalizeForSearch(userMessage);
+  const ostatak = norm.replace(POTVRDA_PREFIKS_RE, "");
+  const imaPotvrdu = ostatak !== norm;
+  const { samoRazred, razred } = citajOdgovorORazredu(ostatak);
+  // Bez uvodne potvrde primamo samo poruku koja je CIJELA razred ("2.", "2. razred").
+  if (!imaPotvrdu && !razred) return undefined;
+  if (!samoRazred) return undefined;
+  return razred;
 }
 
 function markdownLink(label, url) {
@@ -780,9 +809,11 @@ function buildCandidatesAnswer(candidates, session, uvod, reason, razred = null)
   if (candidates.length === 1) {
     const [jedina] = candidates;
     session.textbookPotvrdaSkolaId = jedina.id;
+    // Uputa smije tražiti samo ono što kod stvarno prima. Kad razred nije poznat, dovoljan
+    // je gol razred ("2.") — pa ga i tražimo, umjesto da tražimo potvrdu I razred.
     const potvrda = razred
       ? `Ako jest, napišite "da" i šaljem Vam popis za ${razred}. razred.`
-      : 'Ako jest, napišite "da" i razred.';
+      : 'Ako jest, napišite razred (npr. "2.") i šaljem Vam popis.';
     return safeAnswer(
       [
         `Imam samo jednu školu koja bi mogla odgovarati: ${jedina.naziv}. Je li to ta škola?`,
@@ -918,15 +949,21 @@ function buildTextbookOutcome(userMessage, session = {}) {
       );
     }
 
-    // Bot je ponudio jednu jedinu školu i pitao "Je li to ta škola?" — golo "da" je odgovor
-    // na to pitanje. Vrijedi samo uz marker (dakle točno jednu poruku, i samo ako je pitanje
-    // stvarno postavljeno) i samo na potvrdi koja je cijela poruka — vidi jePotvrda.
-    if (ponudenaSkola && jePotvrda(norm)) {
-      const skola = idx.skole.find((s) => s.id === ponudenaSkola);
-      if (skola) {
-        if (!skola.dokumenti.length) return buildNoListAnswer(skola, idx.godina);
-        if (!koristeniRazred) return buildAskRazredAnswer(skola, session);
-        return buildListAnswer(skola, koristeniRazred, idx.godina, session);
+    // Bot je ponudio jednu jedinu školu i pitao "Je li to ta škola?" — primamo svaki
+    // smislen odgovor na to pitanje: golu potvrdu, potvrdu s razredom i gol razred.
+    // Vrijedi samo uz marker (točno jednu poruku, i samo ako je pitanje stvarno
+    // postavljeno) i samo na poruci koja je cijela odgovor — vidi citajPotvrdu.
+    if (ponudenaSkola) {
+      const potvrdeniRazred = citajPotvrdu(userMessage);
+      if (potvrdeniRazred !== undefined) {
+        const skola = idx.skole.find((s) => s.id === ponudenaSkola);
+        if (skola) {
+          // Razred iz potvrde ima prednost pred prenesenim — vrijedi zadnje što je napisao.
+          const zavrsniRazred = potvrdeniRazred || koristeniRazred;
+          if (!skola.dokumenti.length) return buildNoListAnswer(skola, idx.godina);
+          if (!zavrsniRazred) return buildAskRazredAnswer(skola, session);
+          return buildListAnswer(skola, zavrsniRazred, idx.godina, session);
+        }
       }
     }
 
