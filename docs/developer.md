@@ -489,6 +489,124 @@ libar-zendesk-bot-v2/
 
 ---
 
+## Popis udžbenika po školi i razredu
+
+Web chat odgovara linkom na popis udžbenika koji je škola objavila za tekuću
+školsku godinu (2026./2027.). Deterministički, bez LLM poziva.
+
+- Servis: [services/textbookListService.js](../services/textbookListService.js)
+- Podaci: `data/popis-udzbenika-2026-27.json` (generirani, commitani) — 281
+  srednja škola u opsegu, od toga 160 s potvrđenim popisom za 2026./2027.,
+  879 dokumenata ukupno
+- Gate: `_resolveAutomatedOutcome` u [index.js](../index.js), iza escalation
+  gateova (prilozi, intent) i ispred provjere referentnih činjenica i cachea;
+  aktivan samo za `channelType === "web_chat"`
+- Zastavica: `POPIS_UDZBENIKA_ENABLED` (zadano `true`, `config/env.js`)
+
+Škola se prepoznaje IDF bodovanjem tokena naziva, razred regexom. Kad je
+škola nejasna ili razred nedostaje, bot pita umjesto da pogađa. Uz svaki
+popis ide disclaimer da je informativan i preuzet iz javno dostupne baze.
+
+Nepotpun ili neuredan upis naziva škole podnosi se na tri razine: dijakritici,
+velika slova i interpunkcija otpadaju normalizacijom; padeži se hvataju
+podudaranjem po prefiksu; tipfeleri uređivačkom udaljenošću. Kad ni to ne da
+siguran pogodak, bot ponudi najbliže škole ("jeste li mislili…") umjesto da
+tiho odustane.
+
+Linkovi na dokumente idu kao markdown (`[oznaka](url)`) unutar teksta poruke,
+ne u `outcome.links` — widget ih renderira preko `renderContent()` u
+[public/index.html](../public/index.html), koji podržava upravo taj ograničen
+markdown (linkovi + podebljanje).
+
+Opseg: srednje škole u 18 županija (bez Grada Zagreba, Splitsko-dalmatinske i
+Međimurske — namjerno, neće se dodavati). Škole bez objavljenog popisa su u
+podacima s praznim `dokumenti`, pa ih bot prepozna i kaže da popis još nije
+objavljen.
+
+### Poznato ograničenje: škole izvan opsega
+
+Bot ne zna da škole izvan njegovih 18 županija postoje. Kad korisnik imenuje
+takvu školu, matcher vidi samo tokene koje poznaje — grad koji nije u korpusu
+(`split`, `zagreb`) nema IDF težinu i simetrična provjera `imenujeTudeObiljezje`
+ga preskoči. Ako se ostatak naziva poklopi sa školom **unutar** opsega, bot
+pošalje njezin popis, sa svim samopouzdanjem i disclaimerom.
+
+Provjereni primjeri:
+
+```
+Prometno-tehnička škola Split      ->  Prometno-tehnička škola Šibenik
+Građevinska tehnička škola Split   ->  Građevinska tehnička škola Rijeka
+Strojarska tehnička škola Zagreb   ->  Strojarska tehnička škola Osijek
+Isusovačka klasična gimnazija Split ->  Isusovačka klasična gimnazija Osijek
+```
+
+Pogađa škole čiji se naziv sastoji samo od tipskih riječi, bez vlastitog imena
+koje bi ih vezalo uz grad. Točan broj ovisi o tome što se smatra realnim
+upitom — sonda koja mijenja grad u svakom nazivu daje 91 školu, ali većina tih
+upita nije realna; uža sonda daje 3. Stvarni je broj između, i namjerno nije
+fiksiran ovdje jer nijedna od te dvije mjere nije obranjiva.
+
+Redni brojevi (`II. gimnazija Split`) su **riješeni** — redni broj sam ne može
+nositi siguran pogodak, vidi `NERAZLIKOVNI_TOKENI` u servisu. Sva tri zapisa
+rednog broja — rimski (`III.`), arapski (`3.`) i riječima (`treća`) — svode se
+pri tokenizaciji na isti kanonski token (`rb1`–`rb5`), i u nazivima škola i u
+tekstu upita, pa `3. gimnazija Osijek` vodi na `III. gimnaziju Osijek`. Broj
+razreda (`za 2. razred`) uklanja se iz teksta prije prepoznavanja škole, inače
+bi ga matcher čitao kao redni broj u nazivu; razred i dalje čita `parseRazred`.
+
+Redni broj se broji kao redni broj samo ako stoji blizu tipske riječi
+(`VRSTE_SKOLE`) — arapski unutar jednog tokena, rimski i riječima unutar tri.
+Razlika u dometu je izmjerena, ne pogođena: nijedan od 281 naziva ne sadrži
+arapsku znamenku, a najveći razmak kod riječi je 3 (`Prva riječka hrvatska
+gimnazija`). Bez toga bi svaka znamenka u poruci („do 1.9.", „imam 2 djeteta")
+povukla neku od gimnazija s rednim brojem u nazivu i srušila upit na pitanje.
+
+Dvije stvari koje ostaju otvorene, obje **pitaju umjesto da odgovore krivo**:
+
+- Stem-poklapanje u `VRSTE_SKOLE` hvata i riječi koje označavaju ljude:
+  `imam 2 srednjoškolca`, `imam 2 gimnazijalca`, `i još 3 škole` ruše ispravno
+  imenovanu školu na „Na koju školu mislite?". Postoji i prije uvođenja
+  kanonskih rednih brojeva. Popravak je ograničiti duljinu stem-poklapanja.
+- `vi`/`vii`/`viii` stavljeni su u `NERAZLIKOVNI_TOKENI` kao zaštita, ali ih to
+  ujedno čini nevidljivima canary testu. Ako osvježenje ikad donese školu s
+  `VI.` u nazivu, `vi` postaje token korpusa — a to je i obična hrvatska
+  zamjenica, pa bi svako uljudno „možete li **vi**" srušilo upit. Zagrebačke
+  gimnazije idu do `XVIII.`, pa je to realan scenarij ako se opseg ikad proširi.
+  Canary treba pokrivati rimske brojeve stvarno, ne samo naizgled.
+
+**Kako se ovo ispravlja kad dođe na red.** Ne duljom crnom listom nego
+pozitivnom provjerom: `output/Registar_skola.xlsx` u projektu `popis-udzbenika`
+sadrži svih 443 srednje škole u Hrvatskoj, od kojih je ~195 izvan našeg opsega —
+uključujući `III. GIMNAZIJA Split` i `II. gimnazija Zagreb`. Ako se te škole
+izvezu kao negativan skup i boduju usporedno s korpusom, upit koji bolje
+pristaje školi izvan opsega dobiva pošten odgovor („za tu školu nemam popis")
+umjesto tuđeg popisa.
+
+Provjera mora biti **usporedna, ne apsolutna**: `Prometno-tehnička škola
+Šibenik` — koju smo dužni odgovoriti — također se djelomično poklapa s
+`Tehnička škola Zagreb`. Apsolutni prag bi je ubio; usporedni je ne dira jer se
+šibenska poklapa točno.
+
+### Osvježavanje podataka
+
+Kad škole objave nove popise, u susjednom projektu `popis-udzbenika`
+pokrenuti pipeline pa izvoz:
+
+```bash
+cd ../popis-udzbenika
+.venv/bin/python pipeline.py --ponovi-greske
+.venv/bin/python izvoz_za_bot.py \
+  --izlaz ../libar-zendesk-bot-v2/data/popis-udzbenika-2026-27.json
+```
+
+Izvoz pada s greškom ako neki naziv škole ostane s pokvarenim dijakriticima —
+tada ga treba dodati u `RUCNI_ISPRAVCI` u `izvoz_za_bot.py`. Isto tako pada
+ako bi dvije škole nakon spajanja dobile isti `id`. Nakon izvoza commitati
+JSON u bot repo i deployati; datoteka se učitava (i kešira u memoriji) pri
+startu procesa.
+
+---
+
 ## Licenca
 
 MIT — Razvijeno za **Antikvarijat Libar**, Dante d.o.o., Osijek

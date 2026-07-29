@@ -27,6 +27,7 @@ Treba `.env` (vidi [.env.example](.env.example)). Deploy ide na **Render** preko
 - [services/](services/) — sva poslovna logika, jedan servis = jedna odgovornost:
   - `aiService` LLM pozivi · `zendeskService` tiketi · `vectorKnowledgeService` + `embeddingService` RAG · `oneDriveService` izvor znanja · `conversationService` memorija razgovora
   - `piiService` maskiranje osobnih podataka · `spamFilterService` · `intentEscalationService` eskalacija · `outputValidator` · `responseCacheService` · `tokenBudgetService` · `metricsService`/`supabaseMetricsService` · `botStateService` (kill switch)
+  - `textbookListService` popis udžbenika po školi i razredu (web chat, statični podaci u `data/`)
 - [middleware/](middleware/) — `inputSanitizer`, `rateLimiter`
 - [config/](config/) — `env.js` (centralna konfiguracija), `logger.js`
 - [scripts/](scripts/) — sync baze znanja, generiranje testova iz Zendeska

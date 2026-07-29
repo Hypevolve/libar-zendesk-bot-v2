@@ -203,4 +203,102 @@ describe("intentEscalationService", () => {
       assert.strictEqual(result.shouldEscalate, false);
     });
   });
+
+  describe("detectEscalationIntent — zatvorene rupe u rječniku", () => {
+    // Sedam stvarnih situacija koje su prije završavale u bazi znanja umjesto kod čovjeka.
+    const RUPE = [
+      ["Poslao sam udžbenike i nisu mi platili, ovo je prijevara", "fraud_accusation"],
+      ["Krivi udžbenik ste mi poslali, tražim zamjenu", "wrong_order"],
+      ["Pogrešan udžbenik sam dobio", "wrong_order"],
+      ["Već tjedan dana čekam uplatu", "payment_missing"],
+      ["Prevarili ste me s udžbenicima", "fraud_accusation"],
+      ["Gdje mi je paket, kasni već 10 dana", "urgent_problem"],
+      ["Nezadovoljan sam uslugom", "service_complaint"]
+    ];
+
+    for (const [query, intent] of RUPE) {
+      it(`escalates '${query}' kao ${intent}`, () => {
+        const result = detectEscalationIntent(n(query));
+        assert.strictEqual(result.shouldEscalate, true);
+        assert.strictEqual(result.intent, intent);
+        assert.ok(result.message && result.message.includes("javiti"));
+      });
+    }
+
+    // U knjižari udžbenika "udžbenik" mora biti ravnopravan s "knjigom".
+    for (const query of ["pogrešna knjiga", "pogrešan udžbenik", "krivi udžbenik", "kriva knjiga",
+      "poslali ste mi pogrešni udžbenik", "dobila sam krivi udžbenik"]) {
+      it(`escalates wrong_order za '${query}'`, () => {
+        const result = detectEscalationIntent(n(query));
+        assert.strictEqual(result.shouldEscalate, true);
+        assert.strictEqual(result.intent, "wrong_order");
+      });
+    }
+
+    // Dodatni oblici izostale isplate za otkup
+    it("escalates payment_missing za 'uplata kasni'", () => {
+      const result = detectEscalationIntent(n("uplata kasni već dulje vrijeme"));
+      assert.strictEqual(result.shouldEscalate, true);
+      assert.strictEqual(result.intent, "payment_missing");
+    });
+
+    it("escalates payment_missing za 'isplata nije stigla'", () => {
+      const result = detectEscalationIntent(n("poslala sam udžbenike ali isplata nije stigla"));
+      assert.strictEqual(result.shouldEscalate, true);
+      assert.strictEqual(result.intent, "payment_missing");
+    });
+  });
+
+  describe("detectEscalationIntent — kontrolni upiti koji NE smiju eskalirati", () => {
+    // Osam radnih putanja koje bot danas ispravno odgovara iz baze znanja.
+    const KONTROLE = [
+      "Kako naručiti udžbenike?",
+      "Otkupljujete li udžbenike?",
+      "Otkupljujete li udžbenike fizike?",
+      "Koliko dobivam za otkup udžbenika matematike?",
+      "Koliko košta dostava?",
+      "Koliko dugo traje dostava knjiga?",
+      "Koja je cijena udžbenika za 3. razred gimnazije?",
+      "Kada mogu očekivati uplatu za poslane udžbenike (otkup)?"
+    ];
+
+    for (const query of KONTROLE) {
+      it(`does NOT escalate '${query}'`, () => {
+        const result = detectEscalationIntent(n(query));
+        assert.strictEqual(result.shouldEscalate, false);
+      });
+    }
+
+    // Granica isplate: pitanje o standardnom roku ostaje botu, pritužba na
+    // protekli rok ide čovjeku. Uzorci okidaju na predikat, ne na imenicu.
+    const BENIGNA_ISPLATA = [
+      "Kada mogu očekivati uplatu nakon što sam poslao knjige?",
+      "Koliko se čeka na uplatu?",
+      "Kada dobivam novac za online otkup?",
+      "Koliko dana traje isplata?",
+      "Na koji način vršite isplatu za otkup?"
+    ];
+
+    for (const query of BENIGNA_ISPLATA) {
+      it(`does NOT escalate benigno pitanje o isplati: '${query}'`, () => {
+        const result = detectEscalationIntent(n(query));
+        assert.strictEqual(result.shouldEscalate, false);
+      });
+    }
+
+    // Popis udžbenika ima gate IZA eskalacije — ovi upiti mu se ne smiju oteti.
+    const POPIS = [
+      "popis udžbenika Gimnazija Daruvar 2. razred",
+      "trebam popis udžbenika za Gimnaziju Daruvar",
+      "trebaju mi udžbenici za 1. razred medicinske škole u Bjelovaru",
+      "trebam popis udžbenika"
+    ];
+
+    for (const query of POPIS) {
+      it(`does NOT escalate upit za popis udžbenika: '${query}'`, () => {
+        const result = detectEscalationIntent(n(query));
+        assert.strictEqual(result.shouldEscalate, false);
+      });
+    }
+  });
 });

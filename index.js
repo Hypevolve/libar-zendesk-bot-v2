@@ -46,6 +46,7 @@ const { normalizeForComparison } = require("./services/textUtils");
 const { buildDirectWebsiteLinks } = require("./services/siteLinkService");
 const { detectEscalationIntent } = require("./services/intentEscalationService");
 const { isLikelyEmail, buildSelfServiceFallback, resolveAnonymousEscalation } = require("./services/escalationFlowService");
+const textbookListService = require("./services/textbookListService");
 
 // ─── Express Setup ────────────────────────────────────────────
 
@@ -345,6 +346,22 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
         extraTags: ["ai_escalated", `intent_${escalationCheck.intent}`]
       }
     };
+  }
+
+  // ── POPIS UDŽBENIKA (samo web chat) ───────────────────────────
+  // Deterministički odgovor s linkom na popis koji je škola objavila za tekuću
+  // godinu. Stoji iza escalation gateova (žalbe i reklamacije uvijek idu čovjeku)
+  // i ispred cachea i pretrage znanja, pa nepotrebno ne troši LLM pozive.
+  // Bez pogotka vraća null i pipeline teče nepromijenjeno.
+  if (env.POPIS_UDZBENIKA_ENABLED && (opts.channelType || "web_chat") === "web_chat") {
+    const textbookOutcome = textbookListService.buildTextbookOutcome(userMessage, session);
+    if (textbookOutcome) {
+      metricsService.recordDecision(textbookOutcome.type);
+      metricsService.recordChannelOutcome("web_chat", textbookOutcome.type);
+      metricsService.recordLatency(Date.now() - start);
+      log.info("textbook_list_answer", { reason: textbookOutcome.reason });
+      return { knowledge: null, outcome: textbookOutcome };
+    }
   }
 
   // Reference facts check (greetings, canned facts) — only after escalation gates
@@ -1200,6 +1217,24 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+// ─── GET /api/popis-udzbenika.json ────────────────────────────
+// Javni izvor podataka za WordPress widget. Ista datoteka koju čita bot —
+// jedan izvor istine za chat i web. Podaci su javni (nazivi škola i poveznice
+// na dokumente koje su škole same objavile), pa je CORS otvoren.
+
+const POPIS_UDZBENIKA_PATH = path.join(__dirname, "data", "popis-udzbenika-2026-27.json");
+
+app.get("/api/popis-udzbenika.json", (req, res) => {
+  if (!fs.existsSync(POPIS_UDZBENIKA_PATH)) {
+    log.warn("popis_udzbenika_missing", { path: POPIS_UDZBENIKA_PATH });
+    return res.status(404).json({ success: false, error: "Popis udžbenika trenutno nije dostupan." });
+  }
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Cache-Control", "public, max-age=3600");
+  res.type("application/json");
+  return res.sendFile(POPIS_UDZBENIKA_PATH);
+});
+
 // ─── GET /health ──────────────────────────────────────────────
 
 app.get("/health", async (req, res) => {
@@ -1295,7 +1330,9 @@ app.post("/admin/analytics/sync", requireAdmin, async (req, res) => {
     // sinceISO vozi serijski backfill: svaka serija šalje cursor prethodne.
     const sinceISO = req.body?.sinceISO || undefined;
     const maxTickets = Number(req.body?.maxTickets) || undefined;
-    const result = await ticketAnalysisService.run({ sinceDays, sinceISO, maxTickets });
+    // Paralelizam samo za ručni backfill; dnevni auto-sync ostaje sekvencijalan.
+    const concurrency = Number(req.body?.concurrency) || undefined;
+    const result = await ticketAnalysisService.run({ sinceDays, sinceISO, maxTickets, concurrency });
     res.json({ success: true, result });
   } catch (error) {
     log.error("analytics_sync_failed", { message: error.message });

@@ -208,6 +208,82 @@ test("run() bez sinceDays i dalje koristi spremljeni cursor", async () => {
   assert.deepStrictEqual(store.calls.cursors, ["2026-07-02T00:00:00Z"]);
 });
 
+// ─── concurrency (ubrzanje backfilla) ──────────────────────────
+
+// Mock koji mjeri koliko je LLM poziva bilo istovremeno u letu.
+function concurrencyDeps(store, count) {
+  const tickets = Array.from({ length: count }, (_, i) => ({
+    id: i + 1, subject: `t${i}`, channel: "email", created_at: "2026-06-01T00:00:00Z"
+  }));
+  const state = { inFlight: 0, peak: 0 };
+  return {
+    state,
+    deps: {
+      store,
+      listTicketsSince: async () => ({ tickets, nextCursorISO: "2026-06-03T00:00:00Z" }),
+      getPublicTicketComments: async () => [{ body: "x" }],
+      llm: async () => {
+        state.inFlight += 1;
+        state.peak = Math.max(state.peak, state.inFlight);
+        await new Promise((r) => setTimeout(r, 5));
+        state.inFlight -= 1;
+        return JSON.stringify({ topic: "ok", summary: "s" });
+      }
+    }
+  };
+}
+
+test("run() je po defaultu sekvencijalan (jedan LLM poziv u letu)", async () => {
+  const store = mockStore();
+  const { state, deps } = concurrencyDeps(store, 6);
+
+  const res = await svc.run({}, deps);
+
+  assert.strictEqual(state.peak, 1, "default ne smije mijenjati dosadašnje ponašanje");
+  assert.strictEqual(res.analyzed, 6);
+});
+
+test("run({concurrency}) obrađuje tickete paralelno, uz iste brojače", async () => {
+  const store = mockStore();
+  const { state, deps } = concurrencyDeps(store, 20);
+
+  const res = await svc.run({ concurrency: 5 }, deps);
+
+  assert.strictEqual(state.peak, 5, "mora vrtjeti točno 5 paralelnih radnika");
+  assert.strictEqual(res.analyzed, 20);
+  assert.strictEqual(res.errors, 0);
+  assert.strictEqual(store.calls.upserts.length, 20);
+  // Svaki ticket točno jednom, bez obzira na redoslijed dovršetka.
+  const ids = store.calls.upserts.map((u) => u.ticket_id).sort((a, b) => a - b);
+  assert.deepStrictEqual(ids, Array.from({ length: 20 }, (_, i) => i + 1));
+});
+
+test("concurrency ne premašuje broj ticketa niti gornju granicu", async () => {
+  const store = mockStore();
+  const { state, deps } = concurrencyDeps(store, 3);
+
+  await svc.run({ concurrency: 50 }, deps);
+
+  assert.strictEqual(state.peak, 3, "ne smije pokrenuti više radnika nego ima ticketa");
+});
+
+test("greška u paralelnoj obradi ne ruši ostale tickete", async () => {
+  const store = mockStore();
+  const { deps } = concurrencyDeps(store, 10);
+  let n = 0;
+  const okLlm = deps.llm;
+  deps.llm = async (...args) => {
+    n += 1;
+    if (n % 3 === 0) throw new Error("LLM down");
+    return okLlm(...args);
+  };
+
+  const res = await svc.run({ concurrency: 4 }, deps);
+
+  assert.strictEqual(res.analyzed + res.errors, 10);
+  assert.ok(res.errors >= 3, "greške se moraju izbrojati, ne progutati");
+});
+
 test("run() nastavlja kad LLM padne na jednom ticketu", async () => {
   const store = mockStore();
   let call = 0;

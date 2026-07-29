@@ -362,12 +362,47 @@
       return new Date().toLocaleTimeString("hr-HR", { hour: "2-digit", minute: "2-digit" });
     }
 
+    // Sadržaj poruke se escapa pa se tek onda ubacuje ograničen markdown:
+    // linkovi (samo http/https) i podebljanje. Bez escapanja bi bilo koji HTML
+    // ili navodnik koji bi pobjegao iz href atributa iz odgovora završio u DOM-u.
+    // Linkovi se prvo izvade u zamjenske tokene (privatni Unicode raspon, ne
+    // mogu se pojaviti u stvarnoj poruci) da URL unutar njih (koji smije
+    // sadržavati "**") kasnije ne bude izlomljen prolazom za podebljanje.
+    // Ako posjetitelj u poruku ipak nalijepi baš te privatne znakove, uklanjaju
+    // se odmah kod escapanja (pa ne mogu lažirati sentinel), a završna zamjena
+    // tokena je dodatno granično provjerena — bez pripadajućeg anchora izvorni
+    // tekst ostaje netaknut umjesto da se ispiše "undefined".
+    function renderContent(text) {
+      const escaped = String(text || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;")
+        .replace(/\uE000|\uE001/g, "");
+
+      const anchors = [];
+      const withTokens = escaped.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_match, label, url) => {
+        const token = "\uE000" + anchors.length + "\uE001";
+        anchors.push('<a href="' + url + '" target="_blank" rel="noopener">' + label + '</a>');
+        return token;
+      });
+
+      return withTokens
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\n/g, "<br>")
+        .replace(/\uE000(\d+)\uE001/g, (match, i) => {
+          const anchor = anchors[Number(i)];
+          return anchor !== undefined ? anchor : match;
+        });
+    }
+
     function addMessage(role, content, links) {
       const group = document.createElement("div");
       group.className = "msg-group";
       const msg = document.createElement("div");
       msg.className = `msg ${role}`;
-      msg.innerHTML = content.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
+      msg.innerHTML = renderContent(content);
       const ts = document.createElement("span");
       ts.className = "ts";
       ts.textContent = formatTime();

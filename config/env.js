@@ -46,6 +46,8 @@ module.exports = {
   ANALYSIS_MODEL: envStr("ANALYSIS_MODEL", "google/gemini-2.5-flash"),
   ANALYSIS_MAX_TICKETS: envInt("ANALYSIS_MAX_TICKETS", 150),
   ANALYSIS_BACKFILL_DAYS: envInt("ANALYSIS_BACKFILL_DAYS", 90),
+  // 1 = sekvencijalno (dosadašnje ponašanje); >1 ubrzava backfill povijesti.
+  ANALYSIS_CONCURRENCY: envInt("ANALYSIS_CONCURRENCY", 1),
   ANALYSIS_AUTO_SYNC_ENABLED: envBool("ANALYSIS_AUTO_SYNC_ENABLED", false),
   ANALYSIS_AUTO_SYNC_INTERVAL_MS: envInt("ANALYSIS_AUTO_SYNC_INTERVAL_MS", 86400000),
   ANALYSIS_AUTO_SYNC_MAX_TICKETS: envInt("ANALYSIS_AUTO_SYNC_MAX_TICKETS", 40),
@@ -121,4 +123,9 @@ module.exports = {
   // --- Spam ---
   ENABLE_EMAIL_SPAM_CLASSIFIER: envBool("ENABLE_EMAIL_SPAM_CLASSIFIER", true),
   EMAIL_SPAM_AI_MIN_CONFIDENCE: parseFloat(process.env.EMAIL_SPAM_AI_MIN_CONFIDENCE || "0.75"),
+
+  // --- Popis udžbenika ---
+  // Deterministički odgovor s linkom na popis udžbenika škole (samo web chat).
+  // Postavi POPIS_UDZBENIKA_ENABLED=false da se ugasi bez diranja koda.
+  POPIS_UDZBENIKA_ENABLED: envBool("POPIS_UDZBENIKA_ENABLED", true),
 };
