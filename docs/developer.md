@@ -523,6 +523,45 @@ Međimurske — namjerno, neće se dodavati). Škole bez objavljenog popisa su u
 podacima s praznim `dokumenti`, pa ih bot prepozna i kaže da popis još nije
 objavljen.
 
+### Poznato ograničenje: škole izvan opsega
+
+Bot ne zna da škole izvan njegovih 18 županija postoje. Kad korisnik imenuje
+takvu školu, matcher vidi samo tokene koje poznaje — grad koji nije u korpusu
+(`split`, `zagreb`) nema IDF težinu i simetrična provjera `imenujeTudeObiljezje`
+ga preskoči. Ako se ostatak naziva poklopi sa školom **unutar** opsega, bot
+pošalje njezin popis, sa svim samopouzdanjem i disclaimerom.
+
+Provjereni primjeri:
+
+```
+Prometno-tehnička škola Split      ->  Prometno-tehnička škola Šibenik
+Građevinska tehnička škola Split   ->  Građevinska tehnička škola Rijeka
+Strojarska tehnička škola Zagreb   ->  Strojarska tehnička škola Osijek
+Isusovačka klasična gimnazija Split ->  Isusovačka klasična gimnazija Osijek
+```
+
+Pogađa škole čiji se naziv sastoji samo od tipskih riječi, bez vlastitog imena
+koje bi ih vezalo uz grad. Točan broj ovisi o tome što se smatra realnim
+upitom — sonda koja mijenja grad u svakom nazivu daje 91 školu, ali većina tih
+upita nije realna; uža sonda daje 3. Stvarni je broj između, i namjerno nije
+fiksiran ovdje jer nijedna od te dvije mjere nije obranjiva.
+
+Rimski brojevi (`II. gimnazija Split`) su **riješeni** — redni broj sam ne može
+nositi siguran pogodak, vidi `NERAZLIKOVNI_TOKENI` u servisu.
+
+**Kako se ovo ispravlja kad dođe na red.** Ne duljom crnom listom nego
+pozitivnom provjerom: `output/Registar_skola.xlsx` u projektu `popis-udzbenika`
+sadrži svih 443 srednje škole u Hrvatskoj, od kojih je ~195 izvan našeg opsega —
+uključujući `III. GIMNAZIJA Split` i `II. gimnazija Zagreb`. Ako se te škole
+izvezu kao negativan skup i boduju usporedno s korpusom, upit koji bolje
+pristaje školi izvan opsega dobiva pošten odgovor („za tu školu nemam popis")
+umjesto tuđeg popisa.
+
+Provjera mora biti **usporedna, ne apsolutna**: `Prometno-tehnička škola
+Šibenik` — koju smo dužni odgovoriti — također se djelomično poklapa s
+`Tehnička škola Zagreb`. Apsolutni prag bi je ubio; usporedni je ne dira jer se
+šibenska poklapa točno.
+
 ### Osvježavanje podataka
 
 Kad škole objave nove popise, u susjednom projektu `popis-udzbenika`
