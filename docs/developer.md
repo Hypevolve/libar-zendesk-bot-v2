@@ -554,6 +554,26 @@ tekstu upita, pa `3. gimnazija Osijek` vodi na `III. gimnaziju Osijek`. Broj
 razreda (`za 2. razred`) uklanja se iz teksta prije prepoznavanja škole, inače
 bi ga matcher čitao kao redni broj u nazivu; razred i dalje čita `parseRazred`.
 
+Redni broj se broji kao redni broj samo ako stoji blizu tipske riječi
+(`VRSTE_SKOLE`) — arapski unutar jednog tokena, rimski i riječima unutar tri.
+Razlika u dometu je izmjerena, ne pogođena: nijedan od 281 naziva ne sadrži
+arapsku znamenku, a najveći razmak kod riječi je 3 (`Prva riječka hrvatska
+gimnazija`). Bez toga bi svaka znamenka u poruci („do 1.9.", „imam 2 djeteta")
+povukla neku od gimnazija s rednim brojem u nazivu i srušila upit na pitanje.
+
+Dvije stvari koje ostaju otvorene, obje **pitaju umjesto da odgovore krivo**:
+
+- Stem-poklapanje u `VRSTE_SKOLE` hvata i riječi koje označavaju ljude:
+  `imam 2 srednjoškolca`, `imam 2 gimnazijalca`, `i još 3 škole` ruše ispravno
+  imenovanu školu na „Na koju školu mislite?". Postoji i prije uvođenja
+  kanonskih rednih brojeva. Popravak je ograničiti duljinu stem-poklapanja.
+- `vi`/`vii`/`viii` stavljeni su u `NERAZLIKOVNI_TOKENI` kao zaštita, ali ih to
+  ujedno čini nevidljivima canary testu. Ako osvježenje ikad donese školu s
+  `VI.` u nazivu, `vi` postaje token korpusa — a to je i obična hrvatska
+  zamjenica, pa bi svako uljudno „možete li **vi**" srušilo upit. Zagrebačke
+  gimnazije idu do `XVIII.`, pa je to realan scenarij ako se opseg ikad proširi.
+  Canary treba pokrivati rimske brojeve stvarno, ne samo naizgled.
+
 **Kako se ovo ispravlja kad dođe na red.** Ne duljom crnom listom nego
 pozitivnom provjerom: `output/Registar_skola.xlsx` u projektu `popis-udzbenika`
 sadrži svih 443 srednje škole u Hrvatskoj, od kojih je ~195 izvan našeg opsega —
