@@ -5,6 +5,7 @@
     {
       "id": "biskupijska-klasicna-gimnazija-rudera-boskovica-dubrovnik",
       "naziv": "Biskupijska klasična gimnazija Ruđera Boškovića Dubrovnik",
+      "mjesto": null,
       "zupanija": "Dubrovačko-neretvanska",
       "stranica": "https://klasicna.hr/popis-udzbenika/",
       "dokumenti": [
@@ -23,6 +24,7 @@
     {
       "id": "centar-za-odgoj-i-obrazovanje-subicevac-sibenik",
       "naziv": "Centar za odgoj i obrazovanje \"Šubićevac\" Šibenik",
+      "mjesto": "Šibenik",
       "zupanija": "Šibensko-kninska",
       "stranica": null,
       "dokumenti": []
@@ -30,6 +32,7 @@
     {
       "id": "centar-za-odgoj-i-obrazovanje-rijeka",
       "naziv": "Centar za odgoj i obrazovanje Rijeka",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://centar-odgojiobrazovanje-ri.skole.hr/pristup-informacijama/ostalo/",
       "dokumenti": [
@@ -43,6 +46,7 @@
     {
       "id": "centar-za-odgoj-i-obrazovanje-zajezda",
       "naziv": "Centar za odgoj i obrazovanje Zajezda",
+      "mjesto": "Zajezda",
       "zupanija": "Krapinsko-zagorska",
       "stranica": "https://coo-zajezda.hr/obavijesti/",
       "dokumenti": []
@@ -50,6 +54,7 @@
     {
       "id": "druga-gimnazija-varazdin",
       "naziv": "Druga gimnazija Varaždin",
+      "mjesto": "Varaždin",
       "zupanija": "Varaždinska",
       "stranica": null,
       "dokumenti": [
@@ -83,6 +88,7 @@
     {
       "id": "druga-srednja-skola-beli-manastir",
       "naziv": "Druga srednja škola Beli Manastir",
+      "mjesto": "Beli Manastir",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://ss-druga-bm.skole.hr/nastava/udzbenici/",
       "dokumenti": []
@@ -90,6 +96,7 @@
     {
       "id": "drvodjeljska-i-strojarska-skola-rijeka",
       "naziv": "Drvodjeljska i strojarska škola Rijeka",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://sbs-ioz.hr/udzbenici/",
       "dokumenti": []
@@ -97,6 +104,7 @@
     {
       "id": "drvodjelska-tehnicka-skola-vinkovci",
       "naziv": "Drvodjelska tehnička škola Vinkovci",
+      "mjesto": "Vinkovci",
       "zupanija": "Vukovarsko-srijemska",
       "stranica": "https://ss-drvodjelska-tehnicka-vk.skole.hr/",
       "dokumenti": []
@@ -104,6 +112,7 @@
     {
       "id": "dubrovacka-privatna-gimnazija",
       "naziv": "Dubrovačka privatna gimnazija",
+      "mjesto": "Dubrovnik",
       "zupanija": "Dubrovačko-neretvanska",
       "stranica": "https://www.pg-dubrovnik.net/novost/118/udzbenici-za-20262027",
       "dokumenti": [
@@ -132,6 +141,7 @@
     {
       "id": "edukos-privatna-srednja-skola",
       "naziv": "EDukOS – privatna srednja škola",
+      "mjesto": null,
       "zupanija": "Osječko-baranjska",
       "stranica": null,
       "dokumenti": []
@@ -139,6 +149,7 @@
     {
       "id": "ekonomska-i-birotehnicka-skola-bjelovar",
       "naziv": "Ekonomska i birotehnička škola Bjelovar",
+      "mjesto": "Bjelovar",
       "zupanija": "Bjelovarsko-bilogorska",
       "stranica": "https://ekonomska-birotehnicka-skola-bj.hr/popis-udzbenika/",
       "dokumenti": [
@@ -167,6 +178,7 @@
     {
       "id": "ekonomska-i-trgovacka-skola-dubrovnik",
       "naziv": "Ekonomska i trgovačka škola Dubrovnik",
+      "mjesto": "Dubrovnik",
       "zupanija": "Dubrovačko-neretvanska",
       "stranica": "https://ekonomska-dubrovnik.com/dokumenti/17/udzbenici",
       "dokumenti": [
@@ -265,6 +277,7 @@
     {
       "id": "ekonomska-i-trgovacka-skola-ivana-domca-vinkovci",
       "naziv": "Ekonomska i trgovačka škola Ivana Domca Vinkovci",
+      "mjesto": "Vinkovci",
       "zupanija": "Vukovarsko-srijemska",
       "stranica": "https://ss-ekonomska-vk.skole.hr/popis-udzbenika/",
       "dokumenti": []
@@ -272,6 +285,7 @@
     {
       "id": "ekonomska-i-turisticka-skola-daruvar",
       "naziv": "Ekonomska i turistička škola Daruvar",
+      "mjesto": "Daruvar",
       "zupanija": "Bjelovarsko-bilogorska",
       "stranica": "https://ss-ekonomskaituristicka-da.skole.hr/udzbenici/",
       "dokumenti": []
@@ -279,6 +293,7 @@
     {
       "id": "ekonomska-i-upravna-skola-osijek",
       "naziv": "Ekonomska i upravna škola Osijek",
+      "mjesto": "Osijek",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://ss-ekonomska-upravna-os.skole.hr/nastava/",
       "dokumenti": [
@@ -302,6 +317,7 @@
     {
       "id": "ekonomska-skola-braca-radic-dakovo",
       "naziv": "Ekonomska škola \"Braća Radić\" Đakovo",
+      "mjesto": "Đakovo",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://ss-ekonomska-bracaradic-dj.skole.hr/popis-udzbenika-za-sve-razrede/",
       "dokumenti": []
@@ -309,6 +325,7 @@
     {
       "id": "ekonomska-skola-mije-mirkovica-rijeka",
       "naziv": "Ekonomska škola Mije Mirkovića Rijeka",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://esmm-ri.hr/udzbenici/",
       "dokumenti": [
@@ -332,6 +349,7 @@
     {
       "id": "ekonomska-skola-pozega",
       "naziv": "Ekonomska škola Požega",
+      "mjesto": "Požega",
       "zupanija": "Požeško-slavonska",
       "stranica": "https://ekonomska-pozega.hr/?s=ud%C5%BEbe",
       "dokumenti": [
@@ -425,6 +443,7 @@
     {
       "id": "ekonomska-skola-pula",
       "naziv": "Ekonomska škola Pula",
+      "mjesto": "Pula",
       "zupanija": "Istarska",
       "stranica": "https://ss-ekonomska-pu.skole.hr/udzbenici/",
       "dokumenti": [
@@ -443,6 +462,7 @@
     {
       "id": "ekonomska-skola-sisak",
       "naziv": "Ekonomska škola Sisak",
+      "mjesto": "Sisak",
       "zupanija": "Sisačko-moslavačka",
       "stranica": "https://ss-ekonomska-sk.skole.hr/popisi-udzbenika/",
       "dokumenti": [
@@ -496,6 +516,7 @@
     {
       "id": "ekonomska-skola-velika-gorica",
       "naziv": "Ekonomska škola Velika Gorica",
+      "mjesto": "Velika Gorica",
       "zupanija": "Zagrebačka",
       "stranica": "https://ss-ekonomska-velikagorica.skole.hr/udzbenici-za-sk-god-2026-27/",
       "dokumenti": [
@@ -539,6 +560,7 @@
     {
       "id": "ekonomska-skola-sibenik",
       "naziv": "Ekonomska škola Šibenik",
+      "mjesto": "Šibenik",
       "zupanija": "Šibensko-kninska",
       "stranica": "https://ss-ekonomska-si.skole.hr/popis-udzbenika/",
       "dokumenti": []
@@ -546,6 +568,7 @@
     {
       "id": "ekonomska-trgovacka-i-ugostiteljska-skola-samobor",
       "naziv": "Ekonomska, trgovačka i ugostiteljska škola Samobor",
+      "mjesto": "Samobor",
       "zupanija": "Zagrebačka",
       "stranica": "https://ss-ekonomska-trgovacka-ugostiteljska-samobor.skole.hr/wp-content/uploads/sites/787/2026/07/Udzbenici_2026_2027_objava-1.pdf",
       "dokumenti": [
@@ -559,6 +582,7 @@
     {
       "id": "ekonomsko-birotehnicka-i-trgovacka-skola-zadar",
       "naziv": "Ekonomsko-birotehnička i trgovačka škola Zadar",
+      "mjesto": "Zadar",
       "zupanija": "Zadarska",
       "stranica": "https://www.ebt-zadar.hr/popis-udzbenika-za-skolsku-godinu-2026-27/",
       "dokumenti": [
@@ -652,6 +676,7 @@
     {
       "id": "ekonomsko-birotehnicka-skola-slavonski-brod",
       "naziv": "Ekonomsko-birotehnička škola Slavonski Brod",
+      "mjesto": "Slavonski Brod",
       "zupanija": "Brodsko-posavska",
       "stranica": "https://ss-ekonomsko-birotehnicka-sb.skole.hr/?p=311713",
       "dokumenti": [
@@ -680,6 +705,7 @@
     {
       "id": "ekonomsko-turisticka-skola-karlovac",
       "naziv": "Ekonomsko-turistička škola Karlovac",
+      "mjesto": "Karlovac",
       "zupanija": "Karlovačka",
       "stranica": "https://ss-ekonomsko-turisticka-ka.skole.hr/popis-udzbenika-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
@@ -753,6 +779,7 @@
     {
       "id": "elektroindustrijska-i-obrtnicka-skola-rijeka",
       "naziv": "Elektroindustrijska i obrtnička škola Rijeka",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://eios.hr/wp-content-uploads-2023-09-udzbenici-2023-2024-docx/",
       "dokumenti": [
@@ -796,6 +823,7 @@
     {
       "id": "elektrostrojarska-skola-varazdin",
       "naziv": "Elektrostrojarska škola Varaždin",
+      "mjesto": "Varaždin",
       "zupanija": "Varaždinska",
       "stranica": "https://www.ess.hr/item/1391-popis-udzbenika-za-skolsku-godinu-2026-2027",
       "dokumenti": []
@@ -803,6 +831,7 @@
     {
       "id": "elektrotehnicka-i-ekonomska-skola-nova-gradiska",
       "naziv": "Elektrotehnička i ekonomska škola Nova Gradiška",
+      "mjesto": "Nova Gradiška",
       "zupanija": "Brodsko-posavska",
       "stranica": "https://ss-elektrotehnickaiekonomska-ngradiska.skole.hr/udzbenici/",
       "dokumenti": [
@@ -821,6 +850,7 @@
     {
       "id": "elektrotehnicka-i-prometna-skola-osijek",
       "naziv": "Elektrotehnička i prometna škola Osijek",
+      "mjesto": "Osijek",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://elpros.net/2026/popis-udzbenika-obavijest/",
       "dokumenti": []
@@ -828,6 +858,7 @@
     {
       "id": "gimnazija-antun-gustav-matos-samobor",
       "naziv": "Gimnazija \"Antun Gustav Matoš\" Samobor",
+      "mjesto": null,
       "zupanija": "Zagrebačka",
       "stranica": "http://www.gimnazija-agmatos-samobor.skole.hr/ucenici/udzbenici/",
       "dokumenti": [
@@ -851,6 +882,7 @@
     {
       "id": "gimnazija-fran-galovic-koprivnica",
       "naziv": "Gimnazija \"Fran Galović\" Koprivnica",
+      "mjesto": "Koprivnica",
       "zupanija": "Koprivničko-križevačka",
       "stranica": "https://gfg.hr/obavezni-udzbenici/",
       "dokumenti": [
@@ -864,6 +896,7 @@
     {
       "id": "gimnazija-matija-mesic-slavonski-brod",
       "naziv": "Gimnazija \"Matija Mesić\" Slavonski Brod",
+      "mjesto": "Slavonski Brod",
       "zupanija": "Brodsko-posavska",
       "stranica": "https://gimnazija-mmesic-sb.skole.hr/popis-udzbenika/",
       "dokumenti": []
@@ -871,6 +904,7 @@
     {
       "id": "gimnazija-a-g-matosa-dakovo",
       "naziv": "Gimnazija A. G. Matoša Đakovo",
+      "mjesto": "Đakovo",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://gimnazija-agmatosa-dj.skole.hr/popis-udzbenika-prirodoslovno-matematicka-gimnazija/, https://gimnazija-agmatosa-dj.skole.hr/popis-udzbenika-opca-gimnazija/ , https://gimnazija-agmatosa-dj.skole.hr/popis-udzbenika-jezicna-gimnazija/ , https://gimnazija-agmatosa-dj.skole.hr/dodatni-obrazovni-materijali/",
       "dokumenti": []
@@ -878,6 +912,7 @@
     {
       "id": "gimnazija-andrije-mohorovicica-rijeka",
       "naziv": "Gimnazija Andrije Mohorovičića Rijeka",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://gimnazija-amohorovicica-ri.skole.hr/udzbenici/",
       "dokumenti": []
@@ -885,6 +920,7 @@
     {
       "id": "gimnazija-antuna-gustava-matosa-zabok",
       "naziv": "Gimnazija Antuna Gustava Matoša Zabok",
+      "mjesto": "Zabok",
       "zupanija": "Krapinsko-zagorska",
       "stranica": "https://www.gimagm.hr/upisi-i-nastava/popis-udzbenika/",
       "dokumenti": [
@@ -898,6 +934,7 @@
     {
       "id": "gimnazija-antuna-vrancica-sibenik",
       "naziv": "Gimnazija Antuna Vrančića Šibenik",
+      "mjesto": "Šibenik",
       "zupanija": "Šibensko-kninska",
       "stranica": "https://gav.hr/?page_id=8103",
       "dokumenti": [
@@ -911,6 +948,7 @@
     {
       "id": "gimnazija-beli-manastir",
       "naziv": "Gimnazija Beli Manastir",
+      "mjesto": "Beli Manastir",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://gimnazija-beli-manastir.skole.hr/nastava/popis-udzbenika/",
       "dokumenti": []
@@ -918,6 +956,7 @@
     {
       "id": "gimnazija-bjelovar",
       "naziv": "Gimnazija Bjelovar",
+      "mjesto": "Bjelovar",
       "zupanija": "Bjelovarsko-bilogorska",
       "stranica": "https://gimnazijabjelovar.hr/popis-udzbenika/",
       "dokumenti": [
@@ -931,6 +970,7 @@
     {
       "id": "gimnazija-daruvar",
       "naziv": "Gimnazija Daruvar",
+      "mjesto": "Daruvar",
       "zupanija": "Bjelovarsko-bilogorska",
       "stranica": "https://gimnazija-daruvar.hr/novosti/2/",
       "dokumenti": [
@@ -964,6 +1004,7 @@
     {
       "id": "gimnazija-dubrovnik",
       "naziv": "Gimnazija Dubrovnik",
+      "mjesto": "Dubrovnik",
       "zupanija": "Dubrovačko-neretvanska",
       "stranica": "https://gimnazija-dubrovnik.hr/novosti/2594/popisi-udzbenika-",
       "dokumenti": []
@@ -971,6 +1012,7 @@
     {
       "id": "gimnazija-eugena-kumicica-opatija",
       "naziv": "Gimnazija Eugena Kumičića Opatija",
+      "mjesto": "Opatija",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://gek-opatija.hr/hr/ucenici/udzbenici",
       "dokumenti": [
@@ -1004,6 +1046,7 @@
     {
       "id": "gimnazija-franje-petrica-zadar",
       "naziv": "Gimnazija Franje Petrića Zadar",
+      "mjesto": "Zadar",
       "zupanija": "Zadarska",
       "stranica": "https://gimnazija-fpetrica-zd.skole.hr/popis-udzbenika-za-sk-god-2026-2027/",
       "dokumenti": [
@@ -1022,6 +1065,7 @@
     {
       "id": "gimnazija-gospic",
       "naziv": "Gimnazija Gospić",
+      "mjesto": "Gospić",
       "zupanija": "Ličko-senjska",
       "stranica": "https://gimnazija-gospic.skole.hr/popis-udzbenika-u-skolskoj-godini-2026-2027/",
       "dokumenti": [
@@ -1035,6 +1079,7 @@
     {
       "id": "gimnazija-ivana-zakmardija-dijankoveckoga-krizevci",
       "naziv": "Gimnazija Ivana Zakmardija Dijankovečkoga Križevci",
+      "mjesto": "Križevci",
       "zupanija": "Koprivničko-križevačka",
       "stranica": "https://gimnazija-izdijankoveckoga-kc.skole.hr/popis-udzbenika-i-katalog-odobrenih-drugih-nastavnih-materijala-za-skolsku-godinu-2025-2026/",
       "dokumenti": [
@@ -1048,6 +1093,7 @@
     {
       "id": "gimnazija-jurja-barakovica-zadar",
       "naziv": "Gimnazija Jurja Barakovića Zadar",
+      "mjesto": "Zadar",
       "zupanija": "Zadarska",
       "stranica": null,
       "dokumenti": []
@@ -1055,6 +1101,7 @@
     {
       "id": "gimnazija-karlovac",
       "naziv": "Gimnazija Karlovac",
+      "mjesto": "Karlovac",
       "zupanija": "Karlovačka",
       "stranica": "https://www.gimnazija-karlovac.hr/knjiznica/novosti/967-popis-udzbenika-za-skolsku-godinu-2021-2022.html",
       "dokumenti": [
@@ -1083,6 +1130,7 @@
     {
       "id": "gimnazija-matije-antuna-reljkovica-vinkovci",
       "naziv": "Gimnazija Matije Antuna Reljkovića Vinkovci",
+      "mjesto": "Vinkovci",
       "zupanija": "Vukovarsko-srijemska",
       "stranica": "https://gimnazijavk.hr/popis-udzbenika/",
       "dokumenti": []
@@ -1090,6 +1138,7 @@
     {
       "id": "gimnazija-metkovic",
       "naziv": "Gimnazija Metković",
+      "mjesto": "Metković",
       "zupanija": "Dubrovačko-neretvanska",
       "stranica": "https://gimnazija-metkovic.skole.hr/nastava/udzbenici/",
       "dokumenti": []
@@ -1097,6 +1146,7 @@
     {
       "id": "gimnazija-nova-gradiska",
       "naziv": "Gimnazija Nova Gradiška",
+      "mjesto": "Nova Gradiška",
       "zupanija": "Brodsko-posavska",
       "stranica": "https://gimnazija-nova-gradiska.skole.hr/popis-udzbenika/",
       "dokumenti": [
@@ -1150,6 +1200,7 @@
     {
       "id": "gimnazija-petra-preradovica-virovitica",
       "naziv": "Gimnazija Petra Preradovića Virovitica",
+      "mjesto": "Virovitica",
       "zupanija": "Virovitičko-podravska",
       "stranica": "https://gimnazija-ppreradovica-vt.skole.hr/popisi-udzbenika/",
       "dokumenti": []
@@ -1157,6 +1208,7 @@
     {
       "id": "gimnazija-pozega",
       "naziv": "Gimnazija Požega",
+      "mjesto": "Požega",
       "zupanija": "Požeško-slavonska",
       "stranica": "https://www.gimpoz.hr/hr/novosti/udzbenici-u-20262027",
       "dokumenti": [
@@ -1190,6 +1242,7 @@
     {
       "id": "gimnazija-pula",
       "naziv": "Gimnazija Pula",
+      "mjesto": "Pula",
       "zupanija": "Istarska",
       "stranica": "https://www.gimnazijapula.hr/udzbenici/",
       "dokumenti": [
@@ -1208,6 +1261,7 @@
     {
       "id": "gimnazija-sisak",
       "naziv": "Gimnazija Sisak",
+      "mjesto": "Sisak",
       "zupanija": "Sisačko-moslavačka",
       "stranica": null,
       "dokumenti": []
@@ -1215,6 +1269,7 @@
     {
       "id": "gimnazija-velika-gorica",
       "naziv": "Gimnazija Velika Gorica",
+      "mjesto": "Velika Gorica",
       "zupanija": "Zagrebačka",
       "stranica": "https://gimnazija-velika-gorica.skole.hr/udzbenici/",
       "dokumenti": [
@@ -1228,6 +1283,7 @@
     {
       "id": "gimnazija-vladimira-nazora-zadar",
       "naziv": "Gimnazija Vladimira Nazora Zadar",
+      "mjesto": "Zadar",
       "zupanija": "Zadarska",
       "stranica": "https://gimnazija-vnazora-zd.skole.hr/popis/",
       "dokumenti": [
@@ -1256,6 +1312,7 @@
     {
       "id": "gimnazija-vukovar",
       "naziv": "Gimnazija Vukovar",
+      "mjesto": "Vukovar",
       "zupanija": "Vukovarsko-srijemska",
       "stranica": "http://www.gimnazija-vukovar.skole.hr/udzbenici",
       "dokumenti": []
@@ -1263,6 +1320,7 @@
     {
       "id": "gimnazija-dr-ivana-kranjceva-durdevac",
       "naziv": "Gimnazija dr. Ivana Kranjčeva Đurđevac",
+      "mjesto": "Đurđevac",
       "zupanija": "Koprivničko-križevačka",
       "stranica": "https://gimnazija-ikranjceva-djurdjevac.skole.hr/298044-2/",
       "dokumenti": []
@@ -1270,6 +1328,7 @@
     {
       "id": "gimnazija-i-strukovna-skola-bernardina-frankopana-ogulin",
       "naziv": "Gimnazija i strukovna škola Bernardina Frankopana Ogulin",
+      "mjesto": "Ogulin",
       "zupanija": "Karlovačka",
       "stranica": "https://gimnazija-strukovnabfrankopana-ogulin.skole.hr/naslovna/nastava/popis-udzbenika/",
       "dokumenti": [
@@ -1308,6 +1367,7 @@
     {
       "id": "gimnazija-i-strukovna-skola-jurja-dobrile-pazin",
       "naziv": "Gimnazija i strukovna škola Jurja Dobrile Pazin",
+      "mjesto": "Pazin",
       "zupanija": "Istarska",
       "stranica": "https://www.gssjd.hr/wp-content/uploads/2026/07/UDZBENICI_2026__2027.pdf",
       "dokumenti": []
@@ -1315,6 +1375,7 @@
     {
       "id": "gimnazija-ziger",
       "naziv": "Gimnazija Žiger",
+      "mjesto": null,
       "zupanija": "Varaždinska",
       "stranica": "https://gimnazija.ziger.hr/novosti",
       "dokumenti": []
@@ -1322,6 +1383,7 @@
     {
       "id": "gimnazija-zupanja",
       "naziv": "Gimnazija Županja",
+      "mjesto": "Županja",
       "zupanija": "Vukovarsko-srijemska",
       "stranica": "https://gimnazija-zupanja.skole.hr/udzbenici-2025-2026/",
       "dokumenti": []
@@ -1329,6 +1391,7 @@
     {
       "id": "glazbena-skola-alberta-strige-krizevci",
       "naziv": "Glazbena škola Alberta Štrige Križevci",
+      "mjesto": "Križevci",
       "zupanija": "Koprivničko-križevačka",
       "stranica": "https://glazbenaskolakrizevci.hr/novosti-i-obavijesti/",
       "dokumenti": []
@@ -1336,6 +1399,7 @@
     {
       "id": "glazbena-skola-blagoje-bersa-zadar",
       "naziv": "Glazbena škola Blagoje Bersa Zadar",
+      "mjesto": "Zadar",
       "zupanija": "Zadarska",
       "stranica": null,
       "dokumenti": []
@@ -1343,6 +1407,7 @@
     {
       "id": "glazbena-skola-brune-bjelinskog-daruvar",
       "naziv": "Glazbena škola Brune Bjelinskog Daruvar",
+      "mjesto": "Daruvar",
       "zupanija": "Bjelovarsko-bilogorska",
       "stranica": "https://gs-bbjelinskog.hr/najnovije-obavijesti-2/",
       "dokumenti": []
@@ -1350,6 +1415,7 @@
     {
       "id": "glazbena-skola-ferdo-livadic-samobor",
       "naziv": "Glazbena škola Ferdo Livadić Samobor",
+      "mjesto": "Samobor",
       "zupanija": "Zagrebačka",
       "stranica": "https://www.ferdo-livadic.hr/wp-content/uploads/2026/07/Popis-odabranih-udzbenika-GS-Ferdo-Livadic-2026.-2027.pdf",
       "dokumenti": []
@@ -1357,6 +1423,7 @@
     {
       "id": "glazbena-skola-franje-kuhaca-osijek",
       "naziv": "Glazbena škola Franje Kuhača Osijek",
+      "mjesto": "Osijek",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://gsfk-osijek.hr/popis-udzbenika-za-srednju-glazbenu-skolu-2026-2027/",
       "dokumenti": [
@@ -1370,6 +1437,7 @@
     {
       "id": "glazbena-skola-ivana-lukacica-sibenik",
       "naziv": "Glazbena škola Ivana Lukačića Šibenik",
+      "mjesto": "Šibenik",
       "zupanija": "Šibensko-kninska",
       "stranica": null,
       "dokumenti": []
@@ -1377,6 +1445,7 @@
     {
       "id": "glazbena-skola-ivana-matetica-ronjgova-rijeka",
       "naziv": "Glazbena škola Ivana Matetića Ronjgova Rijeka",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://gs-imr.hr/udzbenici/",
       "dokumenti": []
@@ -1384,6 +1453,7 @@
     {
       "id": "glazbena-skola-ivana-matetica-ronjgova-pula",
       "naziv": "Glazbena škola Ivana Matetića – Ronjgova Pula",
+      "mjesto": "Pula",
       "zupanija": "Istarska",
       "stranica": "https://www.imr.hr/dogadanja/popis-udzbenika-radnih-biljeznica-i-ostalih-materijala-za-sgs/",
       "dokumenti": [
@@ -1412,6 +1482,7 @@
     {
       "id": "glazbena-skola-jan-vlasimsky-virovitica",
       "naziv": "Glazbena škola Jan Vlašimsky Virovitica",
+      "mjesto": "Virovitica",
       "zupanija": "Virovitičko-podravska",
       "stranica": null,
       "dokumenti": []
@@ -1419,6 +1490,7 @@
     {
       "id": "glazbena-skola-josipa-runjanina-vinkovci",
       "naziv": "Glazbena škola Josipa Runjanina Vinkovci",
+      "mjesto": null,
       "zupanija": "Vukovarsko-srijemska",
       "stranica": null,
       "dokumenti": []
@@ -1426,6 +1498,7 @@
     {
       "id": "glazbena-skola-pozega",
       "naziv": "Glazbena škola Požega",
+      "mjesto": "Požega",
       "zupanija": "Požeško-slavonska",
       "stranica": "https://glazbena-skola-pozega.hr/pocetak-nove-skolske-godine-udzbenici/",
       "dokumenti": [
@@ -1439,6 +1512,7 @@
     {
       "id": "glazbena-skola-pregrada",
       "naziv": "Glazbena škola Pregrada",
+      "mjesto": "Pregrada",
       "zupanija": "Krapinsko-zagorska",
       "stranica": null,
       "dokumenti": []
@@ -1446,6 +1520,7 @@
     {
       "id": "glazbena-skola-slavonski-brod",
       "naziv": "Glazbena škola Slavonski Brod",
+      "mjesto": "Slavonski Brod",
       "zupanija": "Brodsko-posavska",
       "stranica": "https://gsslavonskibrod.com/2026/07/06/udzbenici-za-srednju-skolu-3/",
       "dokumenti": [
@@ -1474,6 +1549,7 @@
     {
       "id": "glazbena-skola-varazdin",
       "naziv": "Glazbena škola Varaždin",
+      "mjesto": null,
       "zupanija": "Varaždinska",
       "stranica": "https://glazbena.hr/srednja-glazbena/popis-udzbenika-za-opceobrazovne-predmete-za-sk-god-2026-2027/",
       "dokumenti": [
@@ -1487,6 +1563,7 @@
     {
       "id": "glazbena-skola-vatroslava-lisinskog-bjelovar",
       "naziv": "Glazbena škola Vatroslava Lisinskog Bjelovar",
+      "mjesto": "Bjelovar",
       "zupanija": "Bjelovarsko-bilogorska",
       "stranica": null,
       "dokumenti": []
@@ -1494,6 +1571,7 @@
     {
       "id": "gospodarska-skola-istituto-professionale-buje",
       "naziv": "Gospodarska škola / Istituto Professionale Buje",
+      "mjesto": "Buje",
       "zupanija": "Istarska",
       "stranica": "https://ss-gospodarska-buje.skole.hr/udzbenici-za-skolsku-godinu-26-27/",
       "dokumenti": [
@@ -1652,6 +1730,7 @@
     {
       "id": "gospodarska-skola-varazdin",
       "naziv": "Gospodarska škola Varaždin",
+      "mjesto": "Varaždin",
       "zupanija": "Varaždinska",
       "stranica": "https://ss-gospodarska-vz.skole.hr/objava-popisa-udzbenika-za-novu-skolsku-godinu-2026-2027/",
       "dokumenti": [
@@ -1670,6 +1749,7 @@
     {
       "id": "graditeljska-skola-za-industriju-i-obrt-rijeka",
       "naziv": "Graditeljska škola za industriju i obrt Rijeka",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://ss-graditeljska-industrijaiobrt-ri.skole.hr/udzbenici/",
       "dokumenti": [
@@ -1683,6 +1763,7 @@
     {
       "id": "graditeljska-prirodoslovna-i-rudarska-skola-varazdin",
       "naziv": "Graditeljska, prirodoslovna i rudarska škola Varaždin",
+      "mjesto": "Varaždin",
       "zupanija": "Varaždinska",
       "stranica": "https://www.rudarska.hr/popis-udzbenika-s-pripadajucim-dopunskim-nastavnim-sredstvima/",
       "dokumenti": [
@@ -1786,6 +1867,7 @@
     {
       "id": "graditeljsko-geodetska-skola-osijek",
       "naziv": "Graditeljsko-geodetska škola Osijek",
+      "mjesto": "Osijek",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://ss-graditeljsko-geodetska-os.skole.hr/popis-udzbenika/",
       "dokumenti": [
@@ -1814,6 +1896,7 @@
     {
       "id": "gradevinska-tehnicka-skola-rijeka",
       "naziv": "Građevinska tehnička škola Rijeka",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://ss-gradjevinska-tehnicka-ri.skole.hr/popis-udzbenika-za-sk-god-2026-2027/",
       "dokumenti": [
@@ -1882,6 +1965,7 @@
     {
       "id": "hotelijersko-turisticka-i-ugostiteljska-skola-zadar",
       "naziv": "Hotelijersko-turistička i ugostiteljska škola Zadar",
+      "mjesto": "Zadar",
       "zupanija": "Zadarska",
       "stranica": "https://ss-hotelijerskoturistickaiugostiteljska-zd.skole.hr/popis-udzbenika/",
       "dokumenti": [
@@ -1915,6 +1999,7 @@
     {
       "id": "hotelijersko-turisticka-skola-opatija",
       "naziv": "Hotelijersko-turistička škola Opatija",
+      "mjesto": "Opatija",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://ss-hotelijersko-turisticka-opatija.skole.hr/udzbenici/",
       "dokumenti": [
@@ -1938,6 +2023,7 @@
     {
       "id": "i-gimnazija-osijek",
       "naziv": "I. gimnazija Osijek",
+      "mjesto": "Osijek",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://gimnazija-prva-os.skole.hr/obavijest-popis-udzbenika-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
@@ -1971,6 +2057,7 @@
     {
       "id": "ii-gimnazija-osijek",
       "naziv": "II. gimnazija Osijek",
+      "mjesto": "Osijek",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://gimnazija-druga-os.skole.hr/udzbenici-za-sk-god-2026-2027/",
       "dokumenti": []
@@ -1978,6 +2065,7 @@
     {
       "id": "iii-gimnazija-osijek",
       "naziv": "III. gimnazija Osijek",
+      "mjesto": "Osijek",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://gimnazija-treca-os.skole.hr/popis-udzbenika/",
       "dokumenti": []
@@ -1985,6 +2073,7 @@
     {
       "id": "industrijsko-obrtnicka-skola-nova-gradiska",
       "naziv": "Industrijsko-obrtnička škola Nova Gradiška",
+      "mjesto": "Nova Gradiška",
       "zupanija": "Brodsko-posavska",
       "stranica": "https://ss-industrijsko-obrtnicka-ng.skole.hr/popis-udzbenika/",
       "dokumenti": []
@@ -1992,6 +2081,7 @@
     {
       "id": "industrijsko-obrtnicka-skola-pula",
       "naziv": "Industrijsko-obrtnička škola Pula",
+      "mjesto": "Pula",
       "zupanija": "Istarska",
       "stranica": "https://ss-ios-pu.skole.hr/",
       "dokumenti": [
@@ -2005,6 +2095,7 @@
     {
       "id": "industrijsko-obrtnicka-skola-sisak",
       "naziv": "Industrijsko-obrtnička škola Sisak",
+      "mjesto": "Sisak",
       "zupanija": "Sisačko-moslavačka",
       "stranica": "https://ss-industrijsko-obrtnicka-sk.skole.hr/popis-udzbenika/",
       "dokumenti": []
@@ -2012,6 +2103,7 @@
     {
       "id": "industrijsko-obrtnicka-skola-slatina",
       "naziv": "Industrijsko-obrtnička škola Slatina",
+      "mjesto": "Slatina",
       "zupanija": "Virovitičko-podravska",
       "stranica": "https://ss-industrijsko-obrtnicka-sl.skole.hr/udzbenici-za-sk-god-2026-2027-obavijest/",
       "dokumenti": []
@@ -2019,6 +2111,7 @@
     {
       "id": "industrijsko-obrtnicka-skola-slavonski-brod",
       "naziv": "Industrijsko-obrtnička škola Slavonski Brod",
+      "mjesto": "Slavonski Brod",
       "zupanija": "Brodsko-posavska",
       "stranica": "https://ss-industrijsko-obrtnicka-sb.skole.hr/popis-knjiga-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
@@ -2037,6 +2130,7 @@
     {
       "id": "industrijsko-obrtnicka-skola-virovitica",
       "naziv": "Industrijsko-obrtnička škola Virovitica",
+      "mjesto": "Virovitica",
       "zupanija": "Virovitičko-podravska",
       "stranica": "https://ss-industrijskoobrtnicka-vt.skole.hr/wp-content/uploads/sites/1154/2026/07/Udzbenici-za-skolsku-godinu-2026.2027.-Ispravak.pdf",
       "dokumenti": [
@@ -2050,6 +2144,7 @@
     {
       "id": "industrijsko-obrtnicka-skola-sibenik",
       "naziv": "Industrijsko-obrtnička škola Šibenik",
+      "mjesto": "Šibenik",
       "zupanija": "Šibensko-kninska",
       "stranica": null,
       "dokumenti": [
@@ -2113,6 +2208,7 @@
     {
       "id": "isusovacka-klasicna-gimnazija-osijek",
       "naziv": "Isusovačka klasična gimnazija Osijek",
+      "mjesto": null,
       "zupanija": "Osječko-baranjska",
       "stranica": "https://www.ikg.hr/udzbenici/",
       "dokumenti": [
@@ -2126,6 +2222,7 @@
     {
       "id": "katolicka-klasicna-gimnazija-pozega",
       "naziv": "Katolička klasična gimnazija Požega",
+      "mjesto": null,
       "zupanija": "Požeško-slavonska",
       "stranica": "https://katolicka-gimnazija.hr/index.php/2026/07/09/popis-udzbenika-za-skolsku-godinu-2026-2027/",
       "dokumenti": []
@@ -2133,6 +2230,7 @@
     {
       "id": "katolicka-klasicna-gimnazija-virovitica",
       "naziv": "Katolička klasična gimnazija Virovitica",
+      "mjesto": null,
       "zupanija": "Virovitičko-podravska",
       "stranica": "https://kkg-vtc.hr/?s=ud%C5%BEbeni",
       "dokumenti": [
@@ -2161,6 +2259,7 @@
     {
       "id": "klasicna-gimnazija-ivana-pavla-ii-zadar",
       "naziv": "Klasična gimnazija Ivana Pavla II Zadar",
+      "mjesto": null,
       "zupanija": "Zadarska",
       "stranica": "https://gimnazija-ivanapavla.hr/popis-udzbenika-2/",
       "dokumenti": [
@@ -2234,6 +2333,7 @@
     {
       "id": "klasicna-gimnazija-fra-marijana-lanosovica",
       "naziv": "Klasična gimnazija fra Marijana Lanosovića",
+      "mjesto": null,
       "zupanija": "Brodsko-posavska",
       "stranica": "https://gimnazija-framarijanalanosovica.hr/2026/07/10/popis-udzbenika-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
@@ -2247,6 +2347,7 @@
     {
       "id": "komercijalna-i-trgovacka-skola-bjelovar",
       "naziv": "Komercijalna i trgovačka škola Bjelovar",
+      "mjesto": "Bjelovar",
       "zupanija": "Bjelovarsko-bilogorska",
       "stranica": "https://ss-trgovacka-bj.skole.hr/udzbenici-2026-2027/",
       "dokumenti": [
@@ -2295,6 +2396,7 @@
     {
       "id": "medicinska-skola-ante-kuzmanica-zadar",
       "naziv": "Medicinska škola Ante Kuzmanića Zadar",
+      "mjesto": "Zadar",
       "zupanija": "Zadarska",
       "stranica": "https://ss-medicinska-akuzmanic-zd.skole.hr/popis-udzbenika/",
       "dokumenti": [
@@ -2313,6 +2415,7 @@
     {
       "id": "medicinska-skola-bjelovar",
       "naziv": "Medicinska škola Bjelovar",
+      "mjesto": "Bjelovar",
       "zupanija": "Bjelovarsko-bilogorska",
       "stranica": "https://medskolabjelovar.hr/popis-udzbenika-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
@@ -2386,6 +2489,7 @@
     {
       "id": "medicinska-skola-dubrovnik",
       "naziv": "Medicinska škola Dubrovnik",
+      "mjesto": "Dubrovnik",
       "zupanija": "Dubrovačko-neretvanska",
       "stranica": "https://ss-medicinska-du.skole.hr/popis-udzbenika-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
@@ -2424,6 +2528,7 @@
     {
       "id": "medicinska-skola-karlovac",
       "naziv": "Medicinska škola Karlovac",
+      "mjesto": "Karlovac",
       "zupanija": "Karlovačka",
       "stranica": "https://ss-medicinska-ka.skole.hr/za-ucenike/popis-udzbenika/",
       "dokumenti": [
@@ -2472,6 +2577,7 @@
     {
       "id": "medicinska-skola-osijek",
       "naziv": "Medicinska škola Osijek",
+      "mjesto": "Osijek",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://ss-medicinska-os.skole.hr/popis-udzbenika/",
       "dokumenti": [
@@ -2525,6 +2631,7 @@
     {
       "id": "medicinska-skola-pula",
       "naziv": "Medicinska škola Pula",
+      "mjesto": "Pula",
       "zupanija": "Istarska",
       "stranica": "https://www.medicinskaskolapula.hr/wp-content/uploads/2026/07/POPIS-UDZBENIKA-ZA-2026.-2027.-SKOLSKU-GODINU.pdf",
       "dokumenti": [
@@ -2538,6 +2645,7 @@
     {
       "id": "medicinska-skola-varazdin",
       "naziv": "Medicinska škola Varaždin",
+      "mjesto": "Varaždin",
       "zupanija": "Varaždinska",
       "stranica": "https://www.medskvz.org/web/?s=ud%C5%BEbe",
       "dokumenti": [
@@ -2551,6 +2659,7 @@
     {
       "id": "medicinska-skola-u-rijeci",
       "naziv": "Medicinska škola u Rijeci",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://ss-medicinska-ri.skole.hr/naslovna/informacije/popis-udzbenika/",
       "dokumenti": [
@@ -2564,6 +2673,7 @@
     {
       "id": "medicinska-skola-sibenik",
       "naziv": "Medicinska škola Šibenik",
+      "mjesto": "Šibenik",
       "zupanija": "Šibensko-kninska",
       "stranica": "https://ss-medicinska-si.skole.hr/popis-udzbenika-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
@@ -2577,6 +2687,7 @@
     {
       "id": "medunarodna-srednja-skola-adria",
       "naziv": "Međunarodna srednja škola Adria",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": null,
       "dokumenti": []
@@ -2584,6 +2695,7 @@
     {
       "id": "mjesovita-industrijsko-obrtnicka-skola-karlovac",
       "naziv": "Mješovita industrijsko-obrtnička škola Karlovac",
+      "mjesto": "Karlovac",
       "zupanija": "Karlovačka",
       "stranica": "https://ss-mios-ka.skole.hr/azurirani-popisi-udzbenika-za-1-i-2-razrede-za-sk-god-2026-2027/",
       "dokumenti": [
@@ -2662,6 +2774,7 @@
     {
       "id": "obrtnicka-i-tehnicka-skola-dubrovnik",
       "naziv": "Obrtnička i tehnička škola Dubrovnik",
+      "mjesto": "Dubrovnik",
       "zupanija": "Dubrovačko-neretvanska",
       "stranica": null,
       "dokumenti": []
@@ -2669,6 +2782,7 @@
     {
       "id": "obrtnicka-i-tehnicka-skola-ogulin",
       "naziv": "Obrtnička i tehnička škola Ogulin",
+      "mjesto": "Ogulin",
       "zupanija": "Karlovačka",
       "stranica": "https://www.otsog.hr/popis-udzbenika-za-sk-god-2026-2027/",
       "dokumenti": [
@@ -2787,6 +2901,7 @@
     {
       "id": "obrtnicka-skola-bjelovar",
       "naziv": "Obrtnička škola Bjelovar",
+      "mjesto": "Bjelovar",
       "zupanija": "Bjelovarsko-bilogorska",
       "stranica": "https://obs-bj.hr/za-u%C4%8Denike/popis-ud%C5%BEbenika-za-%C5%A1kolsku-godinu-2026-2027",
       "dokumenti": [
@@ -2805,6 +2920,7 @@
     {
       "id": "obrtnicka-skola-gojka-matuline-zadar",
       "naziv": "Obrtnička škola Gojka Matuline Zadar",
+      "mjesto": "Zadar",
       "zupanija": "Zadarska",
       "stranica": "https://www.obrtskolgm.hr/docs/2025/obrtskolgm-popis-udzbenika-2025-2026.pdf",
       "dokumenti": []
@@ -2812,6 +2928,7 @@
     {
       "id": "obrtnicka-skola-koprivnica",
       "naziv": "Obrtnička škola Koprivnica",
+      "mjesto": "Koprivnica",
       "zupanija": "Koprivničko-križevačka",
       "stranica": "https://ss-obrtnicka-koprivnica.skole.hr/wp-content/uploads/sites/1253/2026/07/Odabir-udzbenika_2026_2027.pdf",
       "dokumenti": [
@@ -2825,6 +2942,7 @@
     {
       "id": "obrtnicka-skola-opatija",
       "naziv": "Obrtnička škola Opatija",
+      "mjesto": "Opatija",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://ss-obrtnicka-opatija.skole.hr/popis-udzbenika-2/",
       "dokumenti": [
@@ -2838,6 +2956,7 @@
     {
       "id": "obrtnicka-skola-osijek",
       "naziv": "Obrtnička škola Osijek",
+      "mjesto": "Osijek",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://ss-obrtnicka-os.skole.hr/nastava/udzbenici/",
       "dokumenti": [
@@ -2861,6 +2980,7 @@
     {
       "id": "obrtnicka-skola-pozega",
       "naziv": "Obrtnička škola Požega",
+      "mjesto": "Požega",
       "zupanija": "Požeško-slavonska",
       "stranica": null,
       "dokumenti": []
@@ -2868,6 +2988,7 @@
     {
       "id": "obrtnicko-industrijska-skola-zupanja",
       "naziv": "Obrtničko-industrijska škola Županja",
+      "mjesto": "Županja",
       "zupanija": "Vukovarsko-srijemska",
       "stranica": "https://ss-obrtnicko-industrijska-zu.skole.hr/udzbenici/",
       "dokumenti": []
@@ -2875,6 +2996,7 @@
     {
       "id": "obrtnicko-tehnicka-skola-slavonski-brod",
       "naziv": "Obrtničko-tehnička škola Slavonski Brod",
+      "mjesto": "Slavonski Brod",
       "zupanija": "Brodsko-posavska",
       "stranica": "https://ss-obrtnicko-tehnicka-sb.skole.hr/udzbenici/",
       "dokumenti": []
@@ -2882,6 +3004,7 @@
     {
       "id": "pazinski-kolegij-klasicna-gimnazija",
       "naziv": "Pazinski kolegij – klasična gimnazija",
+      "mjesto": null,
       "zupanija": "Istarska",
       "stranica": null,
       "dokumenti": []
@@ -2889,6 +3012,7 @@
     {
       "id": "poljoprivredna-i-veterinarska-skola-osijek",
       "naziv": "Poljoprivredna i veterinarska škola Osijek",
+      "mjesto": "Osijek",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://ss-poljoprivredna-veterinarska-os.skole.hr/nastava/udzbenici/",
       "dokumenti": [
@@ -2912,6 +3036,7 @@
     {
       "id": "poljoprivredna-prehrambena-i-veterinarska-skola-stanka-ozanica-zadar",
       "naziv": "Poljoprivredna, prehrambena i veterinarska škola Stanka Ožanića Zadar",
+      "mjesto": "Zadar",
       "zupanija": "Zadarska",
       "stranica": "https://ppvs-ozanic.hr/popis-udzbenika-za-skolsku-godinu-2026-27/",
       "dokumenti": []
@@ -2919,6 +3044,7 @@
     {
       "id": "poljoprivredno-prehrambena-skola-pozega",
       "naziv": "Poljoprivredno-prehrambena škola Požega",
+      "mjesto": "Požega",
       "zupanija": "Požeško-slavonska",
       "stranica": "https://ss-poljoprivrednoprehrambena-pozega.skole.hr/udzbenici/",
       "dokumenti": [
@@ -2937,6 +3063,7 @@
     {
       "id": "poljoprivredno-sumarska-skola-vinkovci",
       "naziv": "Poljoprivredno-šumarska škola Vinkovci",
+      "mjesto": "Vinkovci",
       "zupanija": "Vukovarsko-srijemska",
       "stranica": "https://ss-poljoprivredno-sumarska-vk.skole.hr/popis-udzbenika/",
       "dokumenti": []
@@ -2944,6 +3071,7 @@
     {
       "id": "pomorska-skola-bakar",
       "naziv": "Pomorska škola Bakar",
+      "mjesto": "Bakar",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://pomorskabakar.hr/udzbenici/",
       "dokumenti": [
@@ -2957,6 +3085,7 @@
     {
       "id": "pomorska-skola-zadar",
       "naziv": "Pomorska škola Zadar",
+      "mjesto": "Zadar",
       "zupanija": "Zadarska",
       "stranica": null,
       "dokumenti": []
@@ -2964,6 +3093,7 @@
     {
       "id": "pomorsko-tehnicka-skola-dubrovnik",
       "naziv": "Pomorsko-tehnička škola Dubrovnik",
+      "mjesto": "Dubrovnik",
       "zupanija": "Dubrovačko-neretvanska",
       "stranica": "https://pomorska-dubrovnik.hr/novost/334/popis-udzbenika-za-skolsku-godinu-20262027",
       "dokumenti": [
@@ -2977,6 +3107,7 @@
     {
       "id": "prirodoslovna-i-graficka-skola-rijeka",
       "naziv": "Prirodoslovna i grafička škola Rijeka",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://www.pgsri.hr/udzbenici/",
       "dokumenti": [
@@ -3115,6 +3246,7 @@
     {
       "id": "prirodoslovna-skola-karlovac",
       "naziv": "Prirodoslovna škola Karlovac",
+      "mjesto": "Karlovac",
       "zupanija": "Karlovačka",
       "stranica": "https://prirodoslovnaskola-ka.hr/popis-udzbenika-2026-2027/",
       "dokumenti": [
@@ -3188,6 +3320,7 @@
     {
       "id": "prirodoslovno-graficka-skola-zadar",
       "naziv": "Prirodoslovno-grafička škola Zadar",
+      "mjesto": "Zadar",
       "zupanija": "Zadarska",
       "stranica": "https://pgszd.hr/popis-udzbenika/",
       "dokumenti": [
@@ -3241,6 +3374,7 @@
     {
       "id": "privatna-gimnazija-nova-zadar",
       "naziv": "Privatna gimnazija Nova Zadar",
+      "mjesto": null,
       "zupanija": "Zadarska",
       "stranica": "https://pgnova.hr/popis-udzbenika/",
       "dokumenti": []
@@ -3248,6 +3382,7 @@
     {
       "id": "privatna-skola-gaudeamus",
       "naziv": "Privatna škola \"Gaudeamus\"",
+      "mjesto": null,
       "zupanija": "Osječko-baranjska",
       "stranica": null,
       "dokumenti": []
@@ -3255,6 +3390,7 @@
     {
       "id": "prometna-skola-rijeka",
       "naziv": "Prometna škola Rijeka",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://prometna-skola-rijeka.hr/popis-udzbenika-za-2026-2027-godinu/",
       "dokumenti": [
@@ -3268,6 +3404,7 @@
     {
       "id": "prometno-tehnicka-skola-sibenik",
       "naziv": "Prometno-tehnička škola Šibenik",
+      "mjesto": "Šibenik",
       "zupanija": "Šibensko-kninska",
       "stranica": "https://ss-prometno-tehnicka-si.skole.hr/wp-content/uploads/sites/318/2026/07/UDZBENICI_PROMETNO-TEHNICKA_SKOLA_SIBENIK_-26-27.pdf",
       "dokumenti": [
@@ -3281,6 +3418,7 @@
     {
       "id": "prosvjetno-kulturni-centar-madara-u-rh",
       "naziv": "Prosvjetno-kulturni centar Mađara u RH",
+      "mjesto": null,
       "zupanija": "Osječko-baranjska",
       "stranica": "https://www.pkcm.hr/index.php/hr/osnovna-skola/udzbenici-os , https://www.pkcm.hr/index.php/hr/srednja-skola/udzbenici-ss",
       "dokumenti": [
@@ -3294,6 +3432,7 @@
     {
       "id": "prva-gimnazija-varazdin",
       "naziv": "Prva gimnazija Varaždin",
+      "mjesto": "Varaždin",
       "zupanija": "Varaždinska",
       "stranica": "https://gimnazija-varazdin.skole.hr/udzbenici/",
       "dokumenti": []
@@ -3301,6 +3440,7 @@
     {
       "id": "prva-privatna-gimnazija-varazdin",
       "naziv": "Prva privatna gimnazija Varaždin",
+      "mjesto": null,
       "zupanija": "Varaždinska",
       "stranica": "https://privatna.net/popis-udzbenika/",
       "dokumenti": []
@@ -3308,6 +3448,7 @@
     {
       "id": "prva-rijecka-hrvatska-gimnazija",
       "naziv": "Prva riječka hrvatska gimnazija",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://prhg.hr/U%C4%8Denici/Ud%C5%BEbenici-i-radne-bilje%C5%BEnice-2026-2027",
       "dokumenti": [
@@ -3321,6 +3462,7 @@
     {
       "id": "prva-srednja-skola-beli-manastir",
       "naziv": "Prva srednja škola Beli Manastir",
+      "mjesto": "Beli Manastir",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://ss-prva-bm.skole.hr/?s=ud%C5%BEbe",
       "dokumenti": [
@@ -3369,6 +3511,7 @@
     {
       "id": "prva-srednja-skola-vukovar",
       "naziv": "Prva srednja škola Vukovar",
+      "mjesto": null,
       "zupanija": "Vukovarsko-srijemska",
       "stranica": "https://ss-prva-vu.skole.hr/udzbenici-2/",
       "dokumenti": [
@@ -3412,6 +3555,7 @@
     {
       "id": "prva-susacka-hrvatska-gimnazija-u-rijeci",
       "naziv": "Prva sušačka hrvatska gimnazija u Rijeci",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://www.pshg.net/udzbenici.php",
       "dokumenti": [
@@ -3450,6 +3594,7 @@
     {
       "id": "salezijanska-klasicna-gimnazija-rijeka",
       "naziv": "Salezijanska klasična gimnazija Rijeka",
+      "mjesto": null,
       "zupanija": "Primorsko-goranska",
       "stranica": "https://gimnazija-klasicna-salezijanska-ri.skole.hr/popis-udzbenik/",
       "dokumenti": []
@@ -3457,6 +3602,7 @@
     {
       "id": "srednja-gospodarska-skola-krizevci",
       "naziv": "Srednja gospodarska škola Križevci",
+      "mjesto": "Križevci",
       "zupanija": "Koprivničko-križevačka",
       "stranica": "https://ss-gospodarska-kc.skole.hr/udzbenici/",
       "dokumenti": [
@@ -3535,6 +3681,7 @@
     {
       "id": "srednja-medicinska-skola-slavonski-brod",
       "naziv": "Srednja medicinska škola Slavonski Brod",
+      "mjesto": "Slavonski Brod",
       "zupanija": "Brodsko-posavska",
       "stranica": "https://www.srednja-medicinska-skola.hr/category/novosti/",
       "dokumenti": [
@@ -3623,6 +3770,7 @@
     {
       "id": "srednja-poljoprivredna-i-tehnicka-skola-opuzen",
       "naziv": "Srednja poljoprivredna i tehnička škola Opuzen",
+      "mjesto": "Opuzen",
       "zupanija": "Dubrovačko-neretvanska",
       "stranica": "https://ssopuzen.hr/2026/07/15/popis-udzbenika-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
@@ -3676,6 +3824,7 @@
     {
       "id": "srednja-strukovna-skola-antuna-horvata-dakovo",
       "naziv": "Srednja strukovna škola Antuna Horvata Đakovo",
+      "mjesto": "Đakovo",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://strukovna.com/2026/07/08/popis-udzbenika-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
@@ -3694,6 +3843,7 @@
     {
       "id": "srednja-strukovna-skola-samobor",
       "naziv": "Srednja strukovna škola Samobor",
+      "mjesto": "Samobor",
       "zupanija": "Zagrebačka",
       "stranica": "https://www.strukovnasamobor.hr/dokumenti/Popis_ud%C5%BEbenika/2026.-2027.#folder_id=1m-TM-jd6d0o3jA9ecLrpnkIF_9bbucnD",
       "dokumenti": []
@@ -3701,6 +3851,7 @@
     {
       "id": "srednja-strukovna-skola-varazdin",
       "naziv": "Srednja strukovna škola Varaždin",
+      "mjesto": "Varaždin",
       "zupanija": "Varaždinska",
       "stranica": "https://sss-vz.hr/wp-content/uploads/2026/07/Ud%C5%BEbenici-%C5%A1kolske-godine-2026.-2027.-za-objavu-na-stranici-%C5%A1kole.pdf",
       "dokumenti": [
@@ -3714,6 +3865,7 @@
     {
       "id": "srednja-strukovna-skola-velika-gorica",
       "naziv": "Srednja strukovna škola Velika Gorica",
+      "mjesto": "Velika Gorica",
       "zupanija": "Zagrebačka",
       "stranica": "https://ss-strukovna-velikagorica.skole.hr/popis-udzbenika-u-skolskoj-godini-2025-2026/",
       "dokumenti": [
@@ -3727,6 +3879,7 @@
     {
       "id": "srednja-strukovna-skola-vinkovci",
       "naziv": "Srednja strukovna škola Vinkovci",
+      "mjesto": "Vinkovci",
       "zupanija": "Vukovarsko-srijemska",
       "stranica": "https://www.srednjastrukovnaskolavinkovci.hr/udzbenici/",
       "dokumenti": [
@@ -3745,6 +3898,7 @@
     {
       "id": "srednja-strukovna-skola-kralja-zvonimira-knin",
       "naziv": "Srednja strukovna škola kralja Zvonimira Knin",
+      "mjesto": "Knin",
       "zupanija": "Šibensko-kninska",
       "stranica": "https://ss-strukovna-kralja-zvonimira-kn.skole.hr/vijesti/",
       "dokumenti": []
@@ -3752,6 +3906,7 @@
     {
       "id": "srednja-strukovna-skola-sibenik",
       "naziv": "Srednja strukovna škola Šibenik",
+      "mjesto": "Šibenik",
       "zupanija": "Šibensko-kninska",
       "stranica": "https://www.strukovna.hr/index.php/popis-udbenika",
       "dokumenti": [
@@ -3795,6 +3950,7 @@
     {
       "id": "srednja-talijanska-skola-rijeka",
       "naziv": "Srednja talijanska škola Rijeka",
+      "mjesto": null,
       "zupanija": "Primorsko-goranska",
       "stranica": "https://sts-rijeka-smsi-fiume.hr/2026/07/",
       "dokumenti": []
@@ -3802,6 +3958,7 @@
     {
       "id": "srednja-waldorfska-skola-u-rijeci",
       "naziv": "Srednja waldorfska škola u Rijeci",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": null,
       "dokumenti": []
@@ -3809,6 +3966,7 @@
     {
       "id": "srednja-skola-arboretum-opeka-vinica",
       "naziv": "Srednja škola \"Arboretum Opeka\" Vinica",
+      "mjesto": null,
       "zupanija": "Varaždinska",
       "stranica": "https://ao-rck.hr/srednja-skola-arboretum-opeka/udzbenici/",
       "dokumenti": []
@@ -3816,6 +3974,7 @@
     {
       "id": "srednja-skola-august-senoa-garesnica",
       "naziv": "Srednja škola \"August Šenoa\" Garešnica",
+      "mjesto": "Garešnica",
       "zupanija": "Bjelovarsko-bilogorska",
       "stranica": "https://ss-asenoa-garesnica.skole.hr/udzbenici/",
       "dokumenti": [
@@ -3904,6 +4063,7 @@
     {
       "id": "srednja-skola-ivan-seljanec-krizevci",
       "naziv": "Srednja škola \"Ivan Seljanec\" Križevci",
+      "mjesto": "Križevci",
       "zupanija": "Koprivničko-križevačka",
       "stranica": "https://ss-iseljanec-kc.skole.hr/udzbenici/",
       "dokumenti": [
@@ -4057,6 +4217,7 @@
     {
       "id": "srednja-skola-ivan-svear-ivanic-grad",
       "naziv": "Srednja škola \"Ivan Švear\" Ivanić-Grad",
+      "mjesto": "Ivanić-Grad",
       "zupanija": "Zagrebačka",
       "stranica": "https://ss-isvear-ivanic-grad.skole.hr/popis_udzbenika/",
       "dokumenti": []
@@ -4064,6 +4225,7 @@
     {
       "id": "srednja-skola-marka-marulica-slatina",
       "naziv": "Srednja škola \"Marka Marulića\" Slatina",
+      "mjesto": "Slatina",
       "zupanija": "Virovitičko-podravska",
       "stranica": "https://drive.google.com/drive/folders/1dq4nXw1O139cQ3pwXSSn1OI2GzddqwRB",
       "dokumenti": []
@@ -4071,6 +4233,7 @@
     {
       "id": "srednja-skola-stjepan-ivsic-orahovica",
       "naziv": "Srednja škola \"Stjepan Ivšić\" Orahovica",
+      "mjesto": "Orahovica",
       "zupanija": "Virovitičko-podravska",
       "stranica": "https://ss-stjepan-ivsic.hr/",
       "dokumenti": [
@@ -4084,6 +4247,7 @@
     {
       "id": "srednja-skola-stjepan-sulimanac-pitomaca",
       "naziv": "Srednja škola \"Stjepan Sulimanac\" Pitomača",
+      "mjesto": null,
       "zupanija": "Virovitičko-podravska",
       "stranica": null,
       "dokumenti": [
@@ -4097,6 +4261,7 @@
     {
       "id": "srednja-skola-vladimir-gortan-buje",
       "naziv": "Srednja škola \"Vladimir Gortan\" Buje",
+      "mjesto": null,
       "zupanija": "Istarska",
       "stranica": "https://ss-vgortan-buje.skole.hr/popisi-uzbenika/",
       "dokumenti": [
@@ -4135,6 +4300,7 @@
     {
       "id": "srednja-skola-ambroza-haracica-mali-losinj",
       "naziv": "Srednja škola Ambroza Haračića Mali Lošinj",
+      "mjesto": "Mali Lošinj",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://www.ss-aharacica-malilosinj.com.hr/?page_id=4379",
       "dokumenti": [
@@ -4148,6 +4314,7 @@
     {
       "id": "srednja-skola-andrije-ljudevita-adamica",
       "naziv": "Srednja škola Andrije Ljudevita Adamića",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://ss-adamic.com/popis-udzbenika/",
       "dokumenti": [
@@ -4186,6 +4353,7 @@
     {
       "id": "srednja-skola-ban-josip-jelacic-zapresic",
       "naziv": "Srednja škola Ban Josip Jelačić Zaprešić",
+      "mjesto": "Zaprešić",
       "zupanija": "Zagrebačka",
       "stranica": "https://ss-ban-jjelacic-zapresic.skole.hr/ucenici/#ucenici_udzbenici",
       "dokumenti": [
@@ -4199,6 +4367,7 @@
     {
       "id": "srednja-skola-bartola-kasica-grubisno-polje",
       "naziv": "Srednja škola Bartola Kašića Grubišno Polje",
+      "mjesto": "Grubišno Polje",
       "zupanija": "Bjelovarsko-bilogorska",
       "stranica": "https://ss-bkasica-grubisnopolje.skole.hr/popis-udzbenika/",
       "dokumenti": []
@@ -4206,6 +4375,7 @@
     {
       "id": "srednja-skola-bartula-kasica-pag",
       "naziv": "Srednja škola Bartula Kašića Pag",
+      "mjesto": "Pag",
       "zupanija": "Zadarska",
       "stranica": "https://ss-bkasica-pag.skole.hr/popis-udzbenika-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
@@ -4224,6 +4394,7 @@
     {
       "id": "srednja-skola-bedekovcina",
       "naziv": "Srednja škola Bedekovčina",
+      "mjesto": "Bedekovčina",
       "zupanija": "Krapinsko-zagorska",
       "stranica": "https://ss-bedekovcina.skole.hr/udzbenici-2026-2027/",
       "dokumenti": []
@@ -4231,6 +4402,7 @@
     {
       "id": "srednja-skola-biograd-na-moru",
       "naziv": "Srednja škola Biograd na Moru",
+      "mjesto": "Biograd na Moru",
       "zupanija": "Zadarska",
       "stranica": "https://ss-biogradnamoru.skole.hr/popis-udzbenika/",
       "dokumenti": []
@@ -4238,6 +4410,7 @@
     {
       "id": "srednja-skola-buzet",
       "naziv": "Srednja škola Buzet",
+      "mjesto": "Buzet",
       "zupanija": "Istarska",
       "stranica": "https://ss-buzet.skole.hr/udzbenici/",
       "dokumenti": [
@@ -4261,6 +4434,7 @@
     {
       "id": "srednja-skola-dalj",
       "naziv": "Srednja škola Dalj",
+      "mjesto": "Dalj",
       "zupanija": "Osječko-baranjska",
       "stranica": null,
       "dokumenti": []
@@ -4268,6 +4442,7 @@
     {
       "id": "srednja-skola-delnice",
       "naziv": "Srednja škola Delnice",
+      "mjesto": "Delnice",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://ss-delnice.skole.hr/udzbenici/",
       "dokumenti": [
@@ -4296,6 +4471,7 @@
     {
       "id": "srednja-skola-donji-miholjac",
       "naziv": "Srednja škola Donji Miholjac",
+      "mjesto": "Donji Miholjac",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://ss-donji-miholjac.skole.hr/udzbenici-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
@@ -4409,6 +4585,7 @@
     {
       "id": "srednja-skola-dragutina-strazimira-sveti-ivan-zelina",
       "naziv": "Srednja škola Dragutina Stražimira Sveti Ivan Zelina",
+      "mjesto": "Sveti Ivan Zelina",
       "zupanija": "Zagrebačka",
       "stranica": "https://ss-dstrazimira-svetiivanzelina.skole.hr/udzbenici-i-dom/",
       "dokumenti": []
@@ -4416,6 +4593,7 @@
     {
       "id": "srednja-skola-duga-resa",
       "naziv": "Srednja škola Duga Resa",
+      "mjesto": "Duga Resa",
       "zupanija": "Karlovačka",
       "stranica": "https://staging.ssdr.hr/ucenici/popis-udzbenika/",
       "dokumenti": [
@@ -4494,6 +4672,7 @@
     {
       "id": "srednja-skola-dugo-selo",
       "naziv": "Srednja škola Dugo Selo",
+      "mjesto": "Dugo Selo",
       "zupanija": "Zagrebačka",
       "stranica": "https://ss-dugo-selo.skole.hr/udzbenici/",
       "dokumenti": [
@@ -4627,6 +4806,7 @@
     {
       "id": "srednja-skola-glina",
       "naziv": "Srednja škola Glina",
+      "mjesto": "Glina",
       "zupanija": "Sisačko-moslavačka",
       "stranica": "https://ss-glina.skole.hr/popis-udzbenika-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
@@ -4655,6 +4835,7 @@
     {
       "id": "srednja-skola-gracac",
       "naziv": "Srednja škola Gračac",
+      "mjesto": "Gračac",
       "zupanija": "Zadarska",
       "stranica": "https://ss-gracac.skole.hr/popis-udzbenika/",
       "dokumenti": [
@@ -4693,6 +4874,7 @@
     {
       "id": "srednja-skola-hrvatski-kralj-zvonimir-krk",
       "naziv": "Srednja škola Hrvatski kralj Zvonimir Krk",
+      "mjesto": "Krk",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://ss-hrvatskikraljzvonimir-krk.skole.hr/udzbenici/",
       "dokumenti": [
@@ -4716,6 +4898,7 @@
     {
       "id": "srednja-skola-ilok",
       "naziv": "Srednja škola Ilok",
+      "mjesto": "Ilok",
       "zupanija": "Vukovarsko-srijemska",
       "stranica": null,
       "dokumenti": []
@@ -4723,6 +4906,7 @@
     {
       "id": "srednja-skola-isidora-krsnjavoga-nasice",
       "naziv": "Srednja škola Isidora Kršnjavoga Našice",
+      "mjesto": "Našice",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://ss-ikrsnjavoga-nasice.skole.hr/popis-udzbenika/",
       "dokumenti": []
@@ -4730,6 +4914,7 @@
     {
       "id": "srednja-skola-ivana-mestrovica-drnis",
       "naziv": "Srednja škola Ivana Meštrovića Drniš",
+      "mjesto": "Drniš",
       "zupanija": "Šibensko-kninska",
       "stranica": "https://www.ss-ivana-mestrovica-drnis.hr/nastava/popis-udzbenika",
       "dokumenti": []
@@ -4737,6 +4922,7 @@
     {
       "id": "srednja-skola-ivana-trnskog-hrvatska-kostajnica",
       "naziv": "Srednja škola Ivana Trnskog Hrvatska Kostajnica",
+      "mjesto": null,
       "zupanija": "Sisačko-moslavačka",
       "stranica": "https://ss-itrnskog-hrvatskakostajnica.skole.hr/udzbenici-za-gimnaziju-i-3-i-4-razred-strukovnih-skola/ , https://ss-itrnskog-hrvatskakostajnica.skole.hr/popis-udzbenika-za-1-i-2-razred-strukovnih-kvalifikacija-stolar-stolarica-sumarski-tehnicar-sumarska-tehnicarka-i-referent-referentica-za-poslovnu-ekonomiju/",
       "dokumenti": [
@@ -4780,6 +4966,7 @@
     {
       "id": "srednja-skola-ivanec",
       "naziv": "Srednja škola Ivanec",
+      "mjesto": "Ivanec",
       "zupanija": "Varaždinska",
       "stranica": "https://ss-ivanec.hr/udzbenici",
       "dokumenti": [
@@ -4793,6 +4980,7 @@
     {
       "id": "srednja-skola-ivo-padovan-blato",
       "naziv": "Srednja škola Ivo Padovan Blato",
+      "mjesto": "Blato",
       "zupanija": "Dubrovačko-neretvanska",
       "stranica": null,
       "dokumenti": []
@@ -4800,6 +4988,7 @@
     {
       "id": "srednja-skola-jastrebarsko",
       "naziv": "Srednja škola Jastrebarsko",
+      "mjesto": "Jastrebarsko",
       "zupanija": "Zagrebačka",
       "stranica": "https://ss-jastrebarsko.skole.hr/popis-udzbenika/",
       "dokumenti": [
@@ -4813,6 +5002,7 @@
     {
       "id": "srednja-skola-josipa-kozarca-durdenovac",
       "naziv": "Srednja škola Josipa Kozarca Đurđenovac",
+      "mjesto": "Đurđenovac",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://ss-jkozarca-djurdjenovac.skole.hr/popis-udzbenika-po-razredima-za-2025-2026/",
       "dokumenti": [
@@ -4826,6 +5016,7 @@
     {
       "id": "srednja-skola-konjscina",
       "naziv": "Srednja škola Konjščina",
+      "mjesto": "Konjščina",
       "zupanija": "Krapinsko-zagorska",
       "stranica": "https://ss-konjscina.skole.hr/popis-udzbenika-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
@@ -4919,6 +5110,7 @@
     {
       "id": "srednja-skola-koprivnica",
       "naziv": "Srednja škola Koprivnica",
+      "mjesto": "Koprivnica",
       "zupanija": "Koprivničko-križevačka",
       "stranica": "https://ss-koprivnica.skole.hr/popis-udzbenika-sektor-zdravstvo-i-razredi-koji-nisu-u-modularnoj-nastavi/",
       "dokumenti": [
@@ -4932,6 +5124,7 @@
     {
       "id": "srednja-skola-krapina",
       "naziv": "Srednja škola Krapina",
+      "mjesto": "Krapina",
       "zupanija": "Krapinsko-zagorska",
       "stranica": "https://ss-krapina.hr/informacija-o-datumu-objave-popisa-udzbenika-za-sk-god-2026-2027-2/",
       "dokumenti": []
@@ -4939,6 +5132,7 @@
     {
       "id": "srednja-skola-lovre-montija-knin",
       "naziv": "Srednja škola Lovre Montija Knin",
+      "mjesto": "Knin",
       "zupanija": "Šibensko-kninska",
       "stranica": "https://ss-lovre-montija-knin.skole.hr/popis-udzbenika-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
@@ -5017,6 +5211,7 @@
     {
       "id": "srednja-skola-ludbreg",
       "naziv": "Srednja škola Ludbreg",
+      "mjesto": "Ludbreg",
       "zupanija": "Varaždinska",
       "stranica": "https://ssludbreg.hr/udzbenici/",
       "dokumenti": []
@@ -5024,6 +5219,7 @@
     {
       "id": "srednja-skola-markantuna-de-dominisa-rab",
       "naziv": "Srednja škola Markantuna de Dominisa Rab",
+      "mjesto": "Rab",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://ss-mddominisa-rab.skole.hr/nastava/popis-udzbenika/",
       "dokumenti": [
@@ -5062,6 +5258,7 @@
     {
       "id": "srednja-skola-mate-balote-porec",
       "naziv": "Srednja škola Mate Balote Poreč",
+      "mjesto": "Poreč",
       "zupanija": "Istarska",
       "stranica": "https://ss-mbalote-porec.skole.hr/udzbenici/",
       "dokumenti": []
@@ -5069,6 +5266,7 @@
     {
       "id": "srednja-skola-mate-blazine-labin",
       "naziv": "Srednja škola Mate Blažine Labin",
+      "mjesto": "Labin",
       "zupanija": "Istarska",
       "stranica": "https://ssmb.hr/ucenici-i-roditelji/udzbenici/",
       "dokumenti": [
@@ -5097,6 +5295,7 @@
     {
       "id": "srednja-skola-matije-antuna-reljkovica",
       "naziv": "Srednja škola Matije Antuna Reljkovića",
+      "mjesto": null,
       "zupanija": "Brodsko-posavska",
       "stranica": "https://www.ssmar.hr/article.php?id=165",
       "dokumenti": [
@@ -5130,6 +5329,7 @@
     {
       "id": "srednja-skola-metkovic",
       "naziv": "Srednja škola Metković",
+      "mjesto": "Metković",
       "zupanija": "Dubrovačko-neretvanska",
       "stranica": null,
       "dokumenti": [
@@ -5143,6 +5343,7 @@
     {
       "id": "srednja-skola-novi-marof",
       "naziv": "Srednja škola Novi Marof",
+      "mjesto": "Novi Marof",
       "zupanija": "Varaždinska",
       "stranica": "https://www.ssnm.hr/udzbenici/",
       "dokumenti": [
@@ -5156,6 +5357,7 @@
     {
       "id": "srednja-skola-novska",
       "naziv": "Srednja škola Novska",
+      "mjesto": "Novska",
       "zupanija": "Sisačko-moslavačka",
       "stranica": "https://ss-novska.hr/Nastava/Udzbenici",
       "dokumenti": []
@@ -5163,6 +5365,7 @@
     {
       "id": "srednja-skola-obrovac",
       "naziv": "Srednja škola Obrovac",
+      "mjesto": "Obrovac",
       "zupanija": "Zadarska",
       "stranica": null,
       "dokumenti": []
@@ -5170,6 +5373,7 @@
     {
       "id": "srednja-skola-oroslavje",
       "naziv": "Srednja škola Oroslavje",
+      "mjesto": "Oroslavje",
       "zupanija": "Krapinsko-zagorska",
       "stranica": "https://ss-oroslavje.skole.hr/odabir-udzbenika/",
       "dokumenti": [
@@ -5268,6 +5472,7 @@
     {
       "id": "srednja-skola-otocac",
       "naziv": "Srednja škola Otočac",
+      "mjesto": "Otočac",
       "zupanija": "Ličko-senjska",
       "stranica": "https://ss-otocac.skole.hr/udzbenici/",
       "dokumenti": []
@@ -5275,6 +5480,7 @@
     {
       "id": "srednja-skola-pakrac",
       "naziv": "Srednja škola Pakrac",
+      "mjesto": "Pakrac",
       "zupanija": "Požeško-slavonska",
       "stranica": "https://ss-pakrac.skole.hr/udzbenici/",
       "dokumenti": []
@@ -5282,6 +5488,7 @@
     {
       "id": "srednja-skola-pavla-rittera-vitezovica-senj",
       "naziv": "Srednja škola Pavla Rittera Vitezovića Senj",
+      "mjesto": null,
       "zupanija": "Ličko-senjska",
       "stranica": null,
       "dokumenti": []
@@ -5289,6 +5496,7 @@
     {
       "id": "srednja-skola-petra-segedina-korcula",
       "naziv": "Srednja škola Petra Šegedina Korčula",
+      "mjesto": "Korčula",
       "zupanija": "Dubrovačko-neretvanska",
       "stranica": "https://ss-psegedina-korcula.skole.hr/udzbenici/",
       "dokumenti": []
@@ -5296,6 +5504,7 @@
     {
       "id": "srednja-skola-petrinja",
       "naziv": "Srednja škola Petrinja",
+      "mjesto": "Petrinja",
       "zupanija": "Sisačko-moslavačka",
       "stranica": "http://www.ss-petrinja.skole.hr/ud_benici",
       "dokumenti": []
@@ -5303,6 +5512,7 @@
     {
       "id": "srednja-skola-plitvicka-jezera-korenica",
       "naziv": "Srednja škola Plitvička Jezera Korenica",
+      "mjesto": "Korenica",
       "zupanija": "Ličko-senjska",
       "stranica": "https://ss-plitvickajezera.skole.hr/oglasna-ploca-2/",
       "dokumenti": []
@@ -5310,6 +5520,7 @@
     {
       "id": "srednja-skola-pregrada",
       "naziv": "Srednja škola Pregrada",
+      "mjesto": "Pregrada",
       "zupanija": "Krapinsko-zagorska",
       "stranica": "https://sspregrada.hr/?s=ud%C5%BEbe",
       "dokumenti": [
@@ -5413,6 +5624,7 @@
     {
       "id": "srednja-skola-slunj",
       "naziv": "Srednja škola Slunj",
+      "mjesto": "Slunj",
       "zupanija": "Karlovačka",
       "stranica": "https://ss-slunj.skole.hr/292881-2/",
       "dokumenti": []
@@ -5420,6 +5632,7 @@
     {
       "id": "srednja-skola-tina-ujevica-kutina",
       "naziv": "Srednja škola Tina Ujevića Kutina",
+      "mjesto": "Kutina",
       "zupanija": "Sisačko-moslavačka",
       "stranica": "https://ss-tujevica-kt.skole.hr/popis-udzbenika/",
       "dokumenti": [
@@ -5433,6 +5646,7 @@
     {
       "id": "srednja-skola-topusko",
       "naziv": "Srednja škola Topusko",
+      "mjesto": "Topusko",
       "zupanija": "Sisačko-moslavačka",
       "stranica": "https://ss-topusko.skole.hr/popis-udzbenika/",
       "dokumenti": [
@@ -5501,6 +5715,7 @@
     {
       "id": "srednja-skola-valpovo",
       "naziv": "Srednja škola Valpovo",
+      "mjesto": "Valpovo",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://ss-valpovo.hr/nastava/udzbenici/",
       "dokumenti": [
@@ -5549,6 +5764,7 @@
     {
       "id": "srednja-skola-vela-luka",
       "naziv": "Srednja škola Vela Luka",
+      "mjesto": "Vela Luka",
       "zupanija": "Dubrovačko-neretvanska",
       "stranica": "https://ss-vela-luka.skole.hr/popis-udzbenika-za-2026-2027-skolsku-godinu/",
       "dokumenti": [
@@ -5612,6 +5828,7 @@
     {
       "id": "srednja-skola-viktorovac-sisak",
       "naziv": "Srednja škola Viktorovac Sisak",
+      "mjesto": "Sisak",
       "zupanija": "Sisačko-moslavačka",
       "stranica": "https://ss-viktorovac.hr/wp-content/uploads/2026/07/Popis-udzbenika-2026-2027.pdf",
       "dokumenti": [
@@ -5625,6 +5842,7 @@
     {
       "id": "srednja-skola-vladimir-nazor-cabar",
       "naziv": "Srednja škola Vladimir Nazor Čabar",
+      "mjesto": "Čabar",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://ss-vnazor-cabar.skole.hr/popis-udzbenika-za-sk-godinu-2026-2027/",
       "dokumenti": [
@@ -5653,6 +5871,7 @@
     {
       "id": "srednja-skola-vrbovec",
       "naziv": "Srednja škola Vrbovec",
+      "mjesto": "Vrbovec",
       "zupanija": "Zagrebačka",
       "stranica": "https://ss-vrbovec.skole.hr/nastava/popis-udzbenika/",
       "dokumenti": []
@@ -5660,6 +5879,7 @@
     {
       "id": "srednja-skola-zabok",
       "naziv": "Srednja škola Zabok",
+      "mjesto": "Zabok",
       "zupanija": "Krapinsko-zagorska",
       "stranica": "https://ss-zabok.skole.hr/udzbenici-skolska-godina-2026-2027/",
       "dokumenti": [
@@ -5693,6 +5913,7 @@
     {
       "id": "srednja-skola-zlatar",
       "naziv": "Srednja škola Zlatar",
+      "mjesto": "Zlatar",
       "zupanija": "Krapinsko-zagorska",
       "stranica": "https://sszlatar.hr/2026/07/23/popis-udzbenika-za-sk-god-2026-2027/",
       "dokumenti": [
@@ -5741,6 +5962,7 @@
     {
       "id": "srednja-skola-zvane-crnje-rovinj",
       "naziv": "Srednja škola Zvane Črnje Rovinj",
+      "mjesto": null,
       "zupanija": "Istarska",
       "stranica": null,
       "dokumenti": []
@@ -5748,6 +5970,7 @@
     {
       "id": "srednja-skola-dr-antuna-barca-crikvenica",
       "naziv": "Srednja škola dr. Antuna Barca Crikvenica",
+      "mjesto": "Crikvenica",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://ss-abarca-crikvenica.skole.hr/popis-udzbenika/",
       "dokumenti": [
@@ -5866,6 +6089,7 @@
     {
       "id": "srednja-skola-fra-andrije-kacica-miosica-ploce",
       "naziv": "Srednja škola fra Andrije Kačića Miošića Ploče",
+      "mjesto": "Ploče",
       "zupanija": "Dubrovačko-neretvanska",
       "stranica": "https://ss-fraandrijekacicamiosica-ploce.skole.hr/wp-content/uploads/sites/476/2026/07/udzbenici-2026-27-novo.pdf",
       "dokumenti": [
@@ -5879,6 +6103,7 @@
     {
       "id": "srednja-skola-kneza-branimira-benkovac",
       "naziv": "Srednja škola kneza Branimira Benkovac",
+      "mjesto": "Benkovac",
       "zupanija": "Zadarska",
       "stranica": "https://ssknezbranimir.hr/popis-udzbenika/",
       "dokumenti": [
@@ -5922,6 +6147,7 @@
     {
       "id": "srednja-skola-u-marusevcu",
       "naziv": "Srednja škola u Maruševcu",
+      "mjesto": null,
       "zupanija": "Varaždinska",
       "stranica": "https://www.ss-marusevec.hr/popis-udzbenika-za-skolsku-godinu-2025-2026/",
       "dokumenti": [
@@ -5965,6 +6191,7 @@
     {
       "id": "srednja-skola-za-elektrotehniku-i-racunalstvo-rijeka",
       "naziv": "Srednja škola za elektrotehniku i računalstvo Rijeka",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": null,
       "dokumenti": [
@@ -5983,6 +6210,7 @@
     {
       "id": "srednja-skola-cazma",
       "naziv": "Srednja škola Čazma",
+      "mjesto": "Čazma",
       "zupanija": "Bjelovarsko-bilogorska",
       "stranica": "https://ss-cazma.skole.hr/popis-udzbenika/",
       "dokumenti": [
@@ -6011,6 +6239,7 @@
     {
       "id": "strojarska-i-prometna-skola-varazdin",
       "naziv": "Strojarska i prometna škola Varaždin",
+      "mjesto": "Varaždin",
       "zupanija": "Varaždinska",
       "stranica": "https://www.sips.hr/popis-udzbenika-za-trece-i-cetvrte-razrede-u-sk-god-2026-2027/ , https://www.sips.hr/popis-udzbenika-za-prve-i-druge-razrede-u-sk-god-2026-2027/",
       "dokumenti": [
@@ -6029,6 +6258,7 @@
     {
       "id": "strojarska-tehnicka-skola-osijek",
       "naziv": "Strojarska tehnička škola Osijek",
+      "mjesto": "Osijek",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://ss-strojarska-tehnicka-os.skole.hr/katalog-udzbenika/",
       "dokumenti": [
@@ -6042,6 +6272,7 @@
     {
       "id": "strojarska-skola-za-industrijska-i-obrtnicka-zanimanja-rijeka",
       "naziv": "Strojarska škola za industrijska i obrtnička zanimanja Rijeka",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://www.strojarska-skola-rijeka.hr/popis-udzbenika/",
       "dokumenti": []
@@ -6049,6 +6280,7 @@
     {
       "id": "strukovna-skola-eugena-kumicica",
       "naziv": "Strukovna škola Eugena Kumičića",
+      "mjesto": null,
       "zupanija": "Istarska",
       "stranica": "https://www.ssek.hr/index.php/za-ucenike-i-roditelje/udzbenici",
       "dokumenti": [
@@ -6112,6 +6344,7 @@
     {
       "id": "strukovna-skola-gospic",
       "naziv": "Strukovna škola Gospić",
+      "mjesto": "Gospić",
       "zupanija": "Ličko-senjska",
       "stranica": null,
       "dokumenti": [
@@ -6220,6 +6453,7 @@
     {
       "id": "strukovna-skola-marko-babic-vukovar",
       "naziv": "Strukovna škola Marko Babić Vukovar",
+      "mjesto": null,
       "zupanija": "Vukovarsko-srijemska",
       "stranica": "https://ss-markobabic-vu.skole.hr/udzbenici/",
       "dokumenti": []
@@ -6227,6 +6461,7 @@
     {
       "id": "strukovna-skola-pula",
       "naziv": "Strukovna škola Pula",
+      "mjesto": "Pula",
       "zupanija": "Istarska",
       "stranica": "https://ss-strukovna-pu.skole.hr/udzbenici/",
       "dokumenti": []
@@ -6234,6 +6469,7 @@
     {
       "id": "strukovna-skola-sisak",
       "naziv": "Strukovna škola Sisak",
+      "mjesto": "Sisak",
       "zupanija": "Sisačko-moslavačka",
       "stranica": "https://strukovnaskolasisak.hr/popis-udzbenika/",
       "dokumenti": [
@@ -6282,6 +6518,7 @@
     {
       "id": "strukovna-skola-vice-vlatkovica-zadar",
       "naziv": "Strukovna škola Vice Vlatkovića Zadar",
+      "mjesto": "Zadar",
       "zupanija": "Zadarska",
       "stranica": "https://ssvv.hr/index.php?option=com_content&view=article&id=9&Itemid=333",
       "dokumenti": [
@@ -6295,6 +6532,7 @@
     {
       "id": "strukovna-skola-virovitica",
       "naziv": "Strukovna škola Virovitica",
+      "mjesto": "Virovitica",
       "zupanija": "Virovitičko-podravska",
       "stranica": "https://www.ssv.hr/popis-udzbenika-za-skolsku-godinu-2026-2027/1532/",
       "dokumenti": [
@@ -6358,6 +6596,7 @@
     {
       "id": "strukovna-skola-durdevac",
       "naziv": "Strukovna škola Đurđevac",
+      "mjesto": "Đurđevac",
       "zupanija": "Koprivničko-križevačka",
       "stranica": "https://ss-strukovna-djurdjevac.skole.hr/popis-udzbenika/",
       "dokumenti": [
@@ -6506,6 +6745,7 @@
     {
       "id": "talijanska-srednja-skola-dante-alighieri-pula",
       "naziv": "Talijanska srednja škola \"Dante Alighieri\" Pula",
+      "mjesto": null,
       "zupanija": "Istarska",
       "stranica": "https://smsida.hr/manuali-scolastici-a-s-2023-2024/",
       "dokumenti": [
@@ -6519,6 +6759,7 @@
     {
       "id": "talijanska-srednja-skola-leonardo-da-vinci-buje",
       "naziv": "Talijanska srednja škola \"Leonardo da Vinci\" Buje",
+      "mjesto": null,
       "zupanija": "Istarska",
       "stranica": "https://ss-leonardodavinci-buje.skole.hr/manuali-scolastici-2025-2026/",
       "dokumenti": []
@@ -6526,6 +6767,7 @@
     {
       "id": "talijanska-srednja-skola-rovinj",
       "naziv": "Talijanska srednja škola Rovinj",
+      "mjesto": null,
       "zupanija": "Istarska",
       "stranica": null,
       "dokumenti": []
@@ -6533,6 +6775,7 @@
     {
       "id": "tehnicka-skola-bjelovar",
       "naziv": "Tehnička škola Bjelovar",
+      "mjesto": "Bjelovar",
       "zupanija": "Bjelovarsko-bilogorska",
       "stranica": null,
       "dokumenti": []
@@ -6540,6 +6783,7 @@
     {
       "id": "tehnicka-skola-daruvar",
       "naziv": "Tehnička škola Daruvar",
+      "mjesto": "Daruvar",
       "zupanija": "Bjelovarsko-bilogorska",
       "stranica": "https://www.tsd.hr/site/udzbenici/",
       "dokumenti": [
@@ -6678,6 +6922,7 @@
     {
       "id": "tehnicka-skola-karlovac",
       "naziv": "Tehnička škola Karlovac",
+      "mjesto": "Karlovac",
       "zupanija": "Karlovačka",
       "stranica": "https://tehnicka-skola-karlovac.hr/popis-udzbenika/",
       "dokumenti": [
@@ -6691,6 +6936,7 @@
     {
       "id": "tehnicka-skola-kutina",
       "naziv": "Tehnička škola Kutina",
+      "mjesto": "Kutina",
       "zupanija": "Sisačko-moslavačka",
       "stranica": "https://ss-tehnicka-kt.skole.hr/udzbenici/",
       "dokumenti": [
@@ -6704,6 +6950,7 @@
     {
       "id": "tehnicka-skola-nikole-tesle-vukovar",
       "naziv": "Tehnička škola Nikole Tesle Vukovar",
+      "mjesto": "Vukovar",
       "zupanija": "Vukovarsko-srijemska",
       "stranica": "https://ss-tehnicka-ntesla-vu.skole.hr/udzbenici/",
       "dokumenti": []
@@ -6711,6 +6958,7 @@
     {
       "id": "tehnicka-skola-pozega",
       "naziv": "Tehnička škola Požega",
+      "mjesto": "Požega",
       "zupanija": "Požeško-slavonska",
       "stranica": "https://www.tehnickaskola.net/index.php?option=com_content&view=category&layout=blog&id=42&Itemid=62",
       "dokumenti": []
@@ -6718,6 +6966,7 @@
     {
       "id": "tehnicka-skola-pula",
       "naziv": "Tehnička škola Pula",
+      "mjesto": "Pula",
       "zupanija": "Istarska",
       "stranica": "https://ss-tehnicka-pu.skole.hr/udzbenici/",
       "dokumenti": [
@@ -6736,6 +6985,7 @@
     {
       "id": "tehnicka-skola-rijeka",
       "naziv": "Tehnička škola Rijeka",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://ss-tehnicka-ri.skole.hr/udzbenici/",
       "dokumenti": []
@@ -6743,6 +6993,7 @@
     {
       "id": "tehnicka-skola-rudera-boskovica-vinkovci",
       "naziv": "Tehnička škola Ruđera Boškovića Vinkovci",
+      "mjesto": "Vinkovci",
       "zupanija": "Vukovarsko-srijemska",
       "stranica": null,
       "dokumenti": []
@@ -6750,6 +7001,7 @@
     {
       "id": "tehnicka-skola-sisak",
       "naziv": "Tehnička škola Sisak",
+      "mjesto": "Sisak",
       "zupanija": "Sisačko-moslavačka",
       "stranica": "https://tehnicka-skola-sisak.hr/ucenici/regionalni-centar-kompetencija/",
       "dokumenti": [
@@ -6818,6 +7070,7 @@
     {
       "id": "tehnicka-skola-slavonski-brod",
       "naziv": "Tehnička škola Slavonski Brod",
+      "mjesto": "Slavonski Brod",
       "zupanija": "Brodsko-posavska",
       "stranica": "https://tssb.hr/udzbenici-za-skol-god-2026-2027/",
       "dokumenti": []
@@ -6825,6 +7078,7 @@
     {
       "id": "tehnicka-skola-virovitica",
       "naziv": "Tehnička škola Virovitica",
+      "mjesto": "Virovitica",
       "zupanija": "Virovitičko-podravska",
       "stranica": "https://ss-tehnicka-vt.skole.hr/o-skoli/knjiznica/popis-udzbenika/",
       "dokumenti": [
@@ -6938,6 +7192,7 @@
     {
       "id": "tehnicka-skola-zadar",
       "naziv": "Tehnička škola Zadar",
+      "mjesto": "Zadar",
       "zupanija": "Zadarska",
       "stranica": "https://ss-tehnicka-zd.skole.hr/popis-udzbenika-2/",
       "dokumenti": [
@@ -6951,6 +7206,7 @@
     {
       "id": "tehnicka-skola-i-prirodoslovna-gimnazija-rudera-boskovica-osijek",
       "naziv": "Tehnička škola i prirodoslovna gimnazija Ruđera Boškovića Osijek",
+      "mjesto": "Osijek",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://rudjerica.com/popis-udzbenika-za-sk-godinu-2026-27/",
       "dokumenti": [
@@ -6979,6 +7235,7 @@
     {
       "id": "tehnicka-skola-sibenik",
       "naziv": "Tehnička škola Šibenik",
+      "mjesto": "Šibenik",
       "zupanija": "Šibensko-kninska",
       "stranica": "https://ss-tehnicka-si.skole.hr/?s=ud%C5%BEbe",
       "dokumenti": [
@@ -6992,6 +7249,7 @@
     {
       "id": "tehnicka-skola-zupanja",
       "naziv": "Tehnička škola Županja",
+      "mjesto": "Županja",
       "zupanija": "Vukovarsko-srijemska",
       "stranica": null,
       "dokumenti": []
@@ -6999,6 +7257,7 @@
     {
       "id": "trgovacka-i-komercijalna-skola-davor-milas",
       "naziv": "Trgovačka i komercijalna škola \"Davor Milas\"",
+      "mjesto": "Osijek",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://ss-trg-kom-dmilas-os.skole.hr/komercijalist/ , https://ss-trg-kom-dmilas-os.skole.hr/prodavac/ , https://ss-trg-kom-dmilas-os.skole.hr/administrator/",
       "dokumenti": []
@@ -7006,6 +7265,7 @@
     {
       "id": "trgovacko-ugostiteljska-skola-karlovac",
       "naziv": "Trgovačko-ugostiteljska škola Karlovac",
+      "mjesto": "Karlovac",
       "zupanija": "Karlovačka",
       "stranica": "https://ss-trgovacko-ugostiteljska-ka.skole.hr/popis-udzbenika-za-sk-god-26-27/",
       "dokumenti": [
@@ -7019,6 +7279,7 @@
     {
       "id": "turisticka-i-ugostiteljska-skola-dubrovnik",
       "naziv": "Turistička i ugostiteljska škola Dubrovnik",
+      "mjesto": "Dubrovnik",
       "zupanija": "Dubrovačko-neretvanska",
       "stranica": "https://rckdu.hr/naslovnica/tusdu/udzbenici/",
       "dokumenti": []
@@ -7026,6 +7287,7 @@
     {
       "id": "turisticko-ugostiteljska-i-prehrambena-skola-bjelovar",
       "naziv": "Turističko-ugostiteljska i prehrambena škola Bjelovar",
+      "mjesto": "Bjelovar",
       "zupanija": "Bjelovarsko-bilogorska",
       "stranica": "https://www.tups-bj.hr/arhiva-vijesti/",
       "dokumenti": [
@@ -7094,6 +7356,7 @@
     {
       "id": "turisticko-ugostiteljska-skola-antona-stifanica-porec",
       "naziv": "Turističko-ugostiteljska škola Antona Štifanića Poreč",
+      "mjesto": "Poreč",
       "zupanija": "Istarska",
       "stranica": "https://tusantonastifanica.hr/category/nastava/udzbenici/",
       "dokumenti": [
@@ -7107,6 +7370,7 @@
     {
       "id": "turisticko-ugostiteljska-skola-sibenik",
       "naziv": "Turističko-ugostiteljska škola Šibenik",
+      "mjesto": "Šibenik",
       "zupanija": "Šibensko-kninska",
       "stranica": "https://ss-turisticko-ugostiteljska-si.skole.hr/popis-udzbenika-u-skolskoj-godini-2026-2027/",
       "dokumenti": [
@@ -7125,6 +7389,7 @@
     {
       "id": "ugostiteljska-skola-opatija",
       "naziv": "Ugostiteljska škola Opatija",
+      "mjesto": "Opatija",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://ugostiteljskaskolaopatija.hr/za-ucenike/udzbenici/",
       "dokumenti": []
@@ -7132,6 +7397,7 @@
     {
       "id": "ugostiteljsko-turisticka-skola-osijek",
       "naziv": "Ugostiteljsko-turistička škola Osijek",
+      "mjesto": "Osijek",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://rck-utso.hr/za-ucenike/#students2",
       "dokumenti": []
@@ -7139,6 +7405,7 @@
     {
       "id": "umjetnicka-skola-fortunat-pintaric",
       "naziv": "Umjetnička škola \"Fortunat Pintarić\"",
+      "mjesto": "Koprivnica",
       "zupanija": "Koprivničko-križevačka",
       "stranica": "https://www.umjetnicka.net/novosti",
       "dokumenti": []
@@ -7146,6 +7413,7 @@
     {
       "id": "umjetnicka-skola-franje-lucica-velika-gorica",
       "naziv": "Umjetnička škola Franje Lučića Velika Gorica",
+      "mjesto": "Velika Gorica",
       "zupanija": "Zagrebačka",
       "stranica": null,
       "dokumenti": []
@@ -7153,6 +7421,7 @@
     {
       "id": "umjetnicka-skola-luke-sorkocevica-dubrovnik",
       "naziv": "Umjetnička škola Luke Sorkočevića Dubrovnik",
+      "mjesto": "Dubrovnik",
       "zupanija": "Dubrovačko-neretvanska",
       "stranica": "https://ss-umjetnicka-lsorkocevica-du.skole.hr/udzbenici/",
       "dokumenti": []
@@ -7160,6 +7429,7 @@
     {
       "id": "zdravstvena-i-veterinarska-skola-dr-andrije-stampara-vinkovci",
       "naziv": "Zdravstvena i veterinarska škola dr. Andrije Štampara Vinkovci",
+      "mjesto": "Vinkovci",
       "zupanija": "Vukovarsko-srijemska",
       "stranica": null,
       "dokumenti": []
@@ -7167,6 +7437,7 @@
     {
       "id": "zrakoplovna-tehnicka-skola-rudolfa-peresina-velika-gorica",
       "naziv": "Zrakoplovna tehnička škola Rudolfa Perešina Velika Gorica",
+      "mjesto": "Velika Gorica",
       "zupanija": "Zagrebačka",
       "stranica": "https://ss-zrakoplovna-rperesina-vg.skole.hr/udzbenici/",
       "dokumenti": [
@@ -7180,6 +7451,7 @@
     {
       "id": "skola-primijenjene-umjetnosti-i-dizajna-osijek",
       "naziv": "Škola primijenjene umjetnosti i dizajna Osijek",
+      "mjesto": "Osijek",
       "zupanija": "Osječko-baranjska",
       "stranica": "https://www.umjetnicka-skola-osijek.hr/dokumenti/Popisudzbenika2627.pdf",
       "dokumenti": [
@@ -7193,6 +7465,7 @@
     {
       "id": "skola-primijenjene-umjetnosti-i-dizajna-zadar",
       "naziv": "Škola primijenjene umjetnosti i dizajna Zadar",
+      "mjesto": "Zadar",
       "zupanija": "Zadarska",
       "stranica": "https://ss-primijenjenaumjetnostidizajn-zd.skole.hr/popis-udzbenika/",
       "dokumenti": []
@@ -7200,6 +7473,7 @@
     {
       "id": "skola-primijenjenih-umjetnosti-i-dizajna-pula",
       "naziv": "Škola primijenjenih umjetnosti i dizajna Pula",
+      "mjesto": "Pula",
       "zupanija": "Istarska",
       "stranica": "https://ss-primijenjenihumjetnostiidizajna-pu.skole.hr/wp-content/uploads/sites/142/2026/06/Popis-udzbenika-I.-IV.-raz.-2026.-2027.pdf",
       "dokumenti": [
@@ -7213,6 +7487,7 @@
     {
       "id": "skola-za-odgoj-i-obrazovanje-pula",
       "naziv": "Škola za odgoj i obrazovanje Pula",
+      "mjesto": "Pula",
       "zupanija": "Istarska",
       "stranica": null,
       "dokumenti": []
@@ -7220,6 +7495,7 @@
     {
       "id": "skola-za-primijenjenu-umjetnost-rijeka",
       "naziv": "Škola za primijenjenu umjetnost Rijeka",
+      "mjesto": null,
       "zupanija": "Primorsko-goranska",
       "stranica": "https://ss-primijenjenaumjetnost-ri.skole.hr/udzbenici/",
       "dokumenti": []
@@ -7227,6 +7503,7 @@
     {
       "id": "skola-za-trgovinu-i-modni-dizajn-rijeka",
       "naziv": "Škola za trgovinu i modni dizajn Rijeka",
+      "mjesto": "Rijeka",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://ss-tmd-ri.skole.hr/popis-udzbenika/",
       "dokumenti": [
@@ -7250,6 +7527,7 @@
     {
       "id": "skola-za-turizam-ugostiteljstvo-i-trgovinu-pula",
       "naziv": "Škola za turizam, ugostiteljstvo i trgovinu Pula",
+      "mjesto": "Pula",
       "zupanija": "Istarska",
       "stranica": "https://www.stut.hr/udzbenici/",
       "dokumenti": [
@@ -7283,6 +7561,7 @@
     {
       "id": "skola-za-umjetnost-dizajn-grafiku-i-odjecu-zabok",
       "naziv": "Škola za umjetnost, dizajn, grafiku i odjeću Zabok",
+      "mjesto": "Zabok",
       "zupanija": "Krapinsko-zagorska",
       "stranica": "https://sudigoz.hr/popis-udzbenika/",
       "dokumenti": [
@@ -7311,6 +7590,7 @@
     {
       "id": "sumarska-i-drvodjeljska-skola-karlovac",
       "naziv": "Šumarska i drvodjeljska škola Karlovac",
+      "mjesto": "Karlovac",
       "zupanija": "Karlovačka",
       "stranica": "https://sumarskaskola.hr/novosti-2/",
       "dokumenti": [
@@ -7324,6 +7604,7 @@
     {
       "id": "zeljeznicka-tehnicka-skola-moravice",
       "naziv": "Željeznička tehnička škola Moravice",
+      "mjesto": "Moravice",
       "zupanija": "Primorsko-goranska",
       "stranica": "https://ss-zeljeznickatehnicka-moravice.skole.hr/popis-udzbenika/",
       "dokumenti": [
