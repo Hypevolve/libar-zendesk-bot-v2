@@ -11,11 +11,15 @@
  * imena veliku. Da bi se škola smatrala prepoznatom, mora prijeći prag
  * pokrivenosti I imati jasan odmak od drugoplasirane — inače radije pitamo.
  *
- * Dodatni uvjet za siguran pogodak: SVAKI token naziva škole iznad DISTINCTIVE_IDF
- * praga mora biti pokriven upitom (točno, prefiksom ili tipfelerom). Bez toga bi
- * nedovoljno određen upit ("srednja škola Šibenik", "ekonomska škola") mogao
- * samouvjereno pogoditi krivu školu samo zato što je konkurentskoj slučajno
- * "otpao" jedan nespomenut, ali prepoznatljiv token (npr. grad ili specifičniji tip).
+ * Dodatni uvjet za siguran pogodak je SIMETRIČAN i ima dvije strane:
+ * 1. SVAKI token naziva škole iznad DISTINCTIVE_IDF praga mora biti pokriven upitom
+ *    (točno, prefiksom ili tipfelerom) — inače bi nedovoljno određen upit ("srednja
+ *    škola Šibenik", "ekonomska škola") samouvjereno pogodio krivu školu samo zato
+ *    što je konkurentskoj slučajno "otpao" jedan nespomenut, ali prepoznatljiv token.
+ * 2. Upit ne smije imenovati prepoznatljiv token koji pobjednik NEMA, a neki drugi
+ *    kandidat ima — inače škola čiji je skup tokena podskup konkurentskog postaje
+ *    "univerzalni donor": uvijek prolazi uvjet 1, konkurent na njemu pada, i onda
+ *    "Isusovačka gimnazija Osijek" dobije popis "I. gimnazije Osijek".
  */
 const fs = require("fs");
 const path = require("path");
@@ -28,6 +32,15 @@ const DATA_PATH = path.join(__dirname, "..", "data", "popis-udzbenika-2026-27.js
 const MIN_COVERAGE = 0.5;
 // Minimalni zbroj IDF-a — sprječava pogodak na samim generičnim riječima.
 const MIN_SCORE = 3.0;
+// Koliko različitih tokena naziva škole upit mora pogoditi da škola uopće uđe u igru.
+// Jedan rijedak token sam prelazi MIN_SCORE (148 tokena korpusa ima dovoljno visok idf,
+// među njima i posve obične riječi — "prva", "druga", "nova", "dugo", "luka", plus svako
+// ime grada), pa bi "Koliko košta dostava knjiga u Osijek?" ili "Kupio sam knjigu i stigla
+// je druga" otimali razgovor. Svaki legitiman upit imenuje barem dvije riječi naziva
+// ("Gimnazija Daruvar" 2, "medicinsku u Bjelovaru" 2, "gimnazija Antuna Vrančića" 3),
+// a u korpusu nema nijedne škole čiji se naziv sastoji od samo jednog tokena — pa ovaj
+// prag ne košta nijedan stvarni naziv.
+const MIN_MATCHED_TOKENS = 2;
 // Koliko najbolja mora nadmašiti drugu da bismo bili sigurni (kad obje prođu DISTINCTIVE_IDF gate).
 const MARGIN = 1.35;
 // Prag iznad kojeg je token naziva škole "prepoznatljiv" i MORA biti pokriven upitom da
@@ -63,6 +76,13 @@ const TYPO_MIN_LEN = 4;
 const TYPO_LONG_LEN = 7;
 const TYPO_WEIGHT = 0.55;
 
+// Widget renderira markdown link regexom /\((https?:\/\/[^\s)]+)\)/ (public/index.html).
+// Sve što tome ne odgovara korisnik vidi kao goli tekst — npr. interna putanja
+// "ručni unos: tehnicka-sb/…xlsx" iz izvoznog pipelinea. Izvozna skripta takve zapise
+// više ne propušta, ali filtriramo i ovdje: ako podaci ikad regresiraju, odgovor pada
+// na "popis još nije objavljen" (uz link na stranicu škole) umjesto na šum.
+const VALJAN_URL = /^https?:\/\/[^\s)]+$/;
+
 let index = null;
 
 function tokenize(value) {
@@ -72,7 +92,11 @@ function tokenize(value) {
 function loadIndex(filePath = DATA_PATH) {
   if (index) return index;
   const raw = JSON.parse(fs.readFileSync(filePath, "utf8"));
-  const skole = raw.skole.map((skola) => ({ ...skola, tokens: [...new Set(tokenize(skola.naziv))] }));
+  const skole = raw.skole.map((skola) => ({
+    ...skola,
+    dokumenti: (skola.dokumenti || []).filter((dokument) => VALJAN_URL.test(String(dokument.url || ""))),
+    tokens: [...new Set(tokenize(skola.naziv))]
+  }));
 
   const df = new Map();
   skole.forEach((skola) => skola.tokens.forEach((token) => df.set(token, (df.get(token) || 0) + 1)));
@@ -127,8 +151,19 @@ function matchesByTypo(queryToken, schoolToken) {
   return withinEditDistance(queryToken, schoolToken, max);
 }
 
+// Pokriva li naziv škole zadani token upita (točno, padežom ili tipfelerom).
+function pokrivaToken(skola, queryToken) {
+  return skola.tokens.some((schoolToken) => (
+    schoolToken === queryToken
+    || matchesByPrefix(queryToken, schoolToken)
+    || matchesByTypo(queryToken, schoolToken)
+  ));
+}
+
 function scoreSchool(skola, queryTokens, idf) {
   let score = 0;
+  // Koliko je RAZLIČITIH tokena naziva upit pogodio — vidi MIN_MATCHED_TOKENS.
+  let matchedTokens = 0;
   // Je li neki prepoznatljiv token naziva (iznad DISTINCTIVE_IDF) ostao nepokriven upitom.
   // Takva škola ne može biti siguran pogodak — vidi findSchool.
   let uncoveredDistinctive = false;
@@ -145,48 +180,85 @@ function scoreSchool(skola, queryTokens, idf) {
       score += weight * TYPO_WEIGHT;
       matched = true;
     }
+    if (matched) matchedTokens += 1;
     if (!matched && weight > DISTINCTIVE_IDF) {
       uncoveredDistinctive = true;
     }
   }
-  return { score, coverage: skola.maxScore ? score / skola.maxScore : 0, uncoveredDistinctive };
+  return {
+    score,
+    coverage: skola.maxScore ? score / skola.maxScore : 0,
+    matchedTokens,
+    uncoveredDistinctive
+  };
 }
 
-function rankSchools(text, { minCoverage = MIN_COVERAGE, minScore = MIN_SCORE } = {}) {
+function rankSchools(
+  text,
+  { minCoverage = MIN_COVERAGE, minScore = MIN_SCORE, minMatched = MIN_MATCHED_TOKENS } = {}
+) {
   const idx = loadIndex();
   const queryTokens = tokenize(text);
   if (!queryTokens.length) return [];
   return idx.skole
     .map((skola) => ({ school: skola, ...scoreSchool(skola, queryTokens, idx.idf) }))
-    .filter((row) => row.coverage >= minCoverage && row.score >= minScore)
+    .filter((row) => (
+      row.coverage >= minCoverage
+      && row.score >= minScore
+      && row.matchedTokens >= minMatched
+    ))
     .sort((a, b) => b.score - a.score);
 }
 
+// Druga strana simetričnog gate-a: imenuje li upit prepoznatljiv token koji pobjednik
+// nema u nazivu, a neki drugi kandidat ga ima. Bez ove provjere škola čiji je skup tokena
+// podskup konkurentskog uvijek preživi kao "confident" (nema nepokrivenih tokena), dok
+// konkurent ispadne — pa ostane sama, MARGIN nema s čime usporediti i korisnik dobije
+// popis krive škole ("Isusovačka gimnazija Osijek" → "I. gimnazija Osijek", jer tokenize
+// odbacuje "I." kao prekratak token).
+function imenujeTudeObiljezje(best, scored, queryTokens, idf) {
+  return queryTokens.some((queryToken) => {
+    const weight = idf.get(queryToken);
+    if (!(weight > DISTINCTIVE_IDF)) return false;
+    if (pokrivaToken(best.school, queryToken)) return false;
+    return scored.some((row) => row.school.id !== best.school.id && pokrivaToken(row.school, queryToken));
+  });
+}
+
 function findSchool(text) {
-  const scored = rankSchools(text);
+  // Suparnički skup se namjerno NE prosijava kroz MIN_MATCHED_TOKENS. Škola s jednim
+  // pogođenim tokenom ne smije pobijediti, ali smije oboriti tuđu samouvjerenost:
+  // na "škola Županja" Gimnazija Županja pogađa samo "Županja", no i dalje je jednako
+  // vjerojatna kao Tehnička škola Županja — pobjednika ne smije biti.
+  const suparnici = rankSchools(text, { minMatched: 1 });
+  const scored = suparnici.filter((row) => row.matchedTokens >= MIN_MATCHED_TOKENS);
   if (!scored.length) return { status: "none" };
+  const nejasno = () => ({ status: "ambiguous", candidates: suparnici.slice(0, 3).map((row) => row.school) });
 
-  // Jedini kandidat u cijelom korpusu, s upitom koji objašnjava većinu njegovog naziva —
-  // sigurno je prepoznat i bez pokrivenog prepoznatljivog tokena (vidi LONE_SURVIVOR_COVERAGE).
-  // Mora biti JEDINI ukupno, ne samo u "confident" skupu, inače bi npr. "škola Daruvar"
-  // (dva kandidata, oba visoke pokrivenosti) lažno pogodio jednog od njih.
-  if (scored.length === 1 && scored[0].coverage >= LONE_SURVIVOR_COVERAGE) {
-    return { status: "match", school: scored[0].school };
+  let best = null;
+  if (suparnici.length === 1 && scored[0].coverage >= LONE_SURVIVOR_COVERAGE) {
+    // Jedini kandidat u cijelom korpusu, s upitom koji objašnjava većinu njegovog naziva —
+    // sigurno je prepoznat i bez pokrivenog prepoznatljivog tokena (vidi LONE_SURVIVOR_COVERAGE).
+    // Mora biti JEDINI ukupno, ne samo u "confident" skupu, inače bi npr. "škola Daruvar"
+    // (dva kandidata, oba visoke pokrivenosti) lažno pogodio jednog od njih.
+    best = scored[0];
+  } else {
+    // Siguran pogodak smije biti samo škola čiji su svi prepoznatljivi tokeni pokriveni
+    // upitom (vidi DISTINCTIVE_IDF) — inače je pobjeda slučajna (npr. grad ima samo jednu
+    // "ekonomsku školu" pa upit "ekonomska škola" pogodi tu, bez da je itko spomenuo grad).
+    const confident = scored.filter((row) => !row.uncoveredDistinctive);
+    if (!confident.length) return nejasno();
+
+    const [prvi, drugi] = confident;
+    if (drugi && prvi.score < drugi.score * MARGIN) {
+      return { status: "ambiguous", candidates: confident.slice(0, 3).map((row) => row.school) };
+    }
+    best = prvi;
   }
 
-  // Siguran pogodak smije biti samo škola čiji su svi prepoznatljivi tokeni pokriveni
-  // upitom (vidi DISTINCTIVE_IDF) — inače je pobjeda slučajna (npr. grad ima samo jednu
-  // "ekonomsku školu" pa upit "ekonomska škola" pogodi tu, bez da je itko spomenuo grad).
-  const confident = scored.filter((row) => !row.uncoveredDistinctive);
-  if (!confident.length) {
-    return { status: "ambiguous", candidates: scored.slice(0, 3).map((row) => row.school) };
-  }
-
-  const [best, second] = confident;
-  if (!second || best.score >= second.score * MARGIN) {
-    return { status: "match", school: best.school };
-  }
-  return { status: "ambiguous", candidates: confident.slice(0, 3).map((row) => row.school) };
+  const idx = loadIndex();
+  if (imenujeTudeObiljezje(best, suparnici, tokenize(text), idx.idf)) return nejasno();
+  return { status: "match", school: best.school };
 }
 
 const DISCLAIMER = [
@@ -197,7 +269,11 @@ const DISCLAIMER = [
 
 // Upit mora spominjati udžbenike/popis da gate uopće opali. Bez ovoga bi
 // "radim u Gimnaziji Daruvar" oteo razgovor.
-const TEXTBOOK_RE = /\budzbenik|\bpopis|\bknjig/;
+// "knjig" je namjerno izbačen: "knjiga/knjige/knjigu" su svakodnevne riječi u pitanjima
+// o dostavi, narudžbi i otkupu ("Koliko dugo traje dostava knjiga?", "Kupio sam knjigu i
+// stigla je druga") pa je taj okidač otimao postojeće upite, a nije donosio ništa —
+// tko traži popis, napiše "popis" ili "udžbenik".
+const TEXTBOOK_RE = /\budzbenik|\bpopis/;
 
 // Blaži prag za "jeste li mislili" — popušta se samo pokrivenost, nikad
 // MIN_SCORE, da nedovoljno određen upit ne izvuče nasumične kandidate.

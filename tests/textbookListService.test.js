@@ -1,5 +1,7 @@
 const { describe, it } = require("node:test");
 const assert = require("node:assert");
+const fs = require("node:fs");
+const path = require("node:path");
 const {
   findSchool,
   parseRazred,
@@ -7,6 +9,7 @@ const {
   loadIndex,
   DISCLAIMER
 } = require("../services/textbookListService");
+const { GENERATED_SCENARIOS } = require("./e2e-generated.test.js");
 
 describe("textbookListService", () => {
   describe("findSchool", () => {
@@ -101,6 +104,31 @@ describe("textbookListService", () => {
       assert.notStrictEqual(r.school.naziv, "Srednja škola Petrinja");
       assert.strictEqual(r.school.naziv, "Srednja škola Petra Šegedina Korčula");
     });
+
+    // Škola čiji je skup tokena podskup konkurentskog uvijek prolazi jednostrani gate
+    // ("svi moji prepoznatljivi tokeni su pokriveni"), a konkurent na njemu pada — pa
+    // ostane sama i pobijedi bez usporedbe. Upit koji imenuje nešto prepoznatljivo što
+    // pobjednik nema, a suparnik ima, mora završiti pitanjem, ne krivim popisom.
+    // ("Prvu hrvatsku gimnaziju u Rijeci" ostaje poznata iznimka: razlikovni token
+    // "sušačka" upit uopće ne spominje, pa ga nema po čemu razlučiti — vidi izvještaj.)
+    const PODSKUP_UPITI = [
+      ["popis udzbenika Isusovacka gimnazija Osijek 1. razred", "I. gimnazija Osijek"],
+      ["popis udzbenika Katolicka gimnazija Pozega 1. razred", "Gimnazija Požega"],
+      ["popis udzbenika Srednja skola Ivanic Grad 1. razred", "Srednja škola Ivanec"],
+      ["popis udzbenika klasicna gimnazija Osijek 1. razred", "I. gimnazija Osijek"],
+      ["popis udzbenika Biskupijska gimnazija Rudjera Boskovica Dubrovnik", "Gimnazija Dubrovnik"]
+    ];
+
+    for (const [upit, kriva] of PODSKUP_UPITI) {
+      it(`ne pogađa "${kriva}" na: ${upit}`, () => {
+        const r = findSchool(upit);
+        assert.notStrictEqual(
+          r.status === "match" ? r.school.naziv : null,
+          kriva,
+          `poslan je popis krive škole: ${kriva}`
+        );
+      });
+    }
   });
 
   describe("parseRazred", () => {
@@ -281,5 +309,78 @@ describe("textbookListService", () => {
         assert.strictEqual(buildTextbookOutcome(upit, {}), null);
       });
     }
+
+    // Svaki od ovih je gate otimao na jednom slučajno pogođenom rijetkom tokenu
+    // ("osijek", "prva", "druga") uz okidač "knjig" — obična pitanja o dostavi,
+    // narudžbi i reklamaciji, ne upiti o popisu udžbenika.
+    const OTETI_UPITI = [
+      "Koliko košta dostava knjiga u Osijek?",
+      "Kako vam mogu poslati fotografije knjiga ili druge priloge?",
+      "Prva narudžba mi nije stigla, gdje su knjige?",
+      "Koliko dugo traje dostava knjiga?",
+      "Kupio sam knjigu i stigla je druga"
+    ];
+
+    for (const upit of OTETI_UPITI) {
+      it(`ne aktivira se na: ${upit}`, () => {
+        assert.strictEqual(buildTextbookOutcome(upit, {}), null);
+      });
+    }
+  });
+
+  // Korpusne provjere: baza se osvježava svako ljeto, pa ova tri sweepa čuvaju
+  // svojstva koja pojedinačni testovi ne vide — prepoznatljivost svih škola,
+  // upotrebljivost svih linkova i to da gate ne otima postojeće upite.
+  describe("korpusne provjere nad cijelom bazom", () => {
+    it("svaka škola se prepoznaje po svom točnom službenom nazivu", () => {
+      const promasaji = [];
+      for (const skola of loadIndex().skole) {
+        const r = findSchool(skola.naziv);
+        if (r.status !== "match" || r.school.id !== skola.id) {
+          promasaji.push(`${skola.naziv} -> ${r.status === "match" ? r.school.naziv : r.status}`);
+        }
+      }
+      assert.deepStrictEqual(promasaji, [], `škole se ne prepoznaju po vlastitom nazivu:\n${promasaji.join("\n")}`);
+    });
+
+    it("svaki url u bazi widget može prikazati kao klikabilan link", () => {
+      // Regex je preslika onog iz public/index.html — url s razmakom ili internom
+      // putanjom ("ručni unos: …") korisnik vidi kao goli tekst usred odgovora.
+      const WIDGET_URL = /^https?:\/\/[^\s)]+$/;
+      const sirovi = JSON.parse(
+        fs.readFileSync(path.join(__dirname, "..", "data", "popis-udzbenika-2026-27.json"), "utf8")
+      );
+      const losi = [];
+      for (const skola of sirovi.skole) {
+        for (const dokument of skola.dokumenti) {
+          if (!WIDGET_URL.test(String(dokument.url))) losi.push(`${skola.naziv}: ${dokument.url}`);
+        }
+      }
+      assert.deepStrictEqual(losi, [], `url-ovi koje widget ne prikazuje kao link:\n${losi.join("\n")}`);
+    });
+
+    it("nijedan odgovor s popisom ne ostaje bez klikabilnog linka", () => {
+      const LINK = /\((https?:\/\/[^\s)]+)\)/;
+      const bezLinka = [];
+      for (const skola of loadIndex().skole) {
+        if (!skola.dokumenti.length) continue;
+        for (const razred of ["1", "2", "3", "4", "5"]) {
+          if (!skola.dokumenti.some((d) => d.razred === razred || d.razred === null)) continue;
+          const outcome = buildTextbookOutcome(`popis udžbenika ${razred}. razred`, { textbookSchoolId: skola.id });
+          if (!outcome || !LINK.test(outcome.customerMessage)) {
+            bezLinka.push(`${skola.naziv} / ${razred}. razred`);
+          }
+        }
+      }
+      assert.deepStrictEqual(bezLinka, [], `odgovori bez klikabilnog linka:\n${bezLinka.join("\n")}`);
+    });
+
+    it("nijedan upit iz e2e korpusa stvarnih tiketa ne aktivira gate", () => {
+      const oteti = GENERATED_SCENARIOS
+        .map((scenarij) => ({ scenarij, outcome: buildTextbookOutcome(scenarij.query, {}) }))
+        .filter((r) => r.outcome !== null)
+        .map((r) => `${r.scenarij.id} (${r.outcome.reason}): ${r.scenarij.query}`);
+      assert.deepStrictEqual(oteti, [], `gate je oteo postojeće upite:\n${oteti.join("\n")}`);
+    });
   });
 });
