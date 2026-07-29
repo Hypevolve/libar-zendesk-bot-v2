@@ -39,7 +39,11 @@ const ESCALATION_INTENTS = [
   {
     intent: "wrong_order",
     patterns: [
-      /kriv[aeiou]? narudzb/, /pogresn[aeiou]? (knjig|artikl|narudzb|posiljk)/,
+      // Imenice pokrivaju i "udzbenik" — u knjižari udžbenika "pogresan udzbenik" je
+      // isti slučaj kao "pogresna knjiga". "pogres(a)?n" hvata i nepostojani a
+      // (pogrešan / pogrešna / pogrešni).
+      /kriv[aeiou]? (narudzb|knjig|udzbenik|udzbenic|artikl|posiljk|komplet|primjerak)/,
+      /pogres(a)?n[aeiou]? (knjig|udzbenik|udzbenic|artikl|narudzb|posiljk|komplet|primjerak)/,
       /poslali ste (mi )?krivo/, /poslali ste (mi )?pogresn/,
       /nije ono sto sam naruci/, /ovo nisam naruci/, /ovo nisam trazi/,
       /dobio sam kriv/, /dobila sam kriv/, /dobio sam pogresn/, /dobila sam pogresn/,
@@ -65,6 +69,38 @@ const ESCALATION_INTENTS = [
     message: "Žao nam je zbog poteškoća s narudžbom! Vaš upit prosljeđujemo našem timu koji će provjeriti status narudžbe i javiti Vam se u najkraćem roku."
   },
   {
+    // Optužba za prijevaru ("ovo je prijevara", "prevarili ste me"). Najjači
+    // signal u poruci — ide ispred ostalih pritužbi jer određuje prioritet trijaže.
+    // Poruka je namjerno neutralna: bot ne smije ni priznati ni poricati.
+    intent: "fraud_accusation",
+    patterns: [
+      /prijevar/, /prevar/,
+      /varate (me|nas|ljude|kupce)/, /lazete/, /lopov/,
+      /(ovo|to) je (obmana|podvala|krada)/
+    ],
+    message: "Žao nam je što ste stekli takav dojam. Vaš slučaj odmah prosljeđujemo našem timu koji će ga provjeriti i javiti Vam se u najkraćem roku."
+  },
+  {
+    // Izostala ili zakašnjela isplata za otkup. Bot nema pristup evidenciji
+    // isplata pa ne može provjeriti status — mora ići čovjeku.
+    //
+    // VAŽNA GRANICA: hvata se isključivo pritužba na PROTEKLI rok (predikat
+    // "kasni", "nije stigla", "nisu mi platili", "vec ... cekam"). Pitanje o
+    // standardnom roku ("kada mogu ocekivati uplatu", "koliko se ceka na uplatu")
+    // NE eskalira — na to bot ima odgovor u bazi znanja. Zato uzorci nikad ne
+    // okidaju na samu imenicu "uplata/isplata", nego samo u paru s predikatom.
+    intent: "payment_missing",
+    patterns: [
+      /(nisu|niste) (mi )?(jos )?(platili|uplatili|isplatili)/,
+      /nije (mi )?(jos )?(placeno|uplaceno|isplaceno)/,
+      /(uplat|isplat|novac).{0,25}(kasni|nije stig|nije dos|nije sjel|jos nije|nije jos|nije uplacen|nije isplacen|nije evidentiran)/,
+      /(kasni|nije stigla|jos cekam).{0,25}(uplat|isplat)/,
+      /(vec|jos).{0,30}(cekam|cekamo).{0,25}(uplat|isplat|novac)/,
+      /gdje (mi )?je (moj[aeu]? )?(novac|uplata|isplata)/
+    ],
+    message: "Žao nam je zbog čekanja! Vaš upit o isplati prosljeđujemo našem timu koji će provjeriti status Vaše pošiljke i javiti Vam se u najkraćem roku."
+  },
+  {
     intent: "legal_threat",
     patterns: [
       /odvjetnik/, /odvjetnic/, /tuzb[aeiou]/, /tuzit cu/, /tuzi(t|m|li)/,
@@ -79,10 +115,31 @@ const ESCALATION_INTENTS = [
     patterns: [
       /\bhitno\b/, /urgentno/, /\bsto hitnije\b/,
       /vec (dva|tri|cetiri|pet|sest|nekoliko) (dana|tjedn)/,
+      // Trajanje napisano brojkom ili u jednini ("vec 10 dana", "vec tjedan dana",
+      // "vec mjesec dana") — gornji uzorak hvata samo ispisane brojeve u množini.
+      /vec (\d{1,3}|sedam|osam|devet|deset|petnaest|dvadeset|tjedan|mjesec|godinu|par) (dana|tjedn|mjesec)/,
+      /vec (dulje|duze) (vrijeme|od)/,
+      // Zakašnjela pošiljka ("paket kasni", "narudzba kasni vec 10 dana")
+      /(paket|posiljk|narudzb|dostava|isporuka).{0,15}kasni/, /kasni (vec|jos)/,
       /ne javljate se/, /ne odgovarate/, /nitko se ne javlja/,
       /jos cekam odgovor/, /dugo cekam/, /cekam vec/
     ],
     message: "Razumijemo hitnost Vašeg upita. Prosljeđujemo Vas našem timu koji će Vam se javiti u najkraćem mogućem roku."
+  },
+  {
+    // Općenito nezadovoljstvo uslugom bez konkretnog oštećenja, povrata ili
+    // pogrešne pošiljke ("nezadovoljan sam uslugom", "razocarana sam"). Namjerno
+    // je POSLJEDNJI u nizu — konkretniji intenti (oštećenje, povrat, kriva
+    // pošiljka, isplata) imaju prednost i daju korisniju poruku.
+    intent: "service_complaint",
+    patterns: [
+      /nezadovolj/, /razocara/,
+      /zalim se/, /\bzalb[aeiou]/, /prituzb/,
+      /(uzasn|katastrofaln|sramotn|ocajn|najgor|grozn|nikakv)[aeiou]{0,3} ?(usluga|uslugu|uslugom|iskustv|odnos|podrsk|komunikacij)/,
+      /(usluga|uslugu|uslugom|iskustvo|odnos|komunikacij|podrsk).{0,25}(uzasn|katastrof|sramot|ocajn|najgor|grozn|nikakv)/,
+      /(katastrofa|sramota)\b/
+    ],
+    message: "Žao nam je što niste zadovoljni! Vaš slučaj prosljeđujemo našem timu koji će Vam se javiti u najkraćem roku."
   }
 ];
 
