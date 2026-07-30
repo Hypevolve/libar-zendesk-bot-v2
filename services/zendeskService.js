@@ -316,9 +316,51 @@ function resolveBotReplyOrigin(channelType = "web_chat") {
   return "zendesk_ai";
 }
 
-// Signature marker appended to every bot reply. Used for precise agent-intervention
-// detection (checkForAgentIntervention looks for this text in the latest comment).
-const BOT_SIGNATURE = "\n\n---\n*Vaš Libar Asistent*";
+// ─── Potpis bota ───────────────────────────────────────────────────────────
+//
+// Bot EMITIRA samo novi potpis, ali PREPOZNAJE i stari — trajno. NE BRISATI stari.
+//
+// ZAŠTO: preimenovanje "Libar Asistent" → "Libar AI Asistent" (EU AI Act) mijenja
+// potpis, ali u Zendesku i dalje postoje OTVORENI tiketi čiji botovi odgovori nose
+// STARI potpis. "Vaš Libar AI Asistent" NE sadrži "Vaš Libar Asistent" kao podniz,
+// pa bi izbacivanje starog oblika iz prepoznavanja slomilo dvije zaštite na živim
+// razgovorima:
+//   1) detectAgentTakeover (dolje) preskače vlastite botove komentare. Ako stare
+//      botove odgovore prestane prepoznavati, oni izgledaju kao komentari agenta →
+//      bot zašuti na tiketima na kojima nema nijednog čovjeka.
+//   2) loop-guard u index.js (webhook) preskače poruku ako je to botov vlastiti
+//      odgovor. Ako prestane prepoznavati starije odgovore → bot odgovara sam sebi
+//      u petlji (Zendesk okida webhook na svaki botov komentar).
+// Oba kvara pogađaju već otvorene razgovore s kupcima, ne nove. Stari tiketi se ne
+// migriraju i ne "zastarijevaju" — rješenje mora ostati u prepoznavanju.
+const BOT_SIGNATURE_NAME = "Vaš Libar AI Asistent";
+const LEGACY_BOT_SIGNATURE_NAME = "Vaš Libar Asistent"; // prije preimenovanja — NE BRISATI
+
+// Potpis koji se dodaje na svaki botov odgovor.
+const BOT_SIGNATURE = `\n\n---\n*${BOT_SIGNATURE_NAME}*`;
+// Stari, još uvijek prisutan na postojećim tiketima.
+const LEGACY_BOT_SIGNATURE = `\n\n---\n*${LEGACY_BOT_SIGNATURE_NAME}*`;
+
+/**
+ * Strogo: sadrži li tijelo komentara CIJELI potpis bota (novi ili stari)?
+ * Koristi detectAgentTakeover nad komentarima dohvaćenima iz Zendesk API-ja,
+ * gdje je body čisti markdown pa je cijeli potpis netaknut.
+ */
+function isBotSignedComment(text) {
+  const s = String(text || "");
+  return s.includes(BOT_SIGNATURE) || s.includes(LEGACY_BOT_SIGNATURE);
+}
+
+/**
+ * Labavo: sadrži li tekst IME iz potpisa (novo ili staro)?
+ * Koristi loop-guard u index.js nad {{ticket.latest_comment}} iz webhooka, gdje
+ * tijelo može stići kao HTML (html_body) pa markdown okvir potpisa ("---", "*")
+ * ne mora preživjeti — ime preživi uvijek.
+ */
+function containsBotSignatureName(text) {
+  const s = String(text || "");
+  return s.includes(BOT_SIGNATURE_NAME) || s.includes(LEGACY_BOT_SIGNATURE_NAME);
+}
 
 async function addBotReplyToTicket(ticketId, replyText, options = {}) {
   const signedReply = replyText + BOT_SIGNATURE;
@@ -592,7 +634,8 @@ async function ping() {
  *
  * A comment counts as an agent comment when it is:
  *   (a) NOT authored by the requester (so not a customer message), AND
- *   (b) NOT one of the bot's own signed replies (no BOT_SIGNATURE).
+ *   (b) NOT one of the bot's own signed replies (isBotSignedComment — prepoznaje
+ *       i novi i stari potpis, vidi komentar uz BOT_SIGNATURE).
  *
  * Returns { takenOver: boolean, reason?: string }. Pure function so it can be
  * unit-tested without hitting the Zendesk API.
@@ -600,7 +643,7 @@ async function ping() {
 function detectAgentTakeover(comments = [], requesterId = null) {
   for (const c of comments) {
     if (c.author_id === requesterId) continue;                  // customer message
-    if (String(c.body || "").includes(BOT_SIGNATURE)) continue; // bot's own reply
+    if (isBotSignedComment(c.body)) continue;                   // bot's own reply (novi ILI stari potpis)
     return { takenOver: true, reason: "agent_comment_detected" }; // human agent joined
   }
   return { takenOver: false };
@@ -625,6 +668,7 @@ async function checkForAgentIntervention(ticketId) {
 module.exports = {
   addInternalNote, addTagAndNote, addBotReplyToTicket, addCustomerMessageToTicket,
   checkForAgentIntervention, detectAgentTakeover,
+  BOT_SIGNATURE, LEGACY_BOT_SIGNATURE, isBotSignedComment, containsBotSignatureName,
   createChatTicket, fetchAllHelpCenterArticles, getZendeskConfigSummary,
   getPublicTicketComments, getRequesterProfile, getTicketAudits, getTicketSummary,
   ping, replyToTicket, resetHelpCenterCache, searchHelpCenter, searchHelpCenterDetailed,

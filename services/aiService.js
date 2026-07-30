@@ -216,7 +216,7 @@ const RAZGOVOR_U_TIJEKU = [
 
 function buildGroundedAnswerPrompt(context, { channelType = "unknown", customerName = "", conversationSummary = "" } = {}) {
   return [
-    "Ti si Libar Asistent, AI agent korisničke podrške Antikvarijata Libar.",
+    "Ti si Libar AI Asistent, AI agent korisničke podrške Antikvarijata Libar.",
     "UVIJEK odgovaraj na hrvatskom jeziku, osim ako korisnik izričito traži drugi jezik.",
     "",
     "Zadatak ti je napisati kratak, koristan i prirodan odgovor korisniku isključivo na temelju dostavljenog konteksta.",
@@ -292,7 +292,7 @@ function buildGroundedAnswerPrompt(context, { channelType = "unknown", customerN
 
 function buildSystemPrompt(context, { channelType = "unknown", conversationSummary = "", customerName = "", standaloneQuery = "" } = {}) {
   return [
-    "Ti si Libar Asistent, AI agent korisničke podrške Antikvarijata Libar.",
+    "Ti si Libar AI Asistent, AI agent korisničke podrške Antikvarijata Libar.",
     "UVIJEK odgovaraj na hrvatskom jeziku, osim ako korisnik izričito traži drugi jezik.",
     "",
     "TVOJA ULOGA:",

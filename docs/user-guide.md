@@ -1,4 +1,4 @@
-# Libar Asistent — Upute za korisnike
+# Libar AI Asistent — Upute za korisnike
 
 > **Verzija**: 2.0.0  
 > **Zadnje ažuriranje**: 2026-06-02
@@ -7,7 +7,7 @@
 
 ## Sadržaj
 
-- [Što je Libar Asistent](#što-je-libar-asistent)
+- [Što je Libar AI Asistent](#što-je-libar-asistent)
 - [Kako komunicirati s botom](#kako-komunicirati-s-botom)
 - [Što bot zna](#što-bot-zna)
 - [Što bot ne zna (eskalacija)](#što-bot-ne-zna-eskalacija)
@@ -17,9 +17,9 @@
 
 ---
 
-## Što je Libar Asistent
+## Što je Libar AI Asistent
 
-**Libar Asistent** je umjetna inteligencija koja služi kao prva linija korisničke podrške za **Antikvarijat Libar**. Možete mu postavljati pitanja putem:
+**Libar AI Asistent** je umjetna inteligencija koja služi kao prva linija korisničke podrške za **Antikvarijat Libar**. Možete mu postavljati pitanja putem:
 
 - **Web chata** na web stranici
 - **Emaila** (info@antikvarijat-libar.com)
@@ -215,7 +215,7 @@ Da. Svi razgovori se odvijaju preko zaštićenih veza (HTTPS). Osobni podaci se 
 
 ### Kako znam je li bot ili čovjek odgovorio?
 
-Botovi odgovori imaju potpis **"Vaš Libar Asistent"**. Ako vidite potpis agenta, riječ je o ljudskom timu.
+Botovi odgovori imaju potpis **"Vaš Libar AI Asistent"** (na starijim razgovorima može stajati raniji oblik **"Vaš Libar Asistent"**). Ako vidite potpis agenta, riječ je o ljudskom timu.
 
 ### Mogu li tražiti da razgovor vodi čovjek?
 

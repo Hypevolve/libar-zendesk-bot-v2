@@ -1,4 +1,4 @@
-# Libar Asistent — Tehnička dokumentacija za developere
+# Libar AI Asistent — Tehnička dokumentacija za developere
 
 > **Verzija**: 2.0.0  
 > **Zadnje ažuriranje**: 2026-06-11

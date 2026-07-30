@@ -60,6 +60,11 @@ const stub = {
   isHumanHandled: () => false,
   isTicketHumanHandled: () => false,
   verifyWebhookToken: () => false,
+  // Loop-guard u webhooku zove ovo; stub prati pravi servis (prepoznaje oba potpisa).
+  containsBotSignatureName: (t) => {
+    const s = String(t || "");
+    return s.includes("Vaš Libar AI Asistent") || s.includes("Vaš Libar Asistent");
+  },
   ticketUrl: (id) => `https://primjer.zendesk.com/agent/tickets/${id}`,
   HUMAN_OWNED_TAGS: []
 };

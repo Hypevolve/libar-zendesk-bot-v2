@@ -994,7 +994,10 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
 
   // Prevent trigger loop: skip if the latest message is our own reply.
   // (When the bot posts a comment, Zendesk fires the trigger again.)
-  if (latestMessage && String(latestMessage).includes("Vaš Libar Asistent")) {
+  // containsBotSignatureName prepoznaje I novi ("Vaš Libar AI Asistent") I stari
+  // ("Vaš Libar Asistent") potpis — na već otvorenim tiketima postoje botovi
+  // odgovori sa starim potpisom i bez toga bi bot ušao u petlju sam sa sobom.
+  if (latestMessage && zendeskService.containsBotSignatureName(latestMessage)) {
     log.info("webhook_skipped_own_reply", { ticketId });
     return res.status(200).json({ success: true, skipped: "own_reply" });
   }

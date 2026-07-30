@@ -1,4 +1,4 @@
-# CLAUDE.md — Libar Asistent (Zendesk AI bot)
+# CLAUDE.md — Libar AI Asistent (Zendesk AI bot)
 
 Operativni vodič za rad na ovom projektu u Claude Codeu. Kratko i praktično; dublja dokumentacija je linkana.
 

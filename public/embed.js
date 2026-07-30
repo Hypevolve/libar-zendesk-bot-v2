@@ -1,5 +1,5 @@
 /**
- * Libar Asistent — WordPress Embed Script
+ * Libar AI Asistent — WordPress Embed Script
  *
  * Ubaci u WordPress footer (via Appearance → Theme Editor → footer.php
  * ili via plugin kao što je "Insert Headers and Footers"):
@@ -14,7 +14,7 @@
 
   const BOT_URL = document.currentScript?.src?.replace('/embed.js', '') || '';
   if (!BOT_URL) {
-    console.error('[Libar Asistent] Nije moguće odrediti BOT_URL. Provjeri src atribut skripte.');
+    console.error('[Libar AI Asistent] Nije moguće odrediti BOT_URL. Provjeri src atribut skripte.');
     return;
   }
 
@@ -30,7 +30,7 @@
     <i class="ph ph-chat-circle-text" style="font-size:28px; display:block;"></i>
     <i class="ph ph-x" style="font-size:24px; display:none;"></i>
   `;
-  fab.setAttribute('aria-label', 'Otvori Libar Asistent');
+  fab.setAttribute('aria-label', 'Otvori Libar AI Asistent');
   fab.style.cssText = `
     position:fixed;bottom:24px;left:24px;width:60px;height:60px;border-radius:50%;
     background:#f26a35;color:#fff;border:none;cursor:pointer;z-index:99999;
@@ -55,7 +55,7 @@
   const iframe = document.createElement('iframe');
   iframe.src = BOT_URL;
   iframe.style.cssText = 'width:100%;height:100%;border:none;';
-  iframe.title = 'Libar Asistent';
+  iframe.title = 'Libar AI Asistent';
   panel.appendChild(iframe);
 
   // ── Toggle logic ──
@@ -70,14 +70,14 @@
       panel.style.pointerEvents = 'all';
       if (chatIcon) chatIcon.style.display = 'none';
       if (closeIcon) closeIcon.style.display = 'block';
-      fab.setAttribute('aria-label', 'Zatvori Libar Asistent');
+      fab.setAttribute('aria-label', 'Zatvori Libar AI Asistent');
     } else {
       panel.style.transform = 'translateY(20px) scale(0.95)';
       panel.style.opacity = '0';
       panel.style.pointerEvents = 'none';
       if (chatIcon) chatIcon.style.display = 'block';
       if (closeIcon) closeIcon.style.display = 'none';
-      fab.setAttribute('aria-label', 'Otvori Libar Asistent');
+      fab.setAttribute('aria-label', 'Otvori Libar AI Asistent');
     }
   }
 

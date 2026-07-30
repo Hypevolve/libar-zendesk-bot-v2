@@ -1,4 +1,4 @@
-# Dokumentacija — Libar Asistent
+# Dokumentacija — Libar AI Asistent
 
 Indeks svih dokumenata. Za brzi operativni pregled vidi [CLAUDE.md](../CLAUDE.md) u rootu.
 

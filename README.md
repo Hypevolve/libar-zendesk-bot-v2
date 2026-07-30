@@ -1,6 +1,6 @@
-# Libar Asistent — AI Chatbot za Antikvarijat Libar
+# Libar AI Asistent — AI Chatbot za Antikvarijat Libar
 
-**Libar Asistent** je enterprise AI chatbot za korisničku podršku Antikvarijata Libar. Primarno integriran s **Zendeskom** kao backend ticketing sustavom, bot služi kao prva linija podrške kroz više kanala: web chat widget, email i Facebook Messenger.
+**Libar AI Asistent** je enterprise AI chatbot za korisničku podršku Antikvarijata Libar. Primarno integriran s **Zendeskom** kao backend ticketing sustavom, bot služi kao prva linija podrške kroz više kanala: web chat widget, email i Facebook Messenger.
 
 ---
 
@@ -25,7 +25,7 @@
 
 ## Pregled
 
-**Libar Asistent** je AI chatbot koji služi kao prva linija korisničke podrške za Antikvarijat Libar. Dostupan je putem web stranice, emaila i Facebook Messengera.
+**Libar AI Asistent** je AI chatbot koji služi kao prva linija korisničke podrške za Antikvarijat Libar. Dostupan je putem web stranice, emaila i Facebook Messengera.
 
 ### Glavne značajke
 
