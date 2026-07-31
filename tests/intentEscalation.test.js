@@ -301,4 +301,48 @@ describe("intentEscalationService", () => {
       });
     }
   });
+
+  // Prijava od 2026-07-31: korisnik je na web widgetu napisao "Dali mogu razgovarati
+  // s agentom" (tiket 91163) i dobio generički self-service letak jer rječnik nije
+  // imao nijedan uzorak za izravan zahtjev za čovjekom. Izravan zahtjev je najjasniji
+  // mogući signal i mora ići čovjeku bez ijednog LLM poziva.
+  describe("detectEscalationIntent — human_agent_request", () => {
+    const requests = [
+      "Dali mogu razgovarati s agentom",
+      "želim razgovarati s čovjekom",
+      "mogu li pričati sa agentom",
+      "spojite me s agentom",
+      "prebacite me na čovjeka",
+      "trebam pravog čovjeka",
+      "dajte mi agenta",
+      "hoću ljudsku podršku",
+      "ne želim razgovarati s botom",
+      "može li se javiti neki djelatnik"
+    ];
+
+    for (const query of requests) {
+      it(`escalates human_agent_request for '${query}'`, () => {
+        const result = detectEscalationIntent(n(query));
+        assert.strictEqual(result.shouldEscalate, true);
+        assert.strictEqual(result.intent, "human_agent_request");
+      });
+    }
+
+    // Rječnik ne smije pojesti benigne upite — "osob" je namjerno izostavljen iz
+    // uzoraka jer bi "osobno preuzimanje" završilo na eskalaciji.
+    const benign = [
+      "mogu li knjige preuzeti osobno",
+      "je li osobno preuzimanje besplatno",
+      "kako mogu kupiti udžbenike",
+      "želim naručiti knjige za prvi razred",
+      "koliko traje dostava"
+    ];
+
+    for (const query of benign) {
+      it(`does NOT escalate '${query}'`, () => {
+        const result = detectEscalationIntent(n(query));
+        assert.strictEqual(result.shouldEscalate, false);
+      });
+    }
+  });
 });

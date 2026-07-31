@@ -1,14 +1,21 @@
 /**
  * Escalation Flow Service
  *
- * Centralises two web-chat decisions that previously caused a 100% escalation
- * rate and an email-collection deadlock:
+ * Centralises two web-chat decisions:
  *
- *  1. buildSelfServiceFallback — when the bot has no grounded answer, give the
- *     user a helpful self-service reply (webshop / otkup / kontakt links) instead
- *     of handing every unknown question to a human (which, on web chat, demanded
- *     an email and looped). Genuine human-need cases (complaints, returns, legal)
- *     are still escalated earlier by intentEscalationService.
+ *  1. buildNoAnswerEscalation — when the bot has no grounded answer, hand the
+ *     conversation to a human, exactly like the email/Facebook webhook path does.
+ *
+ *     POVIJEST (ne vraćati na staro): ovdje je do 2026-07-31 stajao
+ *     buildSelfServiceFallback, koji je umjesto eskalacije slao generički letak
+ *     ("Evo kako Vam Antikvarijat Libar može najbrže pomoći") i razgovor ostavljao
+ *     na "ai_active". Uveden je da zaustavi eskalaciju-na-sve i petlju s traženjem
+ *     emaila, ali je time svaki upit bez pouzdanog odgovora — dostupnost naslova,
+ *     otkupni iznos, pa i izravno "mogu li razgovarati s agentom" — završavao kao
+ *     tobože uspješan odgovor koji nitko iz tima nije vidio. Petlja s emailom je u
+ *     međuvremenu riješena zasebno (anonimne sesije se otvaraju bez emaila, a
+ *     resolveAnonymousEscalation traži email najviše jednom), pa letak više nema
+ *     svrhu i eskalacija je opet ispravan ishod.
  *
  *  2. resolveAnonymousEscalation — when a real escalation happens on an anonymous
  *     web-chat session (placeholder email), ask for an email AT MOST ONCE. If the
@@ -29,24 +36,23 @@ const NEED_EMAIL_MESSAGE = [
   "odgovoriti ovdje u razgovoru."
 ].join(" ");
 
-const SELF_SERVICE_MESSAGE = [
-  "Hvala na upitu! Evo kako Vam Antikvarijat Libar može najbrže pomoći:",
-  "",
-  "- Kupnja udžbenika: pretražite ponudu i naručite putem našeg webshopa.",
-  "- Otkup udžbenika: upute i uvjeti nalaze se na stranici Otkup udžbenika.",
-  "",
-  "Ako trebate dodatnu pomoć, naš tim Vam stoji na raspolaganju putem kontakt stranice."
-].join("\n");
+// Poruka mora biti iskrena: bot nema odgovor i ne glumi da ga ima. Korisniku se
+// kaže tko preuzima i gdje će dobiti odgovor, bez traženja emaila (za to postoji
+// resolveAnonymousEscalation, koji pita najviše jednom).
+const NO_ANSWER_MESSAGE = [
+  "Ovo Vam ne mogu potvrditi sa sigurnošću, pa upit prosljeđujem našem timu.",
+  "Kolega će Vam odgovoriti ovdje u razgovoru u najkraćem mogućem roku."
+].join(" ");
 
-function buildSelfServiceFallback(userMessage) {
+function buildNoAnswerEscalation(userMessage) {
   return {
-    type: "safe_answer",
-    customerMessage: SELF_SERVICE_MESSAGE,
-    stateTag: "ai_active",
-    reason: "self_service_fallback",
-    source: "self_service",
+    type: "escalate_no_answer",
+    customerMessage: NO_ANSWER_MESSAGE,
+    stateTag: "awaiting_human",
+    reason: "no_grounded_answer",
+    source: "escalation",
     links: buildDirectWebsiteLinks(userMessage, { knowledge: null }),
-    extraTags: []
+    extraTags: ["ai_escalated"]
   };
 }
 
@@ -79,8 +85,8 @@ function resolveAnonymousEscalation(session, outcome) {
 
 module.exports = {
   isLikelyEmail,
-  buildSelfServiceFallback,
+  buildNoAnswerEscalation,
   resolveAnonymousEscalation,
   NEED_EMAIL_MESSAGE,
-  SELF_SERVICE_MESSAGE
+  NO_ANSWER_MESSAGE
 };

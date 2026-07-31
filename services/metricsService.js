@@ -27,6 +27,9 @@ const counters = {
   errors: 0,
   handoffs: 0,
   botDisabledEscalations: 0,
+  // Eskalacije zbog izostanka pouzdanog odgovora (rupa u bazi znanja), odvojeno od
+  // eskalacija po intentu. Mjeri pokrivenost baze — raste li, treba dopuniti znanje.
+  noAnswerEscalations: 0,
   webhooksSkippedHumanHandled: 0,
   agentTakeoversSkipped: 0,
   latencies: [],
@@ -46,6 +49,7 @@ const counters = {
     counters.errors = persisted.errors || 0;
     counters.handoffs = persisted.handoffs || 0;
     counters.botDisabledEscalations = persisted.botDisabledEscalations || 0;
+    counters.noAnswerEscalations = persisted.noAnswerEscalations || 0;
     counters.webhooksSkippedHumanHandled = persisted.webhooksSkippedHumanHandled || 0;
     counters.agentTakeoversSkipped = persisted.agentTakeoversSkipped || 0;
     counters.latencies = Array.isArray(persisted.latencies) ? persisted.latencies.slice(-1000) : [];
@@ -76,6 +80,7 @@ function serializeCounters() {
     errors: counters.errors,
     handoffs: counters.handoffs,
     botDisabledEscalations: counters.botDisabledEscalations,
+    noAnswerEscalations: counters.noAnswerEscalations,
     webhooksSkippedHumanHandled: counters.webhooksSkippedHumanHandled,
     agentTakeoversSkipped: counters.agentTakeoversSkipped,
     latencies: counters.latencies,
@@ -135,6 +140,7 @@ async function reset() {
   counters.errors = 0;
   counters.handoffs = 0;
   counters.botDisabledEscalations = 0;
+  counters.noAnswerEscalations = 0;
   counters.webhooksSkippedHumanHandled = 0;
   counters.agentTakeoversSkipped = 0;
   counters.latencies = [];

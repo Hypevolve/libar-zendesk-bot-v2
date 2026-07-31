@@ -140,6 +140,24 @@ const ESCALATION_INTENTS = [
       /(katastrofa|sramota)\b/
     ],
     message: "Žao nam je što niste zadovoljni! Vaš slučaj prosljeđujemo našem timu koji će Vam se javiti u najkraćem roku."
+  },
+  {
+    // Izravan zahtjev za čovjekom. Najjasniji mogući signal — ide timu odmah, bez
+    // ijednog LLM poziva. (Prije 2026-07-31 ovakav je upit padao u self-service
+    // letak, pa je korisnik koji je tražio agenta dobio linkove na webshop.)
+    //
+    // "osob" NIJE u uzorcima: "osobno preuzimanje" je uobičajen benigni upit i
+    // uhvatio bi ga. Zato se živa osoba pokriva samo punom sintagmom.
+    intent: "human_agent_request",
+    patterns: [
+      /(razgovarat|pricat|cut se|javit se|spojit) ?[ie]? s[ae]? ?(nekim |pravim |zivim )?(agent|covjek|djelatnik|operater|zaposlenik|referent)/,
+      /(spojite|spoji|prebacite|prebaci|povezite|poveži|dajte|daj) (me |mi )?(s |sa |na )?(agent|covjek|djelatnik|operater|zivom osobom|zivu osobu)/,
+      /(zelim|hocu|trebam|trazim|moze li|mogu li|moze mi|da mi se javi|nek se javi|neka se javi)[^.?!]{0,30}(agent|covjek|djelatnik|operater|referent)/,
+      /(pravi|pravog|pravim|zivi|zivog|zivim|stvarn)[aeiou]? (covjek|agent|djelatnik|operater)/,
+      /ljudsk[aeiou]{1,2} podrsk/,
+      /ne (zelim|zelis|hocu|zelim vise|hocu vise) (pricati|razgovarati|komunicirati)[^.?!]{0,20}(bot|robot|umjetn)/
+    ],
+    message: "Naravno — Vaš upit prosljeđujem našem timu. Kolega će Vam se javiti ovdje u razgovoru u najkraćem mogućem roku."
   }
 ];
 

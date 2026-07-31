@@ -2,7 +2,7 @@ const { describe, it } = require("node:test");
 const assert = require("node:assert");
 const {
   isLikelyEmail,
-  buildSelfServiceFallback,
+  buildNoAnswerEscalation,
   resolveAnonymousEscalation
 } = require("../services/escalationFlowService");
 
@@ -27,22 +27,36 @@ describe("escalationFlowService", () => {
     });
   });
 
-  describe("buildSelfServiceFallback", () => {
-    it("returns a safe_answer, not a human escalation", () => {
-      const outcome = buildSelfServiceFallback("Kako da kupim udžbenike?");
-      assert.strictEqual(outcome.type, "safe_answer");
-      assert.strictEqual(outcome.stateTag, "ai_active");
-      assert.strictEqual(outcome.reason, "self_service_fallback");
+  describe("buildNoAnswerEscalation", () => {
+    // Regresijski gard za prijavu od 2026-07-31: web chat je bez pouzdanog odgovora
+    // slao generički letak i razgovor ostavljao na "ai_active", pa nitko iz tima nije
+    // znao da je korisnik ostao bez odgovora. Email i Facebook su u istoj situaciji
+    // uredno eskalirali — ovdje se čuva taj paritet.
+    it("escalates to a human instead of answering with a self-service leaflet", () => {
+      const outcome = buildNoAnswerEscalation("Imate li Hrvatsku čitanku 3?");
+      assert.strictEqual(outcome.type, "escalate_no_answer");
+      assert.strictEqual(outcome.stateTag, "awaiting_human");
+      assert.strictEqual(outcome.reason, "no_grounded_answer");
     });
 
-    it("produces a non-empty helpful message that does not demand an email", () => {
-      const outcome = buildSelfServiceFallback("Kako da kupim udžbenike?");
+    it("tags the conversation so the team sees it needs a human", () => {
+      const outcome = buildNoAnswerEscalation("Imate li Hrvatsku čitanku 3?");
+      assert.ok(outcome.extraTags.includes("ai_escalated"));
+    });
+
+    it("tells the visitor a colleague takes over, without demanding an email", () => {
+      const outcome = buildNoAnswerEscalation("Imate li Hrvatsku čitanku 3?");
       assert.ok(outcome.customerMessage && outcome.customerMessage.length > 20);
       assert.ok(!/email adresu/i.test(outcome.customerMessage));
     });
 
-    it("attaches relevant website links for a buying query", () => {
-      const outcome = buildSelfServiceFallback("Kako da kupim udžbenike?");
+    it("never claims the bot has an answer it does not have", () => {
+      const outcome = buildNoAnswerEscalation("Imate li Hrvatsku čitanku 3?");
+      assert.ok(!/najbrže pomoći/i.test(outcome.customerMessage));
+    });
+
+    it("still attaches relevant website links for a buying query", () => {
+      const outcome = buildNoAnswerEscalation("Kako da kupim udžbenike?");
       assert.ok(Array.isArray(outcome.links));
       assert.ok(outcome.links.some((l) => /kupi-udzbenike/.test(l.url)));
     });

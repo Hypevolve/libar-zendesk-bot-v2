@@ -45,7 +45,7 @@ const tokenBudget = require("./services/tokenBudgetService");
 const { normalizeForComparison } = require("./services/textUtils");
 const { buildDirectWebsiteLinks } = require("./services/siteLinkService");
 const { detectEscalationIntent } = require("./services/intentEscalationService");
-const { isLikelyEmail, buildSelfServiceFallback, resolveAnonymousEscalation } = require("./services/escalationFlowService");
+const { isLikelyEmail, buildNoAnswerEscalation, resolveAnonymousEscalation } = require("./services/escalationFlowService");
 const textbookListService = require("./services/textbookListService");
 
 // ─── Express Setup ────────────────────────────────────────────
@@ -506,27 +506,43 @@ async function _resolveAutomatedOutcome(session, userMessage, opts = {}) {
 
   const links = buildDirectWebsiteLinks(userMessage, { knowledge });
 
-  // When we have no grounded answer, do NOT hand every unknown question to a human
-  // (on web chat that demanded an email and looped). Give a helpful self-service
-  // reply instead. Genuine human-need cases (complaints, returns, legal, attachments)
-  // are escalated earlier by the escalation gates above, so they never reach here.
+  // Bez pouzdanog odgovora upit ide čovjeku — isto kao na email/Facebook putu
+  // (vidi webhook, "AI nije mogao generirati pouzdan odgovor"). Slanje generičkog
+  // letka umjesto eskalacije je 2026-07-31 prijavljeno kao greška: korisnik ostane
+  // bez odgovora, a razgovor izgleda riješeno. Vidi escalationFlowService.
   let outcome = customerMessage
     ? {
         type: "safe_answer", customerMessage, stateTag: "ai_active",
         reason: "grounded_answer", source: knowledge ? "knowledge" : "reference_facts",
         links, extraTags: []
       }
-    : buildSelfServiceFallback(userMessage);
+    : buildNoAnswerEscalation(userMessage);
 
   metricsService.recordDecision(outcome.type);
   metricsService.recordChannelOutcome(opts.channelType || "web_chat", outcome.type);
   metricsService.recordLatency(Date.now() - start);
+  // Zasebno brojilo: eskalacija zbog izostanka odgovora nije isto što i eskalacija
+  // po intentu (žalba, povrat). Bez ove razlike se u dashboardu ne vidi koliko upita
+  // baza znanja ne pokriva — letak se prije brojao kao safe_answer i skrivao problem.
+  if (outcome.reason === "no_grounded_answer") {
+    metricsService.increment("noAnswerEscalations");
+    log.warn("no_grounded_answer_escalated", {
+      channel: opts.channelType || "web_chat",
+      retrievalSource: knowledge?.primarySource || null,
+      articleCount: knowledge?.totalMatches || 0
+    });
+  }
 
   tracingService.createTrace({
     input: maskedMsg,
     llmOutput: outcome.customerMessage,
     decision: outcome.type,
-    retrieval: knowledge ? { source: knowledge.primarySource, topScore: knowledge.topScore, articleCount: knowledge.totalMatches } : null,
+    retrieval: knowledge ? {
+      source: knowledge.primarySource,
+      topScore: knowledge.topScore,
+      articleCount: knowledge.totalMatches,
+      contextLength: (knowledge.context || "").length
+    } : null,
     latencyMs: Date.now() - start
   });
 
