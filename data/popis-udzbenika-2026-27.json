@@ -356,12 +356,17 @@
         {
           "razred": "2",
           "oznaka": "Komercijalist",
-          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/2.-KOMERCIJALIST.docx"
+          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-KOMERCIJALIST.pdf"
         },
         {
           "razred": "2",
           "oznaka": "Komercijalist",
-          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-KOMERCIJALIST.docx"
+          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/2.-KOMERCIJALIST.docx"
+        },
+        {
+          "razred": "2",
+          "oznaka": "Referent za poslovnu ekonomiju",
+          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-REFERENT-ZA-POSLOVNU-EKONOMIJU.pdf"
         },
         {
           "razred": "2",
@@ -370,28 +375,23 @@
         },
         {
           "razred": "2",
-          "oznaka": "Referent za poslovnu ekonomiju",
-          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-REFERENT-ZA-POSLOVNU-EKONOMIJU.docx"
-        },
-        {
-          "razred": "2",
-          "oznaka": "Turisticki tehnicar destinacije",
-          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-TURISTICKI-TEHNICAR-DESTINACIJE.docx"
-        },
-        {
-          "razred": "2",
           "oznaka": "Turisticki tehnicar destinacije",
           "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/2.-TURISTICKI-TEHNICAR-DESTINACIJE.docx"
         },
         {
           "razred": "2",
-          "oznaka": "Upravno poslovni referent",
-          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-UPRAVNO-POSLOVNI-REFERENT.docx"
+          "oznaka": "Turisticki tehnicar destinacije",
+          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-TURISTICKI-TEHNICAR-DESTINACIJE.pdf"
         },
         {
           "razred": "2",
           "oznaka": "Upravno poslovni referent",
           "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/2.-UPRAVNO-POSLOVNI-REFERENT.docx"
+        },
+        {
+          "razred": "2",
+          "oznaka": "Upravno poslovni referent",
+          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-UPRAVNO-POSLOVNI-REFERENT.pdf"
         },
         {
           "razred": "3",
@@ -401,12 +401,12 @@
         {
           "razred": "3",
           "oznaka": "3. razred",
-          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/E-3.docx"
+          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/P-3.docx"
         },
         {
           "razred": "3",
           "oznaka": "3. razred",
-          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/P-3.docx"
+          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/E-3.docx"
         },
         {
           "razred": "3",
@@ -6114,18 +6114,13 @@
         },
         {
           "razred": "1",
-          "oznaka": "Oblagac-podova-i-zidova-1 raz",
-          "url": "https://ssknezbranimir.hr/wp-content/uploads/2026/07/Oblagac-podova-i-zidova-1.raz_.pdf"
+          "oznaka": "Operater-za-strojne-obrade-1 raz",
+          "url": "https://ssknezbranimir.hr/wp-content/uploads/2026/07/Operater-za-strojne-obrade-1.raz_.pdf"
         },
         {
           "razred": "1",
           "oznaka": "Prodavac-1 raz",
           "url": "https://ssknezbranimir.hr/wp-content/uploads/2026/07/Prodavac-1.-raz.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "Oblagac-podova-i-zidova-2 raz",
-          "url": "https://ssknezbranimir.hr/wp-content/uploads/2026/07/Oblagac-podova-i-zidova-2.raz_.pdf"
         },
         {
           "razred": "2",
