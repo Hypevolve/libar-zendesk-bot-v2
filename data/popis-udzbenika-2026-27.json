@@ -1,6 +1,6 @@
 {
   "godina": "2026./2027.",
-  "generirano": "2026-07-29",
+  "generirano": "2026-07-31",
   "skole": [
     {
       "id": "biskupijska-klasicna-gimnazija-rudera-boskovica-dubrovnik",
@@ -361,12 +361,7 @@
         {
           "razred": "2",
           "oznaka": "Komercijalist",
-          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-KOMERCIJALIST.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "Referent za poslovnu ekonomiju",
-          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-REFERENT-ZA-POSLOVNU-EKONOMIJU.docx"
+          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-KOMERCIJALIST.docx"
         },
         {
           "razred": "2",
@@ -375,13 +370,18 @@
         },
         {
           "razred": "2",
-          "oznaka": "Turisticki tehnicar destinacije",
-          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/2.-TURISTICKI-TEHNICAR-DESTINACIJE.docx"
+          "oznaka": "Referent za poslovnu ekonomiju",
+          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-REFERENT-ZA-POSLOVNU-EKONOMIJU.docx"
         },
         {
           "razred": "2",
           "oznaka": "Turisticki tehnicar destinacije",
-          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-TURISTICKI-TEHNICAR-DESTINACIJE.pdf"
+          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-TURISTICKI-TEHNICAR-DESTINACIJE.docx"
+        },
+        {
+          "razred": "2",
+          "oznaka": "Turisticki tehnicar destinacije",
+          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/2.-TURISTICKI-TEHNICAR-DESTINACIJE.docx"
         },
         {
           "razred": "2",
@@ -401,12 +401,12 @@
         {
           "razred": "3",
           "oznaka": "3. razred",
-          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/P-3.docx"
+          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/E-3.docx"
         },
         {
           "razred": "3",
           "oznaka": "3. razred",
-          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/E-3.docx"
+          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/P-3.docx"
         },
         {
           "razred": "3",
@@ -3252,11 +3252,6 @@
       "dokumenti": [
         {
           "razred": "1",
-          "oznaka": "1. razred — Agroturistički tehniča",
-          "url": "https://prirodoslovnaskola-ka.hr/wp-content/uploads/2026/07/1.r-agroturistički-tehničar.pdf"
-        },
-        {
-          "razred": "1",
           "oznaka": "1. razred — Cvjećar poljoprivredni gospodarstvenik",
           "url": "https://prirodoslovnaskola-ka.hr/wp-content/uploads/2026/07/1.r-cvjećar-poljoprivredni-gospodarstvenik.pdf"
         },
@@ -4645,6 +4640,11 @@
         {
           "razred": "3",
           "oznaka": "3. razred",
+          "url": "https://staging.ssdr.hr/wp-content/uploads/2026/07/3.c.pdf"
+        },
+        {
+          "razred": "3",
+          "oznaka": "3. razred",
           "url": "https://staging.ssdr.hr/wp-content/uploads/2026/06/3.d.pdf"
         },
         {
@@ -5350,7 +5350,7 @@
         {
           "razred": null,
           "oznaka": "Popis udžbenika",
-          "url": "https://www.ssnm.hr/nastava/udzbenici/"
+          "url": "https://www.ssnm.hr/udzbenici/"
         }
       ]
     },
@@ -6114,8 +6114,18 @@
         },
         {
           "razred": "1",
+          "oznaka": "Oblagac-podova-i-zidova-1 raz",
+          "url": "https://ssknezbranimir.hr/wp-content/uploads/2026/07/Oblagac-podova-i-zidova-1.raz_.pdf"
+        },
+        {
+          "razred": "1",
           "oznaka": "Prodavac-1 raz",
           "url": "https://ssknezbranimir.hr/wp-content/uploads/2026/07/Prodavac-1.-raz.pdf"
+        },
+        {
+          "razred": "2",
+          "oznaka": "Oblagac-podova-i-zidova-2 raz",
+          "url": "https://ssknezbranimir.hr/wp-content/uploads/2026/07/Oblagac-podova-i-zidova-2.raz_.pdf"
         },
         {
           "razred": "2",
@@ -6131,11 +6141,6 @@
           "razred": "2",
           "oznaka": "S1-monter-strojarskih-instalacija-2 raz",
           "url": "https://ssknezbranimir.hr/wp-content/uploads/2026/07/S1-monter-strojarskih-instalacija-2.raz_.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "Serviser-karoserije-motornih-vozila-2 raz",
-          "url": "https://ssknezbranimir.hr/wp-content/uploads/2026/07/Serviser-karoserije-motornih-vozila-2.raz_.pdf"
         },
         {
           "razred": "2",
@@ -6338,6 +6343,36 @@
           "razred": "2",
           "oznaka": "Tehničar za ugostiteljstvo",
           "url": "https://www.ssek.hr/images/dokumenti/nastava/udzbenici/2026_2027/2.C_TZU_2026_2027.xlsx"
+        },
+        {
+          "razred": "3",
+          "oznaka": "Au vo el",
+          "url": "https://www.ssek.hr/images/dokumenti/nastava/udzbenici/2026_2027/3.B_AU_VO_EL_2026_2027.xlsx"
+        },
+        {
+          "razred": "3",
+          "oznaka": "GT",
+          "url": "https://www.ssek.hr/images/dokumenti/nastava/udzbenici/2026_2027/3.G_GT_2026_2027.xlsx"
+        },
+        {
+          "razred": "3",
+          "oznaka": "Ku ko sl",
+          "url": "https://www.ssek.hr/images/dokumenti/nastava/udzbenici/2026_2027/3.D_KU_KO_SL_2026_2027.xlsx"
+        },
+        {
+          "razred": "3",
+          "oznaka": "THK",
+          "url": "https://www.ssek.hr/images/dokumenti/nastava/udzbenici/2026_2027/3.C_THK_2026_2027.xlsx"
+        },
+        {
+          "razred": "4",
+          "oznaka": "GT",
+          "url": "https://www.ssek.hr/images/dokumenti/nastava/udzbenici/2026_2027/4.G_GT_2026_2027.xlsx"
+        },
+        {
+          "razred": "4",
+          "oznaka": "THK",
+          "url": "https://www.ssek.hr/images/dokumenti/nastava/udzbenici/2026_2027/4.C_THK_2026_2027.xlsx"
         }
       ]
     },
@@ -6752,7 +6787,7 @@
         {
           "razred": "1",
           "oznaka": "Manuali scolastici",
-          "url": "https://smsida.hr/wp-content/uploads/2026/07/Manuali-scolastici-2026-27-3.xlsx"
+          "url": "https://smsida.hr/wp-content/uploads/2026/07/Manuali-scolastici-2026-27-4.xlsx"
         }
       ]
     },
