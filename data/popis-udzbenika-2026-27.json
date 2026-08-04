@@ -1,6 +1,6 @@
 {
   "godina": "2026./2027.",
-  "generirano": "2026-07-31",
+  "generirano": "2026-08-04",
   "skole": [
     {
       "id": "biskupijska-klasicna-gimnazija-rudera-boskovica-dubrovnik",
@@ -366,7 +366,7 @@
         {
           "razred": "2",
           "oznaka": "Referent za poslovnu ekonomiju",
-          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-REFERENT-ZA-POSLOVNU-EKONOMIJU.pdf"
+          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-REFERENT-ZA-POSLOVNU-EKONOMIJU.docx"
         },
         {
           "razred": "2",
@@ -376,12 +376,12 @@
         {
           "razred": "2",
           "oznaka": "Turisticki tehnicar destinacije",
-          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/2.-TURISTICKI-TEHNICAR-DESTINACIJE.docx"
+          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-TURISTICKI-TEHNICAR-DESTINACIJE.docx"
         },
         {
           "razred": "2",
           "oznaka": "Turisticki tehnicar destinacije",
-          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-TURISTICKI-TEHNICAR-DESTINACIJE.pdf"
+          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/2.-TURISTICKI-TEHNICAR-DESTINACIJE.docx"
         },
         {
           "razred": "2",
@@ -391,7 +391,7 @@
         {
           "razred": "2",
           "oznaka": "Upravno poslovni referent",
-          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-UPRAVNO-POSLOVNI-REFERENT.pdf"
+          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/1.-UPRAVNO-POSLOVNI-REFERENT.docx"
         },
         {
           "razred": "3",
@@ -401,12 +401,12 @@
         {
           "razred": "3",
           "oznaka": "3. razred",
-          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/P-3.docx"
+          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/E-3.docx"
         },
         {
           "razred": "3",
           "oznaka": "3. razred",
-          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/E-3.docx"
+          "url": "https://ekonomska-pozega.hr/wp-content/uploads/2026/07/P-3.docx"
         },
         {
           "razred": "3",
@@ -1736,11 +1736,6 @@
       "dokumenti": [
         {
           "razred": "1",
-          "oznaka": "1. razred",
-          "url": "https://ss-gospodarska-vz.skole.hr/objava-popisa-udzbenika-za-novu-skolsku-godinu-2026-2027/"
-        },
-        {
-          "razred": "1",
           "oznaka": "Važeći xlsx",
           "url": "https://ss-gospodarska-vz.skole.hr/wp-content/uploads/sites/285/2026/07/Vazeci_Popis-udzbenika_2026_2027.xlsx"
         }
@@ -3018,18 +3013,68 @@
       "dokumenti": [
         {
           "razred": "1",
-          "oznaka": "1. razred",
-          "url": "https://ss-poljoprivredna-veterinarska-os.skole.hr/nastava/udzbenici/"
+          "oznaka": "1. razred — Agrotehničar",
+          "url": "https://ss-poljoprivredna-veterinarska-os.skole.hr/wp-content/uploads/sites/1650/2026/07/Agrotehnicar-udzbenik-za-1.-razred.docx"
         },
         {
           "razred": "1",
-          "oznaka": "1. razred — Agrotehničar",
-          "url": "https://ss-poljoprivredna-veterinarska-os.skole.hr/wp-content/uploads/sites/1650/2026/07/Agrotehnicar-udzbenik-za-1.-razred.docx"
+          "oznaka": "1. razred — Mpm",
+          "url": "https://ss-poljoprivredna-veterinarska-os.skole.hr/wp-content/uploads/sites/1650/2026/08/Mpm-1.-razred.docx"
+        },
+        {
+          "razred": "2",
+          "oznaka": "2. razred — Agrotehnicar",
+          "url": "https://ss-poljoprivredna-veterinarska-os.skole.hr/wp-content/uploads/sites/1650/2026/08/Agrotehnicar-udzbenik-za-2.-razred.docx"
+        },
+        {
+          "razred": "2",
+          "oznaka": "2. razred — Cvjecar",
+          "url": "https://ss-poljoprivredna-veterinarska-os.skole.hr/wp-content/uploads/sites/1650/2026/08/Cvjecar2.-razred.docx"
+        },
+        {
+          "razred": "2",
+          "oznaka": "2. razred — Mpm",
+          "url": "https://ss-poljoprivredna-veterinarska-os.skole.hr/wp-content/uploads/sites/1650/2026/08/Mpm-2.-razred.docx"
         },
         {
           "razred": "2",
           "oznaka": "2. razred — Vetrinarski tehničar",
           "url": "https://ss-poljoprivredna-veterinarska-os.skole.hr/wp-content/uploads/sites/1650/2026/07/Veterinarski-tehnicar-udzbenici-za-2.-r.docx"
+        },
+        {
+          "razred": "3",
+          "oznaka": "3. razred — Agrotehničar",
+          "url": "https://ss-poljoprivredna-veterinarska-os.skole.hr/wp-content/uploads/sites/1650/2025/07/Agrotehnicar-3.-razred.pdf"
+        },
+        {
+          "razred": "3",
+          "oznaka": "3. razred — Cvjećari",
+          "url": "https://ss-poljoprivredna-veterinarska-os.skole.hr/wp-content/uploads/sites/1650/2025/07/Cvjecari-3.-razred.pdf"
+        },
+        {
+          "razred": "3",
+          "oznaka": "3. razred — MPM",
+          "url": "https://ss-poljoprivredna-veterinarska-os.skole.hr/wp-content/uploads/sites/1650/2025/07/MPM-3.-razred.pdf"
+        },
+        {
+          "razred": "3",
+          "oznaka": "3. razred — Veterinarski tehničar",
+          "url": "https://ss-poljoprivredna-veterinarska-os.skole.hr/wp-content/uploads/sites/1650/2025/07/Veterinarski-tehnicar-3.-razred.pdf"
+        },
+        {
+          "razred": "3",
+          "oznaka": "3. razred — Vrtlar",
+          "url": "https://ss-poljoprivredna-veterinarska-os.skole.hr/wp-content/uploads/sites/1650/2026/08/Vrtlar-3.-razred.docx"
+        },
+        {
+          "razred": "4",
+          "oznaka": "4. razred — Agrotehničar",
+          "url": "https://ss-poljoprivredna-veterinarska-os.skole.hr/wp-content/uploads/sites/1650/2025/07/Agrotehnicar-4.-razred.pdf"
+        },
+        {
+          "razred": "4",
+          "oznaka": "4. razred — Veterinarski tehničar",
+          "url": "https://ss-poljoprivredna-veterinarska-os.skole.hr/wp-content/uploads/sites/1650/2025/07/Veterinarski-tehnicar-4.-razred.pdf"
         }
       ]
     },
@@ -3250,6 +3295,11 @@
       "zupanija": "Karlovačka",
       "stranica": "https://prirodoslovnaskola-ka.hr/popis-udzbenika-2026-2027/",
       "dokumenti": [
+        {
+          "razred": "1",
+          "oznaka": "1. razred — Agroturistički tehniča",
+          "url": "https://prirodoslovnaskola-ka.hr/wp-content/uploads/2026/07/1.r-agroturistički-tehničar.pdf"
+        },
         {
           "razred": "1",
           "oznaka": "1. razred — Cvjećar poljoprivredni gospodarstvenik",
@@ -4983,7 +5033,13 @@
       "mjesto": "Blato",
       "zupanija": "Dubrovačko-neretvanska",
       "stranica": null,
-      "dokumenti": []
+      "dokumenti": [
+        {
+          "razred": null,
+          "oznaka": "Popis udžbenika",
+          "url": "https://ssblato.hr/popis-udzbenika-2/"
+        }
+      ]
     },
     {
       "id": "srednja-skola-jastrebarsko",
@@ -5214,7 +5270,43 @@
       "mjesto": "Ludbreg",
       "zupanija": "Varaždinska",
       "stranica": "https://ssludbreg.hr/udzbenici/",
-      "dokumenti": []
+      "dokumenti": [
+        {
+          "razred": "1",
+          "oznaka": "Operater za strojne obrade",
+          "url": "https://ssludbreg.hr/wp-content/uploads/2026/07/Operater-za-strojne-obrade.pdf"
+        },
+        {
+          "razred": "1",
+          "oznaka": "Pomoćni bravar",
+          "url": "https://ssludbreg.hr/wp-content/uploads/2026/07/Pomoćni-bravar.pdf"
+        },
+        {
+          "razred": "1",
+          "oznaka": "Pomoćni kuhar",
+          "url": "https://ssludbreg.hr/wp-content/uploads/2026/07/Pomoćni-kuhar.pdf"
+        },
+        {
+          "razred": "1",
+          "oznaka": "Prodavač",
+          "url": "https://ssludbreg.hr/wp-content/uploads/2026/07/Prodavač.pdf"
+        },
+        {
+          "razred": "1",
+          "oznaka": "Tehničar u strojarstvu",
+          "url": "https://ssludbreg.hr/wp-content/uploads/2026/07/Tehničar-u-strojarstvu.pdf"
+        },
+        {
+          "razred": "1",
+          "oznaka": "Tehničar za mehatroniku",
+          "url": "https://ssludbreg.hr/wp-content/uploads/2026/07/Tehničar-za-mehatroniku.pdf"
+        },
+        {
+          "razred": "1",
+          "oznaka": "Tehničar za razvoj video igara",
+          "url": "https://ssludbreg.hr/wp-content/uploads/2026/07/Tehničar-za-razvoj-video-igara.pdf"
+        }
+      ]
     },
     {
       "id": "srednja-skola-markantuna-de-dominisa-rab",
@@ -5350,7 +5442,7 @@
         {
           "razred": null,
           "oznaka": "Popis udžbenika",
-          "url": "https://www.ssnm.hr/udzbenici/"
+          "url": "https://www.ssnm.hr/nastava/udzbenici/"
         }
       ]
     },
@@ -6109,8 +6201,8 @@
       "dokumenti": [
         {
           "razred": "1",
-          "oznaka": "Automehatronicar-1 raz",
-          "url": "https://ssknezbranimir.hr/wp-content/uploads/2026/07/Automehatronicar-1.raz_.pdf"
+          "oznaka": "Oblagac-podova-i-zidova-1 raz",
+          "url": "https://ssknezbranimir.hr/wp-content/uploads/2026/07/Oblagac-podova-i-zidova-1.raz_.pdf"
         },
         {
           "razred": "1",
@@ -6121,6 +6213,11 @@
           "razred": "1",
           "oznaka": "Prodavac-1 raz",
           "url": "https://ssknezbranimir.hr/wp-content/uploads/2026/07/Prodavac-1.-raz.pdf"
+        },
+        {
+          "razred": "2",
+          "oznaka": "Operater-za-strojne-obrade-2 raz",
+          "url": "https://ssknezbranimir.hr/wp-content/uploads/2026/07/Operater-za-strojne-obrade-2.raz_.pdf"
         },
         {
           "razred": "2",
