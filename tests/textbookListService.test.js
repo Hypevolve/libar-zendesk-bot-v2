@@ -386,7 +386,9 @@ describe("textbookListService", () => {
       const outcome = buildTextbookOutcome("Ekonomska škola Pula, 3. razred popis udžbenika", session);
       assert.match(outcome.customerMessage, /Ekonomska škola Pula/);
       assert.doesNotMatch(outcome.customerMessage, /Gimnazija Daruvar/);
-      assert.strictEqual(session.textbookSchoolId, undefined, "sesija nije očišćena");
+      // Zapamćena prethodna škola mora biti zaboravljena. Nova smije ostati zapamćena:
+      // buildListAnswer je namjerno pamti nakon poslanog popisa ("a za 3. razred?").
+      assert.notStrictEqual(session.textbookSchoolId, "gimnazija-daruvar", "sesija nije očišćena");
     });
 
     it("nastavak sesije: pouzdano imenovana druga škola bez okidačke riječi i dalje dobiva odgovor, ne null", () => {
