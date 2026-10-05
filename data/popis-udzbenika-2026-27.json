@@ -10,8 +10,8 @@
       "stranica": "https://klasicna.hr/popis-udzbenika/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://klasicna.hr/wp-content/uploads/2025/06/Popis-udzbenika-2026-2027.pdf"
         },
         {
@@ -98,14 +98,14 @@
           "url": "https://ss-druga-bm.skole.hr/wp-content/uploads/sites/2463/2026/08/Udzbenici_prvi_razred_2026-2027.xlsx"
         },
         {
-          "razred": "1",
-          "oznaka": "1. razred",
-          "url": "https://ss-druga-bm.skole.hr/nastava/udzbenici/"
-        },
-        {
           "razred": "2",
           "oznaka": "2. razred",
           "url": "https://ss-druga-bm.skole.hr/wp-content/uploads/sites/2463/2026/08/Udzbenici_drugi_razred-2026-2027.xlsx"
+        },
+        {
+          "razred": null,
+          "oznaka": "Popis udžbenika",
+          "url": "https://ss-druga-bm.skole.hr/nastava/udzbenici/"
         }
       ]
     },
@@ -395,11 +395,6 @@
         },
         {
           "razred": "1",
-          "oznaka": "Konobar konobarica",
-          "url": "https://ss-ekonomskaituristicka-da.skole.hr/wp-content/uploads/sites/879/2026/08/1_KONOBAR_KONOBARICA_2026_2027.pdf"
-        },
-        {
-          "razred": "1",
           "oznaka": "Referent za poslovnu ekonomiju referentica za poslovnu ekonomiju",
           "url": "https://ss-ekonomskaituristicka-da.skole.hr/wp-content/uploads/sites/879/2026/08/1_REFERENT-ZA-POSLOVNU-EKONOMIJU_REFERENTICA-ZA-POSLOVNU-EKONOMIJU_2026_2027.pdf"
         },
@@ -442,6 +437,11 @@
           "razred": "2",
           "oznaka": "Turisticki tehnicar destinacije turisticka tehnicarka destinacije",
           "url": "https://ss-ekonomskaituristicka-da.skole.hr/wp-content/uploads/sites/879/2026/08/2_TURISTICKI-TEHNICAR-DESTINACIJE_TURISTICKA-TEHNICARKA-DESTINACIJE_2026_2027.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "Konobar konobarica",
+          "url": "https://ss-ekonomskaituristicka-da.skole.hr/wp-content/uploads/sites/879/2026/08/1_KONOBAR_KONOBARICA_2026_2027.pdf"
         }
       ]
     },
@@ -453,17 +453,17 @@
       "stranica": "https://ss-ekonomska-upravna-os.skole.hr/nastava/",
       "dokumenti": [
         {
-          "razred": "3",
+          "razred": null,
           "oznaka": "Ekonomist",
           "url": "https://ss-ekonomska-upravna-os.skole.hr/wp-content/uploads/sites/423/2026/07/Popis_odabranih_udzbenika_ekonomist_26_27.docx"
         },
         {
-          "razred": "3",
+          "razred": null,
           "oznaka": "Poslovni tajnik",
           "url": "https://ss-ekonomska-upravna-os.skole.hr/wp-content/uploads/sites/423/2026/07/Popis_odabranih_udzbenika__poslovni_tajnik_26_27.docx"
         },
         {
-          "razred": "3",
+          "razred": null,
           "oznaka": "Upravni referent",
           "url": "https://ss-ekonomska-upravna-os.skole.hr/wp-content/uploads/sites/423/2026/07/Popis_odabranih_udzbenika__upravni_referent_26_27.docx"
         }
@@ -615,13 +615,13 @@
       "dokumenti": [
         {
           "razred": "1",
-          "oznaka": "1. razred",
-          "url": "https://ss-ekonomska-pu.skole.hr/wp-content/uploads/sites/182/2026/07/POPIS-UDZBENIKA-2026.2027-3.xls"
-        },
-        {
-          "razred": "1",
           "oznaka": "Drugih obrazovnih materijala",
           "url": "https://ss-ekonomska-pu.skole.hr/wp-content/uploads/sites/182/2026/07/popis-drugih-obrazovnih-materijala-15.7.2026.xlsx"
+        },
+        {
+          "razred": null,
+          "oznaka": "Popis udžbenika",
+          "url": "https://ss-ekonomska-pu.skole.hr/wp-content/uploads/sites/182/2026/07/POPIS-UDZBENIKA-2026.2027-3.xls"
         }
       ]
     },
@@ -737,13 +737,13 @@
         },
         {
           "razred": "3",
-          "oznaka": "Komercijalisti",
-          "url": "https://ss-ekonomska-si.skole.hr/wp-content/uploads/sites/869/2026/08/Komercijalisti_udzbenici_2026-2027.pdf"
-        },
-        {
-          "razred": "3",
           "oznaka": "Upravni referent",
           "url": "https://ss-ekonomska-si.skole.hr/wp-content/uploads/sites/869/2026/08/Upravni_referent_udzbenici_2026-2027.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "Komercijalisti",
+          "url": "https://ss-ekonomska-si.skole.hr/wp-content/uploads/sites/869/2026/08/Komercijalisti_udzbenici_2026-2027.pdf"
         }
       ]
     },
@@ -976,29 +976,29 @@
           "url": "https://eios.hr/wp-content/uploads/2026/07/Elektroinstalater_2026_27.pdf"
         },
         {
-          "razred": "1",
-          "oznaka": "Elektroničar",
-          "url": "https://eios.hr/wp-content/uploads/2026/07/Elektronicar_2026_27.pdf"
+          "razred": "3",
+          "oznaka": "Autoelektričar",
+          "url": "https://eios.hr/wp-content/uploads/2026/07/Autoelektricar_2026_27.pdf"
         },
         {
-          "razred": "1",
-          "oznaka": "Tehničar za informacijske tehnologije",
-          "url": "https://eios.hr/wp-content/uploads/2026/07/Teh_za_IT_2026_27.pdf"
-        },
-        {
-          "razred": "1",
-          "oznaka": "Tehničar za mehatroniku",
-          "url": "https://eios.hr/wp-content/uploads/2026/07/Teh_za_mehatroniku_2026_27.pdf"
-        },
-        {
-          "razred": "2",
+          "razred": null,
           "oznaka": "Elektromehaničar",
           "url": "https://eios.hr/wp-content/uploads/2026/07/Elektromehanicar_2026_27.pdf"
         },
         {
-          "razred": "3",
-          "oznaka": "Autoelektričar",
-          "url": "https://eios.hr/wp-content/uploads/2026/07/Autoelektricar_2026_27.pdf"
+          "razred": null,
+          "oznaka": "Elektroničar",
+          "url": "https://eios.hr/wp-content/uploads/2026/07/Elektronicar_2026_27.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "Tehničar za informacijske tehnologije",
+          "url": "https://eios.hr/wp-content/uploads/2026/07/Teh_za_IT_2026_27.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "Tehničar za mehatroniku",
+          "url": "https://eios.hr/wp-content/uploads/2026/07/Teh_za_mehatroniku_2026_27.pdf"
         }
       ]
     },
@@ -1062,7 +1062,7 @@
       "stranica": "https://elpros.net/2026/popis-udzbenika-obavijest/",
       "dokumenti": [
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "Odabranih",
           "url": "https://elpros.net/wp-content/uploads/2026/08/Popis-odabranih-udzbenika_Elektrotehnicka-i-prometna-skola-Osijek_2026_7.xlsx"
         }
@@ -1186,8 +1186,8 @@
       "stranica": "https://gimnazijabjelovar.hr/popis-udzbenika/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://gimnazijabjelovar.hr/skidaj/UDŽBENICI%202026-2027.xlsx"
         }
       ]
@@ -1236,11 +1236,6 @@
         {
           "razred": "1",
           "oznaka": "1. razred",
-          "url": "https://gimnazija-dubrovnik.hr/admin//upload/dokument_1689674828.pdf"
-        },
-        {
-          "razred": "1",
-          "oznaka": "1. razred",
           "url": "https://gimnazija-dubrovnik.hr/admin//upload/dokument_1689674442.pdf"
         },
         {
@@ -1257,11 +1252,6 @@
           "razred": "2",
           "oznaka": "2. razred",
           "url": "https://gimnazija-dubrovnik.hr/admin//upload/dokument_1689671664.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "2. razred",
-          "url": "https://gimnazija-dubrovnik.hr/admin//upload/dokument_1689672091.pdf"
         },
         {
           "razred": "3",
@@ -1287,6 +1277,16 @@
           "razred": "4",
           "oznaka": "4. razred",
           "url": "https://gimnazija-dubrovnik.hr/admin//upload/dokument_1689673705.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "Popis udžbenika",
+          "url": "https://gimnazija-dubrovnik.hr/admin//upload/dokument_1689674828.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "Popis udžbenika",
+          "url": "https://gimnazija-dubrovnik.hr/admin//upload/dokument_1689672091.pdf"
         }
       ]
     },
@@ -1332,8 +1332,8 @@
       "stranica": "https://gimnazija-fpetrica-zd.skole.hr/popis-udzbenika-za-sk-god-2026-2027/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://gimnazija-fpetrica-zd.skole.hr/wp-content/uploads/sites/214/2026/07/popis_udzbenika_2026-2027.pdf"
         },
         {
@@ -1549,14 +1549,14 @@
       "stranica": "https://www.gimnazijapula.hr/udzbenici/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
-          "url": "https://www.gimnazijapula.hr/wp-content/uploads/2026/06/Popis-udzbenika.pdf"
-        },
-        {
           "razred": "4",
           "oznaka": "4. razred",
           "url": "https://www.gimnazijapula.hr/udzbenici/"
+        },
+        {
+          "razred": null,
+          "oznaka": "Popis udžbenika",
+          "url": "https://www.gimnazijapula.hr/wp-content/uploads/2026/06/Popis-udzbenika.pdf"
         }
       ]
     },
@@ -1578,11 +1578,6 @@
           "url": "https://gimnazija-sisak.skole.hr/wp-content/uploads/sites/2750/2026/06/Udzbenici_za_2._razred_Gimnazija_Sisak.xlsx"
         },
         {
-          "razred": "2",
-          "oznaka": "2. razred",
-          "url": "https://gimnazija-sisak.skole.hr/popis-udzbenika/"
-        },
-        {
           "razred": "3",
           "oznaka": "3. razred",
           "url": "https://gimnazija-sisak.skole.hr/wp-content/uploads/sites/2750/2026/06/Udzbenici_za_3._razred_Gimnazija_Sisak.xlsx"
@@ -1591,6 +1586,11 @@
           "razred": "4",
           "oznaka": "4. razred",
           "url": "https://gimnazija-sisak.skole.hr/wp-content/uploads/sites/2750/2026/06/Udzbenici_za_4._razred_Gimnazija_Sisak.xlsx"
+        },
+        {
+          "razred": null,
+          "oznaka": "Popis udžbenika",
+          "url": "https://gimnazija-sisak.skole.hr/popis-udzbenika/"
         }
       ]
     },
@@ -1700,8 +1700,8 @@
       "stranica": "https://www.gssjd.hr/wp-content/uploads/2026/07/UDZBENICI_2026__2027.pdf",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://www.gssjd.hr/wp-content/uploads/2026/07/UDZBENICI_2026__2027.pdf"
         }
       ]
@@ -2091,7 +2091,7 @@
           "url": "https://ss-gospodarska-vz.skole.hr/objava-popisa-udzbenika-za-novu-skolsku-godinu-2026-2027/"
         },
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "Važeći xlsx",
           "url": "https://ss-gospodarska-vz.skole.hr/wp-content/uploads/sites/285/2026/07/Vazeci_Popis-udzbenika_2026_2027.xlsx"
         }
@@ -2547,12 +2547,12 @@
       "stranica": "https://ss-industrijsko-obrtnicka-sl.skole.hr/udzbenici-za-sk-god-2026-2027-obavijest/",
       "dokumenti": [
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "IOS",
           "url": "https://ss-industrijsko-obrtnicka-sl.skole.hr/wp-content/uploads/sites/1124/2026/08/udzbenici-2026-27-IOS.pdf"
         },
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "IOS isp",
           "url": "https://ss-industrijsko-obrtnicka-sl.skole.hr/wp-content/uploads/sites/1124/2026/09/udzbenici-2026-27-IOS_isp.pdf"
         }
@@ -2566,7 +2566,7 @@
       "stranica": "https://ss-industrijsko-obrtnicka-sb.skole.hr/popis-knjiga-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "Ios sb",
           "url": "https://ss-industrijsko-obrtnicka-sb.skole.hr/wp-content/uploads/sites/340/2026/07/POPIS_UDZBENIKA_IOS_SB_2026-27.xlsx"
         },
@@ -2585,7 +2585,7 @@
       "stranica": "https://ss-industrijskoobrtnicka-vt.skole.hr/wp-content/uploads/sites/1154/2026/07/Udzbenici-za-skolsku-godinu-2026.2027.-Ispravak.pdf",
       "dokumenti": [
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "Ispravak",
           "url": "https://ss-industrijskoobrtnicka-vt.skole.hr/wp-content/uploads/sites/1154/2026/07/Udzbenici-za-skolsku-godinu-2026.2027.-Ispravak.pdf"
         }
@@ -2630,18 +2630,8 @@
         },
         {
           "razred": "2",
-          "oznaka": "Autolimar",
-          "url": "https://www.ioss.hr/media/popis_udzbenika/autolimar.pdf"
-        },
-        {
-          "razred": "2",
           "oznaka": "Automehatronicar",
           "url": "https://www.ioss.hr/media/popis_udzbenika/2razred_2026_2027/Automehatronicar_2.pdf"
-        },
-        {
-          "razred": "2",
-          "oznaka": "Brodomehanicar",
-          "url": "https://www.ioss.hr/media/popis_udzbenika/brodomehanicar.pdf"
         },
         {
           "razred": "2",
@@ -2660,11 +2650,6 @@
         },
         {
           "razred": "2",
-          "oznaka": "Elektroinstalater",
-          "url": "https://www.ioss.hr/media/popis_udzbenika/elektroinstalater.pdf"
-        },
-        {
-          "razred": "2",
           "oznaka": "Izradivac monter strojarskih konstrukcija",
           "url": "https://www.ioss.hr/media/popis_udzbenika/2razred_2026_2027/IZRADIVAC_-_MONTER_STROJARSKIH_KONSTRUKCIJA_2.pdf"
         },
@@ -2674,14 +2659,29 @@
           "url": "https://www.ioss.hr/media/popis_udzbenika/2razred_2026_2027/SERVISER_KAROSERIJE_MOTORNIH_VOZILA_2.pdf"
         },
         {
-          "razred": "2",
-          "oznaka": "Tehnicki crtac",
-          "url": "https://www.ioss.hr/media/popis_udzbenika/tehnicki_crtac.pdf"
+          "razred": null,
+          "oznaka": "Autolimar",
+          "url": "https://www.ioss.hr/media/popis_udzbenika/autolimar.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "Brodomehanicar",
+          "url": "https://www.ioss.hr/media/popis_udzbenika/brodomehanicar.pdf"
         },
         {
           "razred": null,
           "oznaka": "Dokumentarnog gradiva",
           "url": "https://www.ioss.hr/media/godisnji_plan/popis_dokumentarnog_gradiva.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "Elektroinstalater",
+          "url": "https://www.ioss.hr/media/popis_udzbenika/elektroinstalater.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "Tehnicki crtac",
+          "url": "https://www.ioss.hr/media/popis_udzbenika/tehnicki_crtac.pdf"
         }
       ]
     },
@@ -2693,8 +2693,8 @@
       "stranica": "https://www.ikg.hr/udzbenici/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://www.ikg.hr/wp-content/uploads/2026/07/UDZBENICI-2026-27.docx"
         }
       ]
@@ -2892,7 +2892,7 @@
           "url": "https://ss-medicinska-akuzmanic-zd.skole.hr/wp-content/uploads/sites/1292/2026/06/Udzbenici-1.razred-Dentalni-tehnicari.xlsx"
         },
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "Radne biljeznice za deficitarna zanimanja",
           "url": "https://ss-medicinska-akuzmanic-zd.skole.hr/wp-content/uploads/sites/1292/2026/09/Radne-biljeznice-za-deficitarna-zanimanja_sk.-g.-2026_2027.xlsx"
         }
@@ -3069,28 +3069,8 @@
       "dokumenti": [
         {
           "razred": "1",
-          "oznaka": "Dentalni asistent",
-          "url": "https://ss-medicinska-os.skole.hr/wp-content/uploads/sites/619/2026/07/dentalni-asistent.pdf"
-        },
-        {
-          "razred": "1",
-          "oznaka": "Dentalni tehničar",
-          "url": "https://ss-medicinska-os.skole.hr/wp-content/uploads/sites/619/2026/07/dentalni-tehnicar.pdf"
-        },
-        {
-          "razred": "1",
-          "oznaka": "Farmaceutski tehničar",
-          "url": "https://ss-medicinska-os.skole.hr/wp-content/uploads/sites/619/2026/07/farmaceutski-tehnicar.pdf"
-        },
-        {
-          "razred": "1",
           "oznaka": "Fizioterapeutski tehničar",
           "url": "https://ss-medicinska-os.skole.hr/wp-content/uploads/sites/619/2026/07/fizioterapeutski-tehnicar.pdf"
-        },
-        {
-          "razred": "1",
-          "oznaka": "Medicinska sestra tehničar",
-          "url": "https://ss-medicinska-os.skole.hr/wp-content/uploads/sites/619/2026/07/medicinska-sestra-tehnicar.pdf"
         },
         {
           "razred": "1",
@@ -3098,17 +3078,37 @@
           "url": "https://ss-medicinska-os.skole.hr/wp-content/uploads/sites/619/2026/07/primalja-asistentica.pdf"
         },
         {
-          "razred": "1",
+          "razred": null,
+          "oznaka": "Dentalni asistent",
+          "url": "https://ss-medicinska-os.skole.hr/wp-content/uploads/sites/619/2026/07/dentalni-asistent.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "Dentalni tehničar",
+          "url": "https://ss-medicinska-os.skole.hr/wp-content/uploads/sites/619/2026/07/dentalni-tehnicar.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "Farmaceutski tehničar",
+          "url": "https://ss-medicinska-os.skole.hr/wp-content/uploads/sites/619/2026/07/farmaceutski-tehnicar.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "Medicinska sestra tehničar",
+          "url": "https://ss-medicinska-os.skole.hr/wp-content/uploads/sites/619/2026/07/medicinska-sestra-tehnicar.pdf"
+        },
+        {
+          "razred": null,
           "oznaka": "Tehničar za očnu optiku",
           "url": "https://ss-medicinska-os.skole.hr/wp-content/uploads/sites/619/2026/07/tehnicar-za-ocnu-optiku.pdf"
         },
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "Zdravstveno laboratorijski tehničar",
           "url": "https://ss-medicinska-os.skole.hr/wp-content/uploads/sites/619/2026/07/zdravstveno-laboratorijski-tehnicar.pdf"
         },
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "Zdravstveno sanitarni tehničar",
           "url": "https://ss-medicinska-os.skole.hr/wp-content/uploads/sites/619/2026/07/zdravstveno-sanitarni-tehnicar.pdf"
         }
@@ -3122,8 +3122,8 @@
       "stranica": "https://www.medicinskaskolapula.hr/wp-content/uploads/2026/07/POPIS-UDZBENIKA-ZA-2026.-2027.-SKOLSKU-GODINU.pdf",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://www.medicinskaskolapula.hr/wp-content/uploads/2026/07/POPIS-UDZBENIKA-ZA-2026.-2027.-SKOLSKU-GODINU.pdf"
         }
       ]
@@ -3164,8 +3164,8 @@
       "stranica": "https://ss-medicinska-si.skole.hr/popis-udzbenika-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://ss-medicinska-si.skole.hr/wp-content/uploads/sites/2535/2026/07/popis_udzbenika_za_2026_2027.docx"
         }
       ]
@@ -3200,8 +3200,8 @@
       "stranica": "https://www.ots-du.hr/index.php/news/845-popis-udzbenika-za-skolsku-2026-2028",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://www.ots-du.hr/images/Udzbenici/Ud%C5%BEbenici_2026_2027._NOVO1.pdf"
         }
       ]
@@ -3352,7 +3352,7 @@
       "stranica": "http://www.obrtskolgm.hr/latest-news/311-udzbenici-za-sk-god-2026-2027",
       "dokumenti": [
         {
-          "razred": "2",
+          "razred": null,
           "oznaka": "V3",
           "url": "http://www.obrtskolgm.hr/pdf/2026-2027/popis-udzbenika-2026-2027_v3.pdf"
         }
@@ -3366,7 +3366,7 @@
       "stranica": "https://ss-obrtnicka-koprivnica.skole.hr/wp-content/uploads/sites/1253/2026/09/Odabir-udzbenika_2026_2027.pdf",
       "dokumenti": [
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "Odabir",
           "url": "https://ss-obrtnicka-koprivnica.skole.hr/wp-content/uploads/sites/1253/2026/09/Odabir-udzbenika_2026_2027.pdf"
         }
@@ -3527,8 +3527,8 @@
       "stranica": "https://ss-obrtnicko-industrijska-zu.skole.hr/udzbenici/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://ss-obrtnicko-industrijska-zu.skole.hr/wp-content/uploads/sites/2159/2026/09/POPIS-UDZBENIKA-26.27.docx"
         }
       ]
@@ -3742,8 +3742,8 @@
       "stranica": "https://ppvs-ozanic.hr/popis-udzbenika-za-skolsku-godinu-2026-27/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://ppvs-ozanic.hr/popis-udzbenika-za-skolsku-godinu-2026-27/"
         }
       ]
@@ -3783,8 +3783,8 @@
       "stranica": "https://pomorskabakar.hr/udzbenici/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://pomorskabakar.hr/wp-content/uploads/2026/07/Popis_udzbenika_2026-2027.pdf"
         }
       ]
@@ -3826,8 +3826,8 @@
       "stranica": "https://pomorska-dubrovnik.hr/novost/334/popis-udzbenika-za-skolsku-godinu-20262027",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://pomorska-dubrovnik.hr/upload/dokument_1783679989.pdf"
         }
       ]
@@ -4137,7 +4137,7 @@
       "stranica": "https://ss-prometno-tehnicka-si.skole.hr/wp-content/uploads/sites/318/2026/07/UDZBENICI_PROMETNO-TEHNICKA_SKOLA_SIBENIK_-26-27.pdf",
       "dokumenti": [
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "IZBOR pdf",
           "url": "https://ss-prometno-tehnicka-si.skole.hr/wp-content/uploads/sites/318/2026/07/UDZBENICI_PROMETNO-TEHNICKA_SKOLA_SIBENIK_-26-27.pdf"
         }
@@ -4722,12 +4722,12 @@
       "stranica": "https://strukovna.com/2026/07/08/popis-udzbenika-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "Udžbenici-TROGODIŠNJA zanimanja",
           "url": "https://strukovna.com/wp-content/uploads/2026/07/POPIS_2026.-27.-udzb.TROGODISNJA_zanimanja.doc"
         },
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "Udžbenici-ČETVEROGODIŠNJA zanimanja",
           "url": "https://strukovna.com/wp-content/uploads/2026/07/POPIS_2026.-27.-udzbenici-CETVEROGODISNJA_zanimanja.doc"
         }
@@ -4913,7 +4913,7 @@
           "url": "http://www.srednjastrukovnaskolavinkovci.hr/wp-content/uploads/2026/08/Popis-udzbenika-2026.-2027.pdf"
         },
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "Pogledaj za u Excelu",
           "url": "http://www.srednjastrukovnaskolavinkovci.hr/wp-content/uploads/2026/07/Popis-udzbenika-2026.-2027.xlsx"
         },
@@ -5476,7 +5476,7 @@
       "stranica": "https://ss-stjepan-ivsic.hr/udzbenici/",
       "dokumenti": [
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "?wpdmdl=6436",
           "url": "https://ss-stjepan-ivsic.hr/download/popis-udzbenika-za-2026-godinu/?wpdmdl=6436"
         }
@@ -5490,7 +5490,7 @@
       "stranica": "https://www.ss-stjepana-sulimanca.hr/post/popis-ud%C5%BEbenika-za-%C5%A1kolsku-2026-2027-godinu",
       "dokumenti": [
         {
-          "razred": "3",
+          "razred": null,
           "oznaka": "Stjepana Sulimanca xlsx",
           "url": "https://www.ss-stjepana-sulimanca.hr/_files/ugd/b3a3ac_dce868e4dc5644b79cb64e6a0913ec8d.xlsx?dn=Udzbenici_SSPTC2026-2027%20(1%29.xlsx"
         }
@@ -5699,14 +5699,14 @@
       "stranica": "https://ss-bkasica-pag.skole.hr/popis-udzbenika-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
-          "url": "https://ss-bkasica-pag.skole.hr/popis-udzbenika-za-skolsku-godinu-2026-2027/"
-        },
-        {
-          "razred": "1",
+          "razred": null,
           "oznaka": "GODINU-opca-gimnazija",
           "url": "https://ss-bkasica-pag.skole.hr/wp-content/uploads/sites/765/2026/07/POPIS-UDZBENIKA-ZA-SKOLSKU-GODINU-opca-gimnazija-2026.-2027.docx"
+        },
+        {
+          "razred": null,
+          "oznaka": "Popis udžbenika",
+          "url": "https://ss-bkasica-pag.skole.hr/popis-udzbenika-za-skolsku-godinu-2026-2027/"
         }
       ]
     },
@@ -5718,8 +5718,8 @@
       "stranica": "https://ss-bedekovcina.skole.hr/udzbenici-2026-2027/",
       "dokumenti": [
         {
-          "razred": "3",
-          "oznaka": "3. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://ss-bedekovcina.skole.hr/udzbenici-2026-2027/"
         }
       ]
@@ -5781,14 +5781,14 @@
           "url": "https://ss-buzet.skole.hr/wp-content/uploads/sites/1426/2026/07/TES__-__I._razred.xls"
         },
         {
-          "razred": "1",
-          "oznaka": "Trogodisnji programi am em",
-          "url": "https://ss-buzet.skole.hr/wp-content/uploads/sites/1426/2026/07/trogodisnji_programi_am_em.xls"
-        },
-        {
           "razred": "2",
           "oznaka": "2. razred — TES",
           "url": "https://ss-buzet.skole.hr/wp-content/uploads/sites/1426/2026/07/TES__-__II._razred.xls"
+        },
+        {
+          "razred": null,
+          "oznaka": "Trogodisnji programi am em",
+          "url": "https://ss-buzet.skole.hr/wp-content/uploads/sites/1426/2026/07/trogodisnji_programi_am_em.xls"
         }
       ]
     },
@@ -5898,11 +5898,6 @@
         },
         {
           "razred": "3",
-          "oznaka": "Agrotehničar",
-          "url": "https://ss-donji-miholjac.skole.hr/wp-content/uploads/sites/2512/2026/07/3.-AGROTEHNICAR.pdf"
-        },
-        {
-          "razred": "3",
           "oznaka": "Cnc operater",
           "url": "https://ss-donji-miholjac.skole.hr/wp-content/uploads/sites/2512/2026/07/3.-CNC-OPERATER.pdf"
         },
@@ -5942,9 +5937,9 @@
           "url": "https://ss-donji-miholjac.skole.hr/wp-content/uploads/sites/2512/2026/07/4.-SRT.pdf"
         },
         {
-          "razred": "4",
-          "oznaka": "THK s nadopunom GM",
-          "url": "https://ss-donji-miholjac.skole.hr/wp-content/uploads/sites/2512/2026/08/4.-THK-s-nadopunom-udzbenika-z-GM.pdf"
+          "razred": null,
+          "oznaka": "Agrotehničar",
+          "url": "https://ss-donji-miholjac.skole.hr/wp-content/uploads/sites/2512/2026/07/3.-AGROTEHNICAR.pdf"
         },
         {
           "razred": null,
@@ -5955,6 +5950,11 @@
           "razred": null,
           "oznaka": "Cvjećar",
           "url": "https://ss-donji-miholjac.skole.hr/wp-content/uploads/sites/2512/2026/07/1.-CVJECAR.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "THK s nadopunom GM",
+          "url": "https://ss-donji-miholjac.skole.hr/wp-content/uploads/sites/2512/2026/08/4.-THK-s-nadopunom-udzbenika-z-GM.pdf"
         }
       ]
     },
@@ -6955,8 +6955,8 @@
       "stranica": "https://ss-koprivnica.skole.hr/popis-udzbenika-sektor-zdravstvo-i-razredi-koji-nisu-u-modularnoj-nastavi/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://ss-koprivnica.skole.hr/wp-content/uploads/sites/460/2026/07/UDZBENICI-2026.-2027-1.docx"
         }
       ]
@@ -7291,8 +7291,8 @@
       "stranica": "https://ss-metkovic.skole.hr/popis-udzbenika-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
         {
-          "razred": "3",
-          "oznaka": "3. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://ss-metkovic.skole.hr/wp-content/uploads/sites/900/2026/07/Konacno-udzbenici-2026-2027.pdf"
         }
       ]
@@ -7501,11 +7501,6 @@
         {
           "razred": "1",
           "oznaka": "1. razred",
-          "url": "https://ss-otocac.skole.hr/wp-content/uploads/sites/2680/2026/08/Popis-udzbenika-za-1.-b.docx"
-        },
-        {
-          "razred": "1",
-          "oznaka": "1. razred",
           "url": "https://ss-otocac.skole.hr/wp-content/uploads/sites/2680/2026/07/Popis-udzbenika-za-1.-d.pdf"
         },
         {
@@ -7557,6 +7552,11 @@
           "razred": "2",
           "oznaka": "2. razred — Frizera",
           "url": "https://ss-otocac.skole.hr/wp-content/uploads/sites/2680/2026/07/Popis-udzbenika-za-2.-frizera.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "Popis udžbenika",
+          "url": "https://ss-otocac.skole.hr/wp-content/uploads/sites/2680/2026/08/Popis-udzbenika-za-1.-b.docx"
         }
       ]
     },
@@ -7900,7 +7900,7 @@
       "stranica": "https://ss-tujevica-kt.skole.hr/popis-udzbenika/",
       "dokumenti": [
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "Izbor",
           "url": "https://ss-tujevica-kt.skole.hr/wp-content/uploads/sites/1408/2026/07/Izbor_udzbenika_2026.pdf"
         }
@@ -7949,11 +7949,6 @@
           "url": "https://ss-topusko.skole.hr/wp-content/uploads/sites/2601/2026/07/2.-slasticar.pdf"
         },
         {
-          "razred": "2",
-          "oznaka": "Odluka o odabiru udženika",
-          "url": "https://ss-topusko.skole.hr/wp-content/uploads/sites/2601/2026/07/Odluka-o-odabiru-udzenika-za-skolsku-godinu-2026.-2027.pdf"
-        },
-        {
           "razred": "3",
           "oznaka": "3. razred",
           "url": "https://ss-topusko.skole.hr/wp-content/uploads/sites/2601/2026/07/3.-razred.pdf"
@@ -7972,6 +7967,11 @@
           "razred": "3",
           "oznaka": "3. razred — Kuhar",
           "url": "https://ss-topusko.skole.hr/wp-content/uploads/sites/2601/2026/07/3.-kuhar.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "Odluka o odabiru udženika",
+          "url": "https://ss-topusko.skole.hr/wp-content/uploads/sites/2601/2026/07/Odluka-o-odabiru-udzenika-za-skolsku-godinu-2026.-2027.pdf"
         }
       ]
     },
@@ -8096,8 +8096,8 @@
       "stranica": "https://ss-viktorovac.hr/wp-content/uploads/2026/07/Popis-udzbenika-2026-2027.pdf",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://ss-viktorovac.hr/wp-content/uploads/2026/07/Popis-udzbenika-2026-2027.pdf"
         }
       ]
@@ -8253,11 +8253,6 @@
           "url": "https://ss-zabok.skole.hr/wp-content/uploads/sites/868/2026/07/POPIS-UDZBENIKA-1.-RAZREDA.pdf"
         },
         {
-          "razred": "1",
-          "oznaka": "ODLUKA o obrazovnim materijalima",
-          "url": "https://ss-zabok.skole.hr/wp-content/uploads/sites/868/2026/06/ODLUKA_o_obrazovnim_materijalima_26-27.pdf"
-        },
-        {
           "razred": "2",
           "oznaka": "2. razred",
           "url": "https://ss-zabok.skole.hr/wp-content/uploads/sites/868/2026/07/POPIS-UDZBENIKA-ZA-2.-RAZRED.pdf"
@@ -8271,6 +8266,11 @@
           "razred": "4",
           "oznaka": "4. razred",
           "url": "https://ss-zabok.skole.hr/wp-content/uploads/sites/868/2026/06/POPIS-UDZBENIKA-ZA-4.RAZRED-SK.G.2026-27.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "ODLUKA o obrazovnim materijalima",
+          "url": "https://ss-zabok.skole.hr/wp-content/uploads/sites/868/2026/06/ODLUKA_o_obrazovnim_materijalima_26-27.pdf"
         }
       ]
     },
@@ -8519,8 +8519,8 @@
       "stranica": "https://ss-fraandrijekacicamiosica-ploce.skole.hr/wp-content/uploads/sites/476/2026/07/udzbenici-2026-27-novo.pdf",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://ss-fraandrijekacicamiosica-ploce.skole.hr/wp-content/uploads/sites/476/2026/07/udzbenici-2026-27-novo.pdf"
         }
       ]
@@ -8708,7 +8708,7 @@
       "stranica": "https://ss-strojarska-tehnicka-os.skole.hr/katalog-udzbenika/",
       "dokumenti": [
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "Obvezni za WEB",
           "url": "https://ss-strojarska-tehnicka-os.skole.hr/wp-content/uploads/sites/251/2026/07/Obvezni_udzbenici_za_2026_2027_WEB.xlsx"
         },
@@ -8968,29 +8968,29 @@
       "stranica": "https://ss-strukovna-pu.skole.hr/udzbenici/",
       "dokumenti": [
         {
-          "razred": "1",
+          "razred": "3",
+          "oznaka": "Stolar",
+          "url": "https://sspula.hr/wp-content/uploads/2026/08/STOLAR_Popis_udzbenika_za_skolsku_godinu_2026._2027-1.pdf"
+        },
+        {
+          "razred": null,
           "oznaka": "Frizer",
           "url": "https://sspula.hr/wp-content/uploads/2026/08/FRIZER_Popis_udzbenika_za_skolsku_godinu_2026._2027.pdf"
         },
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "Kozmeticar",
           "url": "https://sspula.hr/wp-content/uploads/2026/08/KOZMETICAR_Popis_udzbenika_za_skolsku_godinu_2026_2027.pdf"
         },
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "Mesar",
           "url": "https://sspula.hr/wp-content/uploads/2026/08/MESAR_Popis_udzbenika_za_skolsku_godinu_2026._2027.pdf"
         },
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "Tehnicar nutricionist",
           "url": "https://sspula.hr/wp-content/uploads/2026/08/TEHNICAR_NUTRICIONIST_Popis_udzbenika_za_skolsku_godinu_2026._2027.pdf"
-        },
-        {
-          "razred": "3",
-          "oznaka": "Stolar",
-          "url": "https://sspula.hr/wp-content/uploads/2026/08/STOLAR_Popis_udzbenika_za_skolsku_godinu_2026._2027-1.pdf"
         }
       ]
     },
@@ -9056,11 +9056,6 @@
           "url": "https://www.ssvv.hr/wp-content/uploads/2026/08/1._razred-sk.god-2026-2027.pdf"
         },
         {
-          "razred": "1",
-          "oznaka": "1. razred",
-          "url": "https://www.ssvv.hr/za-ucenike-menu/popis-udzbenika/"
-        },
-        {
           "razred": "2",
           "oznaka": "2. razred",
           "url": "https://www.ssvv.hr/wp-content/uploads/2026/08/2._razred_sk.god_._2026.-2027.a.pdf"
@@ -9074,6 +9069,11 @@
           "razred": "4",
           "oznaka": "4. razred",
           "url": "https://www.ssvv.hr/wp-content/uploads/2026/08/4._razred-sk.god_.-2026-2027.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "Popis udžbenika",
+          "url": "https://www.ssvv.hr/za-ucenike-menu/popis-udzbenika/"
         }
       ]
     },
@@ -9184,11 +9184,6 @@
           "url": "https://ss-strukovna-djurdjevac.skole.hr/wp-content/uploads/sites/2049/2026/07/Tehnicar-prometne-logistike-TPL1-1.-razred-26-27.pdf"
         },
         {
-          "razred": "1",
-          "oznaka": "SSDJ od",
-          "url": "https://ss-strukovna-djurdjevac.skole.hr/wp-content/uploads/sites/2049/2026/07/Novi-udzbenici-SSDJ-od-2026-2027-skolske-godine.pdf"
-        },
-        {
           "razred": "2",
           "oznaka": "2. razred — Automehatroničar AM2",
           "url": "https://ss-strukovna-djurdjevac.skole.hr/wp-content/uploads/sites/2049/2026/07/Automehatronicar-AM2-2.-razred-26-27.pdf"
@@ -9287,6 +9282,11 @@
           "razred": "4",
           "oznaka": "4. razred — Tehničar za mehatroniku TZM4",
           "url": "https://ss-strukovna-djurdjevac.skole.hr/wp-content/uploads/sites/2049/2026/07/Tehnicar-za-mehatroniku-TZM4-4.-razred-26-27.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "SSDJ od",
+          "url": "https://ss-strukovna-djurdjevac.skole.hr/wp-content/uploads/sites/2049/2026/07/Novi-udzbenici-SSDJ-od-2026-2027-skolske-godine.pdf"
         }
       ]
     },
@@ -9312,7 +9312,7 @@
       "stranica": "https://ss-leonardodavinci-buje.skole.hr/manuali-scolastici-2025-2026/",
       "dokumenti": [
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "Libri di testo",
           "url": "https://ss-leonardodavinci-buje.skole.hr/wp-content/uploads/sites/148/2026/09/Libri-di-testo-2026_2027.pdf"
         }
@@ -9350,14 +9350,14 @@
           "url": "https://tsbj.com.hr/wp-content/uploads/2026/07/Opceobrazovni-predmeti_drugi-razred-1.pdf"
         },
         {
-          "razred": "3",
-          "oznaka": "IQDtSBsTKidxTbCk6dnQ6tdEAdpWIsAqq3kHZvNuBvYn7Ok?e=8YqvDg",
-          "url": "https://carnet-my.sharepoint.com/:b:/g/personal/dario_malogorski_skole_hr/IQDtSBsTKidxTbCk6dnQ6tdEAdpWIsAqq3kHZvNuBvYn7Ok?e=8YqvDg"
-        },
-        {
           "razred": null,
           "oznaka": "Gradevinski tehnicar",
           "url": "https://tsbj.com.hr/wp-content/uploads/2026/07/Gradevinski-tehnicar.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "IQDtSBsTKidxTbCk6dnQ6tdEAdpWIsAqq3kHZvNuBvYn7Ok?e=8YqvDg",
+          "url": "https://carnet-my.sharepoint.com/:b:/g/personal/dario_malogorski_skole_hr/IQDtSBsTKidxTbCk6dnQ6tdEAdpWIsAqq3kHZvNuBvYn7Ok?e=8YqvDg"
         },
         {
           "razred": null,
@@ -9523,8 +9523,8 @@
       "stranica": "https://tehnicka-skola-karlovac.hr/popis-udzbenika/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://tehnicka-skola-karlovac.hr/wp-content/uploads/2026/07/Popis_udzbenika_za_skolsku_godinu_2026-2027.pdf"
         }
       ]
@@ -9537,7 +9537,7 @@
       "stranica": "https://ss-tehnicka-kt.skole.hr/udzbenici/",
       "dokumenti": [
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "UdzbeniciTSK2026",
           "url": "https://ss-tehnicka-kt.skole.hr/wp-content/uploads/sites/2119/2026/09/UdzbeniciTSK2026-2027.pdf"
         }
@@ -9551,8 +9551,8 @@
       "stranica": "https://ss-tehnicka-ntesla-vu.skole.hr/udzbenici/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://ss-tehnicka-ntesla-vu.skole.hr/wp-content/uploads/sites/1922/2026/09/2.-Popis-udzbenika.doc"
         },
         {
@@ -9961,8 +9961,8 @@
       "stranica": "https://ss-tehnicka-si.skole.hr/popis-udzbenika-za-skolsku-godinu-2026-27/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://ss-tehnicka-si.skole.hr/wp-content/uploads/sites/760/2026/07/Popis_udzbenika_2026_27.pdf"
         }
       ]
@@ -9975,8 +9975,8 @@
       "stranica": "https://ss-tehnicka-zupanja.skole.hr/popis-udzbenika-za-skolsku-godinu-2026-2027/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://ss-tehnicka-zupanja.skole.hr/wp-content/uploads/sites/1653/2026/08/POPIS-UDZBENIKA.pdf"
         }
       ]
@@ -10003,8 +10003,8 @@
       "stranica": "https://ss-trgovacko-ugostiteljska-ka.skole.hr/popis-udzbenika-za-sk-god-26-27/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://ss-trgovacko-ugostiteljska-ka.skole.hr/wp-content/uploads/sites/1338/2026/07/POPIS-UDZBENIKA-2026._2027.xls"
         }
       ]
@@ -10114,13 +10114,13 @@
       "stranica": "https://ss-turisticko-ugostiteljska-si.skole.hr/popis-udzbenika-u-skolskoj-godini-2026-2027/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://ss-turisticko-ugostiteljska-si.skole.hr/wp-content/uploads/sites/1012/2026/07/Popis-udzbenika-2026_2027.pdf"
         },
         {
-          "razred": "2",
-          "oznaka": "2. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://ss-turisticko-ugostiteljska-si.skole.hr/wp-content/uploads/sites/1012/2026/07/Popis-udzbenika-2026_2027.xlsx"
         }
       ]
@@ -10133,8 +10133,8 @@
       "stranica": "https://ugostiteljskaskolaopatija.hr/za-ucenike/udzbenici/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://ugostiteljskaskolaopatija.hr/za-ucenike/udzbenici/"
         }
       ]
@@ -10219,11 +10219,6 @@
       "stranica": "https://ss-zrakoplovna-rperesina-vg.skole.hr/udzbenici/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "ZT",
-          "url": "https://ss-zrakoplovna-rperesina-vg.skole.hr/wp-content/uploads/sites/139/2026/07/2.ZT_.pdf"
-        },
-        {
           "razred": "2",
           "oznaka": "TZP",
           "url": "https://ss-zrakoplovna-rperesina-vg.skole.hr/wp-content/uploads/sites/139/2026/07/2.TZP_.pdf"
@@ -10245,11 +10240,6 @@
         },
         {
           "razred": "4",
-          "oznaka": "IRE",
-          "url": "https://ss-zrakoplovna-rperesina-vg.skole.hr/wp-content/uploads/sites/139/2026/06/4.IRE-26-27.pdf"
-        },
-        {
-          "razred": "4",
           "oznaka": "ZIM",
           "url": "https://ss-zrakoplovna-rperesina-vg.skole.hr/wp-content/uploads/sites/139/2026/06/4.ZIM-26-27.pdf"
         },
@@ -10257,6 +10247,11 @@
           "razred": "4",
           "oznaka": "ZP",
           "url": "https://ss-zrakoplovna-rperesina-vg.skole.hr/wp-content/uploads/sites/139/2026/06/4.ZP-26-27.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "IRE",
+          "url": "https://ss-zrakoplovna-rperesina-vg.skole.hr/wp-content/uploads/sites/139/2026/06/4.IRE-26-27.pdf"
         },
         {
           "razred": null,
@@ -10272,6 +10267,11 @@
           "razred": null,
           "oznaka": "ZT",
           "url": "https://ss-zrakoplovna-rperesina-vg.skole.hr/wp-content/uploads/sites/139/2026/07/1.ZT_.pdf"
+        },
+        {
+          "razred": null,
+          "oznaka": "ZT",
+          "url": "https://ss-zrakoplovna-rperesina-vg.skole.hr/wp-content/uploads/sites/139/2026/07/2.ZT_.pdf"
         }
       ]
     },
@@ -10283,7 +10283,7 @@
       "stranica": "https://www.umjetnicka-skola-osijek.hr/dokumenti/Popisudzbenika2627.pdf",
       "dokumenti": [
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "Popisudzbenika2627",
           "url": "https://www.umjetnicka-skola-osijek.hr/dokumenti/Popisudzbenika2627.pdf"
         }
@@ -10336,7 +10336,7 @@
       "stranica": "https://ss-primijenjenihumjetnostiidizajna-pu.skole.hr/wp-content/uploads/sites/142/2026/06/Popis-udzbenika-I.-IV.-raz.-2026.-2027.pdf",
       "dokumenti": [
         {
-          "razred": "1",
+          "razred": null,
           "oznaka": "IV raz",
           "url": "https://ss-primijenjenihumjetnostiidizajna-pu.skole.hr/wp-content/uploads/sites/142/2026/06/Popis-udzbenika-I.-IV.-raz.-2026.-2027.pdf"
         }
@@ -10358,8 +10358,8 @@
       "stranica": "https://ss-primijenjenaumjetnost-ri.skole.hr/udzbenici/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://ss-primijenjenaumjetnost-ri.skole.hr/udzbenici/"
         }
       ]
@@ -10374,12 +10374,12 @@
         {
           "razred": "1",
           "oznaka": "1. razred",
-          "url": "https://ss-tmd-ri.skole.hr/wp-content/uploads/sites/2365/2026/07/POPIS_UDZBENIKA_ZA_SKOLSKU_GODINU_2026-2027.xls"
+          "url": "https://ss-tmd-ri.skole.hr/wp-content/uploads/sites/2365/2026/07/Popis-udzbenika-26-27.xlsx"
         },
         {
-          "razred": "1",
-          "oznaka": "1. razred",
-          "url": "https://ss-tmd-ri.skole.hr/wp-content/uploads/sites/2365/2026/07/Popis-udzbenika-26-27.xlsx"
+          "razred": null,
+          "oznaka": "Popis udžbenika",
+          "url": "https://ss-tmd-ri.skole.hr/wp-content/uploads/sites/2365/2026/07/POPIS_UDZBENIKA_ZA_SKOLSKU_GODINU_2026-2027.xls"
         },
         {
           "razred": null,
@@ -10468,8 +10468,8 @@
       "stranica": "https://ss-zeljeznickatehnicka-moravice.skole.hr/popis-udzbenika/",
       "dokumenti": [
         {
-          "razred": "1",
-          "oznaka": "1. razred",
+          "razred": null,
+          "oznaka": "Popis udžbenika",
           "url": "https://ss-zeljeznickatehnicka-moravice.skole.hr/wp-content/uploads/sites/825/2026/07/Popis-udzbenika-2026.-2027.pdf"
         },
         {
