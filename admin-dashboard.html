@@ -407,6 +407,18 @@ body {
 .ch-q-legend { display: flex; gap: 12px; margin-top: 7px; font-size: 11.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
 .ch-q-legend span { display: inline-flex; align-items: center; gap: 3px; }
 
+/* Ishod upita kupaca (riješio bot / pomogao / loše / samo agent) */
+.oc-track { height: 12px; margin-top: 12px; }
+.oc-legend { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; }
+.oc-item { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--text-3); }
+.oc-item strong { font-size: 18px; color: var(--foreground); font-variant-numeric: tabular-nums; }
+.oc-item .oc-sw { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+.oc-sw.g { background: var(--green); }
+.oc-sw.a { background: var(--amber); }
+.oc-sw.r { background: var(--red); }
+.oc-sw.n { background: var(--muted-foreground); opacity: 0.4; }
+@media (max-width: 768px) { .oc-legend { grid-template-columns: repeat(2, 1fr); } }
+
 /* ─── Ikonski gumb u topbaru (theme toggle) ──────────────────────────── */
 .tb-btn.tb-icon { padding: 7px; }
 .tb-btn.tb-icon svg { display: block; }
@@ -752,7 +764,7 @@ tbody tr:hover td { background: var(--bg); }
     <div class="kpi-grid" id="sec-metrics" role="region" aria-label="Ključne metrike">
       <div class="kpi k-brand">
         <div class="kpi-icon"><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-        <div class="kpi-label" role="heading" aria-level="3">Ukupno razgovora</div>
+        <div class="kpi-label" role="heading" aria-level="3">Upiti kupaca</div>
         <div class="kpi-val" id="m-total">—</div>
         <div class="kpi-sub" id="m-total-sub">—</div>
       </div>
@@ -764,7 +776,7 @@ tbody tr:hover td { background: var(--bg); }
       </div>
       <div class="kpi k-red">
         <div class="kpi-icon"><svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg></div>
-        <div class="kpi-label" role="heading" aria-level="3">Čovjek preuzeo</div>
+        <div class="kpi-label" role="heading" aria-level="3">Riješio samo agent</div>
         <div class="kpi-val" id="m-human">—</div>
         <div class="kpi-sub" id="m-human-pct">—</div>
       </div>
@@ -774,6 +786,14 @@ tbody tr:hover td { background: var(--bg); }
         <div class="kpi-val" id="m-gaps">—</div>
         <div class="kpi-sub" id="m-gaps-pct">—</div>
       </div>
+    </div>
+
+    <!-- Ishod upita kupaca — zbroj četiri dijela = Upiti kupaca -->
+    <div class="card" id="sec-outcome" role="region" aria-label="Ishod upita kupaca" style="margin-bottom: 20px;">
+      <div class="card-title" role="heading" aria-level="3">Ishod upita kupaca</div>
+      <div class="card-sub" id="oc-sub">—</div>
+      <div class="ch-q-track oc-track" id="oc-track" role="img" aria-label="Ishod upita kupaca"></div>
+      <div class="oc-legend" id="oc-legend"></div>
     </div>
 
     <!-- Kanali (Web chat / Email / Facebook) -->
@@ -1002,15 +1022,15 @@ tbody tr:hover td { background: var(--bg); }
 
       <!-- Sažetak -->
       <div id="an-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin:14px 0;">
-        <div class="an-stat"><div class="an-val" id="an-total">—</div><div class="an-lbl">Analizirano</div></div>
-        <div class="an-stat"><div class="an-val" id="an-bot">—</div><div class="an-lbl">Bot riješio</div></div>
-        <div class="an-stat"><div class="an-val" id="an-human">—</div><div class="an-lbl">Čovjek riješio</div></div>
+        <div class="an-stat"><div class="an-val" id="an-total">—</div><div class="an-lbl">Analizirano ticketa</div></div>
+        <div class="an-stat"><div class="an-val" id="an-bot">—</div><div class="an-lbl">Bot riješio sam</div></div>
+        <div class="an-stat"><div class="an-val" id="an-human">—</div><div class="an-lbl">Riješio samo agent</div></div>
         <div class="an-stat"><div class="an-val" id="an-gaps" style="color:var(--red)">—</div><div class="an-lbl">KB rupe</div></div>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;" id="an-cols">
         <div>
-          <div class="card-sub" style="margin-bottom:8px;font-weight:600;">Najčešće teme</div>
+          <div class="card-sub" style="margin-bottom:8px;font-weight:600;">Najčešće teme upita</div>
           <ul id="an-top" class="an-list"><li class="an-empty">—</li></ul>
         </div>
         <div>
@@ -1070,6 +1090,12 @@ function esc(s) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+// Točan broj s hrvatskim separatorom tisućica (2.308) — za analitiku ticketa,
+// gdje skraćeni "2.3K" skriva stvarnu brojku.
+function fmtN(n) {
+  return (Number(n) || 0).toLocaleString("hr-HR");
 }
 
 function fmt(n) {
@@ -1225,39 +1251,63 @@ function setRangeNote(text, isWarn) {
 // Izvor: ticket_analysis u Supabaseu (stvarni Zendesk tiketi), osvježava se
 // dnevnim auto-syncom. Sve brojke dolaze iz ISTOG skupa redova, pa se kartice
 // međusobno zbrajaju — za razliku od ranijeg miksa živih brojača i analize.
+// Postoci se računaju nad upitima kupaca — spam, reklame i poruke bez pitanja
+// su isključeni na serveru (analyticsStore.tallySummary).
 function renderSummary(s, lastSync) {
   if (!s) return;
-  const total = s.total || 0;
-  const bot = s.botResolved || 0;
-  const human = s.humanHandled || 0;
+  if (s.startDate) botStartDate = s.startDate;
+  const queries = s.customerQueries || 0;
+  const oc = s.outcomes || {};
+  const ex = s.excluded || {};
+  const excluded = (ex.sum || 0) + (ex.bez_pitanja || 0);
   const gaps = s.kbGaps || 0;
-  const pct = n => total ? `${((n / total) * 100).toFixed(0)}%` : '—';
+  const pct = n => queries ? `${((n / queries) * 100).toFixed(0)}%` : '—';
 
-  $('m-total').textContent = fmt(total);
-  $('m-total-sub').textContent = describeRange();
-  $('m-bot').textContent = fmt(bot);
-  $('m-bot-pct').textContent = total ? `${pct(bot)} bez agenta` : '—';
-  $('m-human').textContent = fmt(human);
-  $('m-human-pct').textContent = total ? `${pct(human)} uz agenta` : '—';
-  $('m-gaps').textContent = fmt(gaps);
-  $('m-gaps-pct').textContent = total ? `${pct(gaps)} razgovora` : '—';
+  $('m-total').textContent = fmtN(queries);
+  $('m-total-sub').textContent = `${describeRange()} · ${fmtN(excluded)} isključeno (spam, bez pitanja)`;
+  $('m-bot').textContent = fmtN(oc.botSolved || 0);
+  $('m-bot-pct').textContent = queries ? `${pct(oc.botSolved || 0)} upita bez agenta` : '—';
+  $('m-human').textContent = fmtN(oc.humanOnly || 0);
+  $('m-human-pct').textContent = queries ? `${pct(oc.humanOnly || 0)} upita, bot nije pisao` : '—';
+  $('m-gaps').textContent = fmtN(gaps);
+  $('m-gaps-pct').textContent = queries ? `${pct(gaps)} upita` : '—';
 
-  renderChannels(s.byChannel, s.byChannelQuality);
-  renderSyncNote(total, lastSync);
+  renderOutcome(oc, queries, s.total || 0, ex);
+  renderChannels(s.byChannel, s.byChannelOutcome);
+  renderSyncNote(s.total || 0, lastSync);
+}
+
+function renderOutcome(oc, queries, total, ex) {
+  const parts = [
+    ['g', 'Bot riješio sam', oc.botSolved || 0],
+    ['a', 'Bot pomogao, agent dovršio', oc.botAssisted || 0],
+    ['r', 'Bot odgovorio loše', oc.botBad || 0],
+    ['n', 'Riješio samo agent', oc.humanOnly || 0]
+  ];
+  const pct = n => queries ? (n / queries) * 100 : 0;
+  $('oc-sub').textContent = queries
+    ? `${fmtN(queries)} upita kupaca od ${fmtN(total)} ticketa · isključeno: ${fmtN(ex.sum || 0)} spam/reklame, ${fmtN(ex.bez_pitanja || 0)} bez pitanja`
+    : 'Nema upita u odabranom razdoblju';
+  const track = $('oc-track');
+  track.innerHTML = parts.map(([c, , n]) => `<div class="ch-q-seg ${c}" style="width:${pct(n)}%"></div>`).join('');
+  track.setAttribute('aria-label', parts.map(([, l, n]) => `${l} ${n}`).join(', '));
+  $('oc-legend').innerHTML = parts.map(([c, l, n]) =>
+    `<div class="oc-item"><span><span class="oc-sw ${c}"></span>${esc(l)}</span><strong>${fmtN(n)}</strong><span>${queries ? pct(n).toFixed(0) + '%' : '—'}</span></div>`
+  ).join('');
 }
 
 // Prikaz zadnjeg syncа uz razdoblje — ako dnevni auto-sync zapne, odmah se vidi.
 function renderSyncNote(total, lastSync) {
   if (!lastSync) {
-    setRangeNote(`${fmt(total)} razgovora · sync još nije pokrenut`, total === 0);
+    setRangeNote(`${fmtN(total)} razgovora · sync još nije pokrenut`, total === 0);
     return;
   }
   const d = new Date(lastSync);
-  if (Number.isNaN(d.getTime())) { setRangeNote(`${fmt(total)} razgovora`); return; }
+  if (Number.isNaN(d.getTime())) { setRangeNote(`${fmtN(total)} razgovora`); return; }
   const ageH = (Date.now() - d.getTime()) / 3600000;
   const stale = ageH > 48; // auto-sync je dnevni; >48h znači da je zapeo
   setRangeNote(
-    `${fmt(total)} razgovora · zadnji sync ${d.toLocaleString('hr-HR')}` + (stale ? ' — sync kasni!' : ''),
+    `${fmtN(total)} razgovora · zadnji sync ${d.toLocaleString('hr-HR')}` + (stale ? ' — sync kasni!' : ''),
     stale
   );
 }
@@ -1266,7 +1316,17 @@ function describeRange() {
   if (range.from || range.to) {
     return `${range.from || 'početak'} – ${range.to || 'danas'}`;
   }
-  return range.days === null ? 'Cijelo razdoblje' : `Zadnjih ${range.days} dana`;
+  return range.days === null
+    ? `Od ${fmtStartDate()} (početak rada bota)`
+    : `Zadnjih ${range.days} dana`;
+}
+
+// Početak rada bota (ANALYSIS_START_DATE) — stiže sa servera u summary.startDate.
+let botStartDate = null;
+function fmtStartDate() {
+  if (!botStartDate) return 'početka';
+  const [y, m, d] = botStartDate.split('-');
+  return `${Number(d)}.${Number(m)}.${y}.`;
 }
 
 // ─── Metrics (živi brojači — NE ovise o razdoblju) ───────────────
@@ -1325,40 +1385,40 @@ function renderMetrics(m) {
 // ─── Kanali (Web / Email / Facebook) ──────────────────────────────
 // Iz analize ticketa, filtrirano po razdoblju. Traka pokazuje udio razgovora
 // koje je bot riješio bez agenta; ispod je raspodjela kvalitete istog skupa.
-function renderChannels(byChannel, byChannelQuality) {
+// "Bot riješio sam" po kanalu je isti ishod kao na glavnoj kartici (botSolved),
+// a ne zbroj dobrih i djelomičnih ocjena — te su uključivale i tickete koje je
+// dovršio agent.
+function renderChannels(byChannel, byChannelOutcome) {
   const chans = [['web', 'ch-web'], ['email', 'ch-email'], ['facebook', 'ch-facebook']];
   for (const [key, pfx] of chans) {
     const req = (byChannel && byChannel[key]) || 0;
-    const q = (byChannelQuality && byChannelQuality[key]) || {};
-    const good = q.good || 0, partial = q.partial || 0, bad = q.bad || 0, na = q.na || 0;
-    // "Bot riješio" po kanalu nije u byChannel, pa koristimo kvalitetu kao
-    // najbližu mjeru učinka: dobri + djelomični odgovori.
-    const ok = good + partial;
-    $(`${pfx}-req`).textContent = fmt(req);
-    const okPct = req ? ((ok / req) * 100).toFixed(0) : 0;
-    $(`${pfx}-ans`).textContent = `${fmt(ok)} (${okPct}%)`;
-    $(`${pfx}-bar`).style.transform = `scaleX(${req ? ok / req : 0})`;
-    $(`${pfx}-esc`).textContent = `Loših odgovora: ${fmt(bad)}`;
-    renderOneChannelQuality(pfx, { good, partial, bad, na });
+    const o = (byChannelOutcome && byChannelOutcome[key]) || {};
+    const solved = o.botSolved || 0, assisted = o.botAssisted || 0, bad = o.botBad || 0, human = o.humanOnly || 0;
+    $(`${pfx}-req`).textContent = fmtN(req);
+    const solvedPct = req ? ((solved / req) * 100).toFixed(0) : 0;
+    $(`${pfx}-ans`).textContent = `${fmtN(solved)} (${solvedPct}%)`;
+    $(`${pfx}-bar`).style.transform = `scaleX(${req ? solved / req : 0})`;
+    $(`${pfx}-esc`).textContent = `Bot pomogao: ${fmtN(assisted)} · Loših odgovora: ${fmtN(bad)}`;
+    renderOneChannelOutcome(pfx, { solved, assisted, bad, human });
   }
 }
 
-function renderOneChannelQuality(pfx, q) {
+function renderOneChannelOutcome(pfx, o) {
   const box = $(`${pfx}-quality`);
   if (!box) return;
-  const tot = q.good + q.partial + q.bad + q.na;
+  const tot = o.solved + o.assisted + o.bad + o.human;
   if (!tot) { box.hidden = true; box.innerHTML = ''; return; }
   box.hidden = false;
   const pct = n => (n / tot) * 100;
   box.innerHTML =
-    '<div class="ch-q-label">Kvaliteta odgovora</div>' +
-    '<div class="ch-q-track" role="img" aria-label="Dobrih ' + q.good + ', djelomičnih ' + q.partial + ', loših ' + q.bad + ', bez ocjene ' + q.na + '">' +
-      '<div class="ch-q-seg g" style="width:' + pct(q.good) + '%"></div>' +
-      '<div class="ch-q-seg a" style="width:' + pct(q.partial) + '%"></div>' +
-      '<div class="ch-q-seg r" style="width:' + pct(q.bad) + '%"></div>' +
-      '<div class="ch-q-seg n" style="width:' + pct(q.na) + '%"></div>' +
+    '<div class="ch-q-label">Ishod upita</div>' +
+    '<div class="ch-q-track" role="img" aria-label="Bot riješio ' + o.solved + ', bot pomogao ' + o.assisted + ', loše ' + o.bad + ', samo agent ' + o.human + '">' +
+      '<div class="ch-q-seg g" style="width:' + pct(o.solved) + '%"></div>' +
+      '<div class="ch-q-seg a" style="width:' + pct(o.assisted) + '%"></div>' +
+      '<div class="ch-q-seg r" style="width:' + pct(o.bad) + '%"></div>' +
+      '<div class="ch-q-seg n" style="width:' + pct(o.human) + '%"></div>' +
     '</div>' +
-    '<div class="ch-q-legend"><span>✓ ' + q.good + '</span><span>~ ' + q.partial + '</span><span>✕ ' + q.bad + '</span></div>';
+    '<div class="ch-q-legend"><span>✓ ' + o.solved + '</span><span>~ ' + o.assisted + '</span><span>✕ ' + o.bad + '</span><span>👤 ' + o.human + '</span></div>';
 }
 
 // Cijene po 1M tokena (USD), OpenRouter, lipanj 2026. Produkcijski model na
@@ -1505,19 +1565,28 @@ async function triggerSync(force) {
 // ─── Analitika ticketa (pravi Zendesk podaci) ──────────────
 function renderAnalytics(summary, top, gaps) {
   if (summary) {
-    $('an-total').textContent = fmt(summary.total || 0);
-    const hb = summary.byHandledBy || {};
-    $('an-bot').textContent = fmt(hb.bot || 0);
-    $('an-human').textContent = fmt(hb.human || 0);
-    $('an-gaps').textContent = fmt(summary.kbGaps || 0);
+    $('an-total').textContent = fmtN(summary.total || 0);
+    const oc = summary.outcomes || {};
+    $('an-bot').textContent = fmtN(oc.botSolved || 0);
+    $('an-human').textContent = fmtN(oc.humanOnly || 0);
+    $('an-gaps').textContent = fmtN(summary.kbGaps || 0);
   }
+  // Teme i rupe su skupine upita (server ih računa nad svim redovima razdoblja).
   const topEl = $('an-top');
   if (top && top.length) {
-    topEl.innerHTML = top.map(t => `<li><span>${esc(t.topic)}</span><span class="an-count">${t.count}</span></li>`).join('');
+    topEl.innerHTML = top.map(t => {
+      const share = t.share !== undefined ? ` · ${(t.share * 100).toFixed(0)}% upita` : '';
+      const rate = t.botSolvedRate !== undefined ? `<span class="an-sugg">Bot riješi sam: ${(t.botSolvedRate * 100).toFixed(0)}%${share}</span>` : '';
+      return `<li><span>${esc(t.topic)}${rate}</span><span class="an-count">${fmtN(t.count)}</span></li>`;
+    }).join('');
   } else { topEl.innerHTML = '<li class="an-empty">Nema podataka — pokreni „Analiziraj tickete"</li>'; }
   const gapsEl = $('an-gaps-list');
   if (gaps && gaps.length) {
-    gapsEl.innerHTML = gaps.map(g => `<li><span>${esc(g.topic)}${g.suggested ? `<span class="an-sugg">Prijedlog: ${esc(g.suggested)}</span>` : ''}</span><span class="an-count">${g.count}</span></li>`).join('');
+    gapsEl.innerHTML = gaps.map(g => {
+      const fix = g.fix ? `<span class="an-sugg">Rješenje: ${esc(g.fix)}</span>` : '';
+      const sugg = g.suggested ? `<span class="an-sugg">Najčešći prijedlog: ${esc(g.suggested)}</span>` : '';
+      return `<li><span>${esc(g.topic)}${fix}${sugg}</span><span class="an-count">${fmtN(g.count)}</span></li>`;
+    }).join('');
   } else { gapsEl.innerHTML = '<li class="an-empty">Nema detektiranih rupa</li>'; }
 }
 

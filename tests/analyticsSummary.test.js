@@ -8,7 +8,10 @@
 const test = require("node:test");
 const assert = require("node:assert");
 
-const { tallySummary, normalizeRange } = require("../services/analyticsStore");
+const env = require("../config/env");
+const {
+  tallySummary, normalizeRange, effectiveRange, classifyRequest, outcomeOf, tallyKbGaps
+} = require("../services/analyticsStore");
 
 function row(over = {}) {
   return {
@@ -143,4 +146,131 @@ test("tallySummary: handled_by izvan poznatih vrijednosti se broji kao čovjek",
   assert.strictEqual(s.botResolved, 0);
   assert.strictEqual(s.humanHandled, 1);
   assert.strictEqual(s.botResolved + s.humanHandled, s.total);
+});
+
+// ─── Početak rada bota ─────────────────────────────────────────
+
+function withStartDate(value, fn) {
+  const prev = env.ANALYSIS_START_DATE;
+  env.ANALYSIS_START_DATE = value;
+  try { return fn(); } finally { env.ANALYSIS_START_DATE = prev; }
+}
+
+test("effectiveRange ne pušta razdoblje prije početka rada bota", () => withStartDate("2026-06-01", () => {
+  assert.strictEqual(effectiveRange({}).from, "2026-06-01T00:00:00.000Z");
+  assert.strictEqual(effectiveRange({ from: "2020-01-01" }).from, "2026-06-01T00:00:00.000Z");
+}));
+
+test("effectiveRange zadržava kasniji 'from' i 'to'", () => withStartDate("2026-06-01", () => {
+  const r = effectiveRange({ from: "2026-08-01", to: "2026-08-31" });
+  assert.strictEqual(r.from, "2026-08-01T00:00:00.000Z");
+  assert.strictEqual(r.to, "2026-08-31T23:59:59.999Z");
+}));
+
+test("effectiveRange bez ANALYSIS_START_DATE ne dodaje granicu", () => withStartDate("", () => {
+  assert.strictEqual(effectiveRange({}).from, null);
+}));
+
+// ─── Klasifikacija upita ───────────────────────────────────────
+
+test("classifyRequest: spam, reklame i sistemske poruke nisu upiti kupaca", () => {
+  assert.strictEqual(classifyRequest({ topic: "TikTok Shop promocija" }), "sum");
+  assert.strictEqual(classifyRequest({ topic: "specifikacija pouzeća" }), "sum");
+  assert.strictEqual(classifyRequest({ topic: "spam" }), "sum");
+  assert.strictEqual(classifyRequest({ topic: "nepoznato", summary: "Primljen je promotivni email koji nije relevantan za Antikvarijat Libar." }), "sum");
+});
+
+test("classifyRequest: reklamacija nije reklama", () => {
+  assert.strictEqual(classifyRequest({ topic: "reklamacija udžbenika" }), "narudzba");
+});
+
+test("classifyRequest: poruke bez pitanja", () => {
+  assert.strictEqual(classifyRequest({ topic: "potvrda dostave" }), "bez_pitanja");
+  assert.strictEqual(classifyRequest({ topic: "zahvala" }), "bez_pitanja");
+  assert.strictEqual(classifyRequest({ topic: "ostalo" }), "bez_pitanja");
+});
+
+test("classifyRequest: skupine stvarnih upita", () => {
+  assert.strictEqual(classifyRequest({ topic: "otkazan nalog otkupa" }), "otkazani_otkup");
+  assert.strictEqual(classifyRequest({ topic: "otkazivanje otkupa" }), "otkazani_otkup");
+  assert.strictEqual(classifyRequest({ topic: "status narudžbe" }), "narudzba");
+  assert.strictEqual(classifyRequest({ topic: "povrat novca" }), "narudzba");
+  assert.strictEqual(classifyRequest({ topic: "raspoloživost naslova" }), "dostupnost");
+  assert.strictEqual(classifyRequest({ topic: "Dostupnost udžbenika" }), "dostupnost");
+  assert.strictEqual(classifyRequest({ topic: "otkup udžbenika" }), "otkup");
+  assert.strictEqual(classifyRequest({ topic: "prodaja knjiga" }), "otkup");
+  assert.strictEqual(classifyRequest({ topic: "dostava" }), "kupnja");
+  assert.strictEqual(classifyRequest({ topic: "kupnja udžbenika" }), "kupnja");
+  assert.strictEqual(classifyRequest({ topic: "pretraga knjiga" }), "ostalo");
+});
+
+test("classifyRequest: kupac koji spominje spam ostaje upit kupca", () => {
+  assert.strictEqual(
+    classifyRequest({ topic: "otkup knjiga", summary: "Korisnik pita zašto je njegov mail završio u spamu i otkupljujete li knjige." }),
+    "otkup"
+  );
+});
+
+// ─── Ishod upita ───────────────────────────────────────────────
+
+test("outcomeOf: loš odgovor bota nije 'bot riješio'", () => {
+  // Stari dashboard je svaki bot-only ticket brojao kao riješen, i s lošim odgovorom.
+  assert.strictEqual(outcomeOf({ handled_by: "bot", bot_quality: "bad" }), "botBad");
+  assert.strictEqual(outcomeOf({ handled_by: "bot", bot_quality: "na" }), "botBad");
+  assert.strictEqual(outcomeOf({ handled_by: "bot", bot_quality: "good" }), "botSolved");
+});
+
+test("outcomeOf: djelomičan ili koristan doprinos bota uz agenta = pomogao", () => {
+  assert.strictEqual(outcomeOf({ handled_by: "bot", bot_quality: "partial" }), "botAssisted");
+  assert.strictEqual(outcomeOf({ handled_by: "mixed", bot_quality: "good" }), "botAssisted");
+  assert.strictEqual(outcomeOf({ handled_by: "mixed", bot_quality: "partial" }), "botAssisted");
+  assert.strictEqual(outcomeOf({ handled_by: "mixed", bot_quality: "bad" }), "botBad");
+});
+
+test("outcomeOf: bot nije sudjelovao → samo agent", () => {
+  assert.strictEqual(outcomeOf({ handled_by: "human", bot_quality: "na" }), "humanOnly");
+  assert.strictEqual(outcomeOf({ handled_by: "mixed", bot_quality: "na" }), "humanOnly");
+  assert.strictEqual(outcomeOf({}), "humanOnly");
+});
+
+// ─── tallySummary: upiti kupaca ────────────────────────────────
+
+test("tallySummary: spam i poruke bez pitanja ne ulaze u nazivnik", () => {
+  const s = tallySummary([
+    row({ topic: "dostava", handled_by: "bot", bot_quality: "good" }),
+    row({ topic: "status narudžbe", handled_by: "human", bot_quality: "na" }),
+    row({ topic: "TikTok Shop promocija", handled_by: "bot", bot_quality: "good" }),
+    row({ topic: "potvrda dostave", handled_by: "bot", bot_quality: "good" })
+  ]);
+  assert.strictEqual(s.total, 4);
+  assert.deepStrictEqual(s.excluded, { sum: 1, bez_pitanja: 1 });
+  assert.strictEqual(s.customerQueries, 2);
+  assert.strictEqual(s.botResolved, 1, "reklama i potvrda dostave nisu zasluga bota");
+  assert.strictEqual(s.customerQueries + s.excluded.sum + s.excluded.bez_pitanja, s.total);
+});
+
+test("tallySummary: ishodi se zbrajaju u upite kupaca, i po kanalu", () => {
+  const s = tallySummary([
+    row({ channel: "email", handled_by: "bot", bot_quality: "good" }),
+    row({ channel: "email", handled_by: "mixed", bot_quality: "partial" }),
+    row({ channel: "web", handled_by: "bot", bot_quality: "bad" }),
+    row({ channel: "facebook", handled_by: "human", bot_quality: "na" })
+  ]);
+  const o = s.outcomes;
+  assert.strictEqual(o.botSolved + o.botAssisted + o.botBad + o.humanOnly, s.customerQueries);
+  for (const ch of ["web", "email", "facebook", "ostalo"]) {
+    const c = s.byChannelOutcome[ch];
+    assert.strictEqual(c.botSolved + c.botAssisted + c.botBad + c.humanOnly, s.byChannel[ch]);
+  }
+  assert.strictEqual(s.byChannelOutcome.email.botSolved, 1);
+  assert.strictEqual(s.byChannelOutcome.email.botAssisted, 1);
+});
+
+test("tallyKbGaps: rupe na spamu se ne broje", () => {
+  const gaps = tallyKbGaps([
+    { topic: "otkup knjiga", is_kb_gap: true, ticket_id: 1 },
+    { topic: "spam", is_kb_gap: true, ticket_id: 2 },
+    { topic: "otkup knjiga", is_kb_gap: false, ticket_id: 3 }
+  ]);
+  assert.deepStrictEqual(gaps.map((g) => [g.category, g.count]), [["otkup", 1]]);
 });

@@ -220,7 +220,7 @@ function buildServer() {
     "top_questions",
     {
       title: "Najčešća pitanja",
-      description: "Najčešća korisnička pitanja/teme. Kad je analitika ticketa (Supabase) konfigurirana, vraća PRAVE teme iz analiziranih Zendesk ticketa; inače fallback na zadnjih do 200 traceova (in-memory).",
+      description: "Najčešća korisnička pitanja/teme. Kad je analitika ticketa (Supabase) konfigurirana, vraća skupine stvarnih upita kupaca od početka rada bota (udio, koliko bot riješi sam, najčešće teme u skupini); inače fallback na zadnjih do 200 traceova (in-memory).",
       inputSchema: { limit: z.number().int().min(1).max(50).optional() }
     },
     async ({ limit }) => asText(await resolveTopQuestions(limit || 10))
@@ -259,7 +259,7 @@ function buildServer() {
     "kb_gaps",
     {
       title: "Rupe u knowledge baseu",
-      description: "Detektirane rupe u bazi znanja iz analiziranih ticketa: teme grupirane po učestalosti, broj, primjeri ticketa i predloženi KB naslovi.",
+      description: "Rupe u bazi znanja od početka rada bota, samo među stvarnim upitima kupaca (bez spama): skupine po učestalosti, što skupinu rješava (fix), najčešći predloženi KB naslov i primjeri ticketa.",
       inputSchema: { limit: z.number().int().min(1).max(50).optional() }
     },
     async ({ limit }) => {
@@ -272,7 +272,7 @@ function buildServer() {
     "conversation_insights",
     {
       title: "Uvidi iz konverzacija",
-      description: "Pregled analiziranih Zendesk konverzacija: sažetak (ukupno, KB rupe, raspodjela po handled_by i kvaliteti), top teme i zadnji razgovori.",
+      description: "Pregled analiziranih Zendesk konverzacija od početka rada bota: sažetak (upiti kupaca bez spama, ishodi botSolved/botAssisted/botBad/humanOnly, KB rupe, po kanalu i skupini), top skupine upita i zadnji razgovori.",
       inputSchema: { limit: z.number().int().min(1).max(50).optional() }
     },
     async ({ limit }) => {

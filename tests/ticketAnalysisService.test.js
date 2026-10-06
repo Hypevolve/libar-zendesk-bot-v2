@@ -324,3 +324,25 @@ test("run() vraća ok:false kad Supabase nije konfiguriran", async () => {
   assert.strictEqual(res.ok, false);
   assert.strictEqual(res.reason, "supabase_not_configured");
 });
+
+test("run() ne analizira tickete otvorene prije početka rada bota", async () => {
+  const env = require("../config/env");
+  const prev = env.ANALYSIS_START_DATE;
+  env.ANALYSIS_START_DATE = "2026-06-01";
+  try {
+    const store = mockStore();
+    const deps = {
+      store,
+      listTicketsSince: async () => ({ tickets: [
+        { id: 12801, channel: "facebook", created_at: "2020-01-07T18:19:10Z", subject: "stari", requester_id: 1, status: "closed" },
+        { id: 92000, channel: "email", created_at: "2026-08-20T10:00:00Z", subject: "novi", requester_id: 2, status: "open" }
+      ], nextCursorISO: "2026-10-01T00:00:00Z" }),
+      getPublicTicketComments: async () => [{ body: "Pitanje" }],
+      llm: async () => JSON.stringify({ topic: "dostava", handled_by: "bot", bot_quality: "good", is_kb_gap: false, summary: "s" })
+    };
+    const res = await svc.run({}, deps);
+    assert.strictEqual(res.analyzed, 1);
+    assert.strictEqual(res.skipped, 1);
+    assert.deepStrictEqual(store.calls.upserts.map((r) => r.ticket_id), [92000]);
+  } finally { env.ANALYSIS_START_DATE = prev; }
+});

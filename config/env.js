@@ -51,6 +51,9 @@ module.exports = {
   ANALYSIS_AUTO_SYNC_ENABLED: envBool("ANALYSIS_AUTO_SYNC_ENABLED", false),
   ANALYSIS_AUTO_SYNC_INTERVAL_MS: envInt("ANALYSIS_AUTO_SYNC_INTERVAL_MS", 86400000),
   ANALYSIS_AUTO_SYNC_MAX_TICKETS: envInt("ANALYSIS_AUTO_SYNC_MAX_TICKETS", 40),
+  // Početak produkcijskog rada bota (YYYY-MM-DD). Ticketi otvoreni prije toga
+  // se ne analiziraju i ne ulaze u statistiku — bot tada nije postojao.
+  ANALYSIS_START_DATE: envStr("ANALYSIS_START_DATE", "2026-06-01"),
 
   // --- Embeddings ---
   EMBEDDING_PROVIDER: envStr("EMBEDDING_PROVIDER", "openrouter"),

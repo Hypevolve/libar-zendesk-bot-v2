@@ -162,6 +162,14 @@ function defaultCursorISO(sinceDays) {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 }
 
+// true ako je ticket otvoren prije ANALYSIS_START_DATE (početak rada bota).
+function isBeforeBotStart(createdAt) {
+  const start = String(env.ANALYSIS_START_DATE || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !createdAt) return false;
+  const created = new Date(createdAt);
+  return !Number.isNaN(created.getTime()) && created < new Date(`${start}T00:00:00.000Z`);
+}
+
 function parseSinceISO(value) {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) throw new Error(`Neispravan sinceISO: ${value}`);
@@ -203,6 +211,9 @@ async function run({ sinceDays, sinceISO, maxTickets, concurrency } = {}, deps =
   async function processOne(ticket) {
     // Incremental Export vraća i obrisane tickete - njima komentari ne postoje (404).
     if (ticket.status === "deleted") { skipped += 1; return; }
+    // Export ide po updated_at, pa vraća i stare tickete koji su se nedavno
+    // pomaknuli. Ticketi otvoreni prije rada bota ne smiju ući u statistiku.
+    if (isBeforeBotStart(ticket.created_at)) { skipped += 1; return; }
     try {
       const comments = await getComments(ticket.id);
       const row = await analyzeOne(ticket, comments, deps);

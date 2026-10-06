@@ -116,22 +116,126 @@ function normalizeRange({ from = null, to = null } = {}) {
   return { from: fromIso, to: toIso };
 }
 
+// Početak produkcijskog rada bota kao ISO timestamp (ili null ako nije zadan).
+function startDateIso() {
+  const raw = String(env.ANALYSIS_START_DATE || "").trim();
+  return DATE_ONLY_RE.test(raw) ? `${raw}T00:00:00.000Z` : null;
+}
+
+/**
+ * Razdoblje za statistiku: traženi raspon, ali nikad prije početka rada bota.
+ * Ticketi iz vremena prije bota (npr. stara povijest Zendeska povučena
+ * backfillom) inače bi se brojali kao da ih je bot vidio i rušili postotke.
+ */
+function effectiveRange(range = {}) {
+  const r = normalizeRange(range);
+  const start = startDateIso();
+  if (start && (!r.from || new Date(r.from) < new Date(start))) r.from = start;
+  return r;
+}
+
+// ─── Klasifikacija upita (čiste funkcije) ─────────────────────
+
+// Skupine stvarnih upita kupaca. `fix` kaže tko/što zatvara rupu u toj skupini.
+const CATEGORIES = {
+  otkup: { label: "Otkup knjiga i udžbenika", fix: "Dopuniti bazu znanja pravilima otkupa" },
+  dostupnost: { label: "Dostupnost naslova", fix: "Treba spojiti bota sa zalihom webshopa" },
+  narudzba: { label: "Narudžbe, povrati i reklamacije", fix: "Traži radnju u sustavu — ostaje agentu" },
+  kupnja: { label: "Kupnja, dostava i plaćanje", fix: "Dopuniti bazu znanja" },
+  otkazani_otkup: { label: "Otkazani nalozi otkupa", fix: "Dodati razlog u automatski mail o otkazu" },
+  ostalo: { label: "Ostalo", fix: null }
+};
+
+// Ticketi koji nisu upit kupca — ne ulaze u nazivnik postotaka.
+const EXCLUDED = {
+  sum: "Spam, reklame i sistemske poruke",
+  bez_pitanja: "Poruke bez pitanja"
+};
+
+// Redoslijed je bitan: prvo pravilo koje pogodi temu određuje skupinu.
+const TOPIC_RULES = [
+  ["sum", /spam|promo|tiktok|edukacij|poslovna ponuda|poslovna surad|seo |seo$|pozivnica za testiranje|automatski odgovor|nepovezan|newsletter|specifikacija pouzeća|testiranje|ponuda usluga|marketing|oglašavanj|reklam(?!acij)|webinar|kapital|investic|ugovor/],
+  ["bez_pitanja", /^potvrda (dostave|primitka|preuzimanja)|^potvrda primitka|zahval|zadovoljstvo|^pozdrav|nema teme|^nepoznat|^ostalo$|^općenito$|prosljeđivanje upita|razgovor s agentom/],
+  ["otkazani_otkup", /otkaz\w* \w*\s?otkup|otkup\w*.*otkaz|otkazan\w* (nalog|otkup)|storn\w* otkup/],
+  ["narudzba", /status|otkaz|storn|izmjen|spajanj|dodavanj|nadopun|korekcij|povrat|zamjen|reklamacij|pogrešn|nedostaj|oštećen|isplat|uplat|neisplat|račun|preuzimanje (paketa|pošiljke|narudžbe)|problem s|greška|kašnjenj|nije stigl|refund/],
+  ["dostupnost", /raspoloživ|dostupnost|^udžbenici|ponuda udžbenika|ponuda za udžbenike|rezervacij|upit o dostupnosti|stanje udžbenika|traženje|potražnja|cijena udžbenika|udžbenici za/],
+  ["otkup", /otkup|prodaja (knjiga|udžbenika)|prodaja knjiga|ponuda knjiga|ponuda za knjige|prikup|preuzimanje (knjiga|udžbenika)|skeniranje|barkod|bar kod|donacij/],
+  ["kupnja", /kupnj|kupovin|narudžb|naruč|dostav|plaćanj|način|cijen|kontakt|radno vrijeme|lokacij|popust|popis udžbenika|radne bilježnice|webshop|poslovnic/]
+];
+// Sažetak analize otkriva šum i kad je tema dobila "normalno" ime.
+const SUMMARY_NOISE_RE = /promotivn|nije relevant|neželjen|spam|reklamn/;
+const SUMMARY_CUSTOMER_RE = /kupac|korisnica pita|korisnik pita/;
+
+/** Skupina jednog analiziranog ticketa: ključ iz CATEGORIES ili EXCLUDED. */
+function classifyRequest(row = {}) {
+  const topic = String(row.topic || "").trim().toLowerCase();
+  const summary = String(row.summary || "").toLowerCase();
+  if (SUMMARY_NOISE_RE.test(summary) && !SUMMARY_CUSTOMER_RE.test(summary)) return "sum";
+  for (const [key, re] of TOPIC_RULES) if (re.test(topic)) return key;
+  return "ostalo";
+}
+
+function isCustomerQuery(category) {
+  return !Object.prototype.hasOwnProperty.call(EXCLUDED, category);
+}
+
+/**
+ * Ishod upita iz perspektive kupca:
+ *   botSolved   — pisao je samo bot i odgovor je dobar (stvarna ušteda rada)
+ *   botAssisted — bot je dao koristan dio odgovora, agent je dovršio
+ *   botBad      — bot je sudjelovao, ali odgovor nije bio koristan
+ *   humanOnly   — riješio je samo agent (bot nije pisao kupcu)
+ * bot_quality 'na' znači da bot nije sudjelovao, pa mixed+na ide agentu.
+ */
+function outcomeOf(row = {}) {
+  const handled = String(row.handled_by || "").trim().toLowerCase();
+  const quality = String(row.bot_quality || "").trim().toLowerCase();
+  if (handled === "bot") {
+    if (quality === "good") return "botSolved";
+    if (quality === "partial") return "botAssisted";
+    return "botBad";
+  }
+  if (handled === "mixed") {
+    if (quality === "good" || quality === "partial") return "botAssisted";
+    if (quality === "bad") return "botBad";
+  }
+  return "humanOnly";
+}
+
 // ─── Agregacija (čista funkcija — bez mreže) ───────────────────
 
 const QUALITIES = ["good", "partial", "bad", "na"];
+const CHANNELS = ["web", "email", "facebook", "ostalo"];
 
 function emptyQuality() {
   return { good: 0, partial: 0, bad: 0, na: 0 };
 }
 
+function emptyOutcomes() {
+  return { botSolved: 0, botAssisted: 0, botBad: 0, humanOnly: 0 };
+}
+
 function emptySummary(range = { from: null, to: null }) {
+  const byChannelOutcome = {}, byChannelQuality = {}, byChannel = {};
+  for (const ch of CHANNELS) {
+    byChannel[ch] = 0;
+    byChannelOutcome[ch] = emptyOutcomes();
+    byChannelQuality[ch] = emptyQuality();
+  }
+  const byCategory = {};
+  for (const key of Object.keys(CATEGORIES)) byCategory[key] = { total: 0, botSolved: 0, kbGaps: 0 };
   return {
-    total: 0, botResolved: 0, humanHandled: 0, kbGaps: 0,
+    total: 0,
+    excluded: { sum: 0, bez_pitanja: 0 },
+    customerQueries: 0,
+    outcomes: emptyOutcomes(),
+    botResolved: 0, humanHandled: 0, kbGaps: 0,
     byHandledBy: { bot: 0, human: 0, mixed: 0 },
     byQuality: emptyQuality(),
-    byChannel: { web: 0, email: 0, facebook: 0, ostalo: 0 },
-    byChannelQuality: { web: emptyQuality(), email: emptyQuality(), facebook: emptyQuality(), ostalo: emptyQuality() },
-    range
+    byCategory,
+    byChannel, byChannelOutcome, byChannelQuality,
+    range,
+    startDate: env.ANALYSIS_START_DATE || null
   };
 }
 
@@ -147,27 +251,28 @@ function bucketForChannel(raw) {
 /**
  * Zbraja redove ticket_analysis u brojke za dashboard.
  *
- * Sve kartice se računaju iz ISTOG skupa redova, pa vrijede invarijante koje
- * su na starom panelu bile prekršene:
- *   botResolved + humanHandled === total
- *   suma byChannel === total
- *   suma byChannelQuality[k] === byChannel[k]
+ * `total` su svi analizirani ticketi; postoci se računaju samo nad
+ * `customerQueries` (bez spama, reklama i poruka bez pitanja). Invarijante:
+ *   customerQueries + excluded.sum + excluded.bez_pitanja === total
+ *   zbroj outcomes === customerQueries === zbroj byChannel
+ *   botResolved + humanHandled === customerQueries
  *
- * "Bot riješio" je isključivo handled_by === "bot" — 'mixed' znači da je agent
- * ipak morao intervenirati, pa se ne broji kao ušteda rada. Nepoznate/prazne
- * vrijednosti idu konzervativno na stranu čovjeka.
+ * "Bot riješio" je samo outcome botSolved — pisao je isključivo bot i odgovor
+ * je dobar. Loš odgovor bota bez agenta nije ušteda rada.
  */
 function tallySummary(rows = [], range = { from: null, to: null }) {
   const s = emptySummary(range);
   for (const r of rows || []) {
     s.total++;
+    const category = classifyRequest(r);
+    if (!isCustomerQuery(category)) { s.excluded[category]++; continue; }
+    s.customerQueries++;
+
+    const outcome = outcomeOf(r);
+    s.outcomes[outcome]++;
 
     const handled = String(r?.handled_by || "").trim().toLowerCase();
-    if (handled === "bot") { s.byHandledBy.bot++; s.botResolved++; }
-    else {
-      if (handled === "human" || handled === "mixed") s.byHandledBy[handled]++;
-      s.humanHandled++;
-    }
+    if (handled in s.byHandledBy) s.byHandledBy[handled]++;
 
     const quality = String(r?.bot_quality || "").trim().toLowerCase();
     const q = QUALITIES.includes(quality) ? quality : "na";
@@ -175,16 +280,94 @@ function tallySummary(rows = [], range = { from: null, to: null }) {
 
     const bucket = bucketForChannel(r?.channel);
     s.byChannel[bucket]++;
+    s.byChannelOutcome[bucket][outcome]++;
     s.byChannelQuality[bucket][q]++;
 
-    if (r?.is_kb_gap === true) s.kbGaps++;
+    const cat = s.byCategory[category];
+    cat.total++;
+    if (outcome === "botSolved") cat.botSolved++;
+    if (r?.is_kb_gap === true) { s.kbGaps++; cat.kbGaps++; }
   }
+  s.botResolved = s.outcomes.botSolved;
+  s.humanHandled = s.customerQueries - s.botResolved;
   return s;
 }
 
-// ─── Dohvat + agregacija ───────────────────────────────────────
+// Najčešća vrijednost u nizu stringova (prazne preskače).
+function mostCommon(values) {
+  const tally = new Map();
+  for (const v of values) {
+    const t = String(v || "").trim();
+    if (t) tally.set(t, (tally.get(t) || 0) + 1);
+  }
+  let best = null, bestCount = 0;
+  for (const [v, c] of tally) if (c > bestCount) { best = v; bestCount = c; }
+  return best;
+}
 
-const PAGE_SIZE = 1000;
+function clampLimit(limit, fallback, max) {
+  return Math.min(Math.max(Number(limit) || fallback, 1), max);
+}
+
+/** Najčešće skupine upita kupaca, s udjelom i koliko ih bot riješi sam. */
+function tallyTopQuestions(rows = [], limit = 10) {
+  const groups = new Map();
+  let customer = 0;
+  for (const r of rows || []) {
+    const category = classifyRequest(r);
+    if (!isCustomerQuery(category)) continue;
+    customer++;
+    const g = groups.get(category) || { category, topic: CATEGORIES[category].label, count: 0, botSolved: 0, topics: [] };
+    g.count++;
+    if (outcomeOf(r) === "botSolved") g.botSolved++;
+    g.topics.push(r.topic);
+    groups.set(category, g);
+  }
+  return [...groups.values()]
+    .map((g) => {
+      const tally = new Map();
+      for (const t of g.topics) { const k = String(t || "").trim(); if (k) tally.set(k, (tally.get(k) || 0) + 1); }
+      const topTopics = [...tally.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([topic, count]) => ({ topic, count }));
+      return {
+        category: g.category,
+        topic: g.topic,
+        count: g.count,
+        share: customer ? g.count / customer : 0,
+        botSolved: g.botSolved,
+        botSolvedRate: g.count ? g.botSolved / g.count : 0,
+        topTopics
+      };
+    })
+    .sort((a, b) => b.count - a.count)
+    .slice(0, clampLimit(limit, 10, 50));
+}
+
+/**
+ * Rupe u bazi znanja po skupini — samo stvarni upiti kupaca (spam i poruke bez
+ * pitanja nisu rupe). Svaka skupina nosi `fix`: što je zatvara.
+ * Redovi moraju biti sortirani od najnovijeg (primjeri su najsvježiji).
+ */
+function tallyKbGaps(rows = [], limit = 10) {
+  const groups = new Map();
+  for (const r of rows || []) {
+    if (r?.is_kb_gap !== true) continue;
+    const category = classifyRequest(r);
+    if (!isCustomerQuery(category)) continue;
+    const g = groups.get(category) || { category, topic: CATEGORIES[category].label, fix: CATEGORIES[category].fix, count: 0, suggestions: [], examples: [] };
+    g.count++;
+    g.suggestions.push(r.suggested_kb_topic);
+    if (g.examples.length < 3) g.examples.push({ ticket_id: r.ticket_id, summary: r.summary || null });
+    groups.set(category, g);
+  }
+  return [...groups.values()]
+    .map(({ suggestions, ...g }) => ({ ...g, suggested: mostCommon(suggestions) }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, clampLimit(limit, 10, 50));
+}
+
+// ─── Dohvat ────────────────────────────────────────────────────
+
+const PAGE_SIZE = 1000; // = Supabase max-rows; veći limit server ionako reže na 1000
 const MAX_PAGES = 50; // 50k redova — zaštita od runawaya, daleko iznad realnog volumena
 
 function rangeFilter({ from, to }) {
@@ -195,19 +378,19 @@ function rangeFilter({ from, to }) {
 }
 
 /**
- * Dohvaća redove za razdoblje u stranicama. Jedan prolaz kroz podatke umjesto
- * ~20 zasebnih count upita — brže i bez rizika da pojedini upiti vide različita
- * stanja baze (što je znalo dati kartice koje se ne zbrajaju).
+ * Dohvaća SVE redove za razdoblje u stranicama. Agregacije se uvijek rade nad
+ * cijelim skupom — jedan limitirani upit vraćao je samo prvih 1000 (teme) ili
+ * zadnjih 500 (rupe) redova i davao krivu sliku.
  */
-async function fetchRowsInRange(range) {
+async function fetchRowsInRange(range, select, extraFilter = "") {
   const client = getClient();
-  const filter = rangeFilter(range);
+  const filter = rangeFilter(range) + extraFilter;
   const rows = [];
   for (let page = 0; page < MAX_PAGES; page++) {
     const offset = page * PAGE_SIZE;
     const res = await client.get(
-      `/rest/v1/ticket_analysis?select=created_at,channel,handled_by,bot_quality,is_kb_gap${filter}` +
-      `&order=created_at.desc&offset=${offset}&limit=${PAGE_SIZE}`
+      `/rest/v1/ticket_analysis?select=${select}${filter}` +
+      `&order=created_at.desc,ticket_id.desc&offset=${offset}&limit=${PAGE_SIZE}`
     );
     const batch = res.data || [];
     rows.push(...batch);
@@ -216,17 +399,19 @@ async function fetchRowsInRange(range) {
   return rows;
 }
 
+const SUMMARY_COLUMNS = "created_at,channel,handled_by,bot_quality,is_kb_gap,topic,summary";
+
 async function getSummary({ from = null, to = null } = {}) {
-  const range = normalizeRange({ from, to });
+  const range = effectiveRange({ from, to });
   if (!isConfigured()) return emptySummary(range);
-  const rows = await fetchRowsInRange(range);
+  const rows = await fetchRowsInRange(range, SUMMARY_COLUMNS);
   return tallySummary(rows, range);
 }
 
 async function getConversations({ limit = 20, from = null, to = null } = {}) {
   if (!isConfigured()) return [];
   const n = Math.min(Math.max(Number(limit) || 20, 1), 200);
-  const filter = rangeFilter(normalizeRange({ from, to }));
+  const filter = rangeFilter(effectiveRange({ from, to }));
   const res = await getClient().get(
     `/rest/v1/ticket_analysis?select=*${filter}&order=created_at.desc&limit=${n}`
   );
@@ -235,41 +420,18 @@ async function getConversations({ limit = 20, from = null, to = null } = {}) {
 
 async function getTopQuestions({ limit = 10, from = null, to = null } = {}) {
   if (!isConfigured()) return [];
-  const filter = rangeFilter(normalizeRange({ from, to }));
-  const res = await getClient().get(
-    `/rest/v1/ticket_analysis?select=topic&topic=not.is.null${filter}&limit=2000`
-  );
-  const tally = new Map();
-  for (const r of res.data || []) {
-    const t = (r.topic || "").trim();
-    if (!t) continue;
-    tally.set(t, (tally.get(t) || 0) + 1);
-  }
-  return [...tally.entries()]
-    .map(([topic, count]) => ({ topic, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, Math.min(Math.max(Number(limit) || 10, 1), 50));
+  const rows = await fetchRowsInRange(effectiveRange({ from, to }), "topic,summary,handled_by,bot_quality");
+  return tallyTopQuestions(rows, limit);
 }
 
 async function getKbGaps({ limit = 10, from = null, to = null } = {}) {
   if (!isConfigured()) return [];
-  const filter = rangeFilter(normalizeRange({ from, to }));
-  const res = await getClient().get(
-    `/rest/v1/ticket_analysis?is_kb_gap=eq.true&select=topic,suggested_kb_topic,ticket_id,summary${filter}` +
-    "&order=created_at.desc&limit=500"
+  const rows = await fetchRowsInRange(
+    effectiveRange({ from, to }),
+    "topic,suggested_kb_topic,ticket_id,summary,is_kb_gap",
+    "&is_kb_gap=eq.true"
   );
-  const groups = new Map();
-  for (const r of res.data || []) {
-    const topic = (r.topic || "ostalo").trim();
-    const g = groups.get(topic) || { topic, count: 0, suggested: null, examples: [] };
-    g.count += 1;
-    if (!g.suggested && r.suggested_kb_topic) g.suggested = r.suggested_kb_topic;
-    if (g.examples.length < 3) g.examples.push({ ticket_id: r.ticket_id, summary: r.summary || null });
-    groups.set(topic, g);
-  }
-  return [...groups.values()]
-    .sort((a, b) => b.count - a.count)
-    .slice(0, Math.min(Math.max(Number(limit) || 10, 1), 50));
+  return tallyKbGaps(rows, limit);
 }
 
 module.exports = {
@@ -281,8 +443,16 @@ module.exports = {
   getConversations,
   getTopQuestions,
   getKbGaps,
+  CATEGORIES,
+  EXCLUDED,
   // Čiste funkcije — izložene radi testiranja bez mreže.
   normalizeRange,
+  effectiveRange,
+  startDateIso,
+  classifyRequest,
+  outcomeOf,
   tallySummary,
+  tallyTopQuestions,
+  tallyKbGaps,
   _setTestClient
 };

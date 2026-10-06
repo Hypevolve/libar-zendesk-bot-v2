@@ -77,10 +77,29 @@ pregazi. Pokriveno u [tests/incrementalCursor.test.js](../tests/incrementalCurso
 
 | Endpoint (requireAdmin) | MCP tool | Vrati |
 |---|---|---|
-| `GET /admin/analytics/summary` | `conversation_insights` | total, KB rupe, raspodjela po handled_by/kvaliteti |
-| `GET /admin/analytics/top-questions` | `top_questions` | najčešće teme |
-| `GET /admin/analytics/kb-gaps` | `kb_gaps` | rupe u KB s primjerima i prijedlozima |
+| `GET /admin/analytics/summary` | `conversation_insights` | upiti kupaca, ishodi, KB rupe, po kanalu i skupini |
+| `GET /admin/analytics/top-questions` | `top_questions` | najčešće skupine upita |
+| `GET /admin/analytics/kb-gaps` | `kb_gaps` | rupe u KB po skupini, s rješenjem i primjerima |
 | `GET /admin/analytics/conversations` | `conversation_insights` | zadnji analizirani razgovori |
+
+## Kako se računaju brojke
+
+Sve je u `services/analyticsStore.js` (jedan izvor za dashboard i MCP):
+
+- **Razdoblje** nikad ne ide prije `ANALYSIS_START_DATE` (početak rada bota,
+  default `2026-06-01`). Backfill je jednom povukao tickete iz 2019.–2020., kad
+  bot nije postojao; stari Zendesk makroi brojali su se kao "bot". Analiza
+  (`ticketAnalysisService.run`) takve tickete više ni ne sprema.
+- **Upiti kupaca** = svi analizirani ticketi minus spam/reklame/sistemske poruke
+  (`sum`) i poruke bez pitanja (`bez_pitanja`). Postoci se računaju samo nad njima.
+  Klasifikacija je pravilima nad `topic`/`summary` iz LLM analize (`classifyRequest`).
+- **Ishod** (`outcomeOf`): `botSolved` = pisao samo bot i odgovor je dobar;
+  `botAssisted` = bot dao koristan dio, agent dovršio; `botBad` = bot sudjelovao,
+  odgovor nije koristan; `humanOnly` = bot nije pisao kupcu. "Bot riješio sam" je
+  samo `botSolved` — loš odgovor bez agenta nije ušteda rada.
+- **Teme i rupe** se grupiraju u skupine (`CATEGORIES`: otkup, dostupnost,
+  narudžbe, kupnja, otkazani otkup, ostalo) i računaju nad **svim** redovima
+  razdoblja (stranice po 1000 = Supabase max-rows). Rupe na spamu se ne broje.
 
 ## Metrike po kanalima (web / email / facebook)
 
