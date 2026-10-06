@@ -445,6 +445,7 @@ module.exports = {
   getKbGaps,
   CATEGORIES,
   EXCLUDED,
+  bucketForChannel,
   // Čiste funkcije — izložene radi testiranja bez mreže.
   normalizeRange,
   effectiveRange,

@@ -33,7 +33,12 @@ const counters = {
   webhooksSkippedHumanHandled: 0,
   agentTakeoversSkipped: 0,
   latencies: [],
-  byChannel: emptyByChannel()
+  byChannel: emptyByChannel(),
+  // Ishod svake poruke kupca na webhooku (email/Facebook), po stvarnom kanalu
+  // ticketa: { email: { answered: n, no_answer: n, … }, facebook: {…} }.
+  // Odgovara na pitanje "zašto bot nije odgovorio" — bez toga se tiha predaja
+  // agentu (interna bilješka) ne vidi nigdje.
+  webhookOutcomes: {}
 };
 
 // ─── Load persisted metrics on startup ──────────────────────────
@@ -64,6 +69,7 @@ const counters = {
         };
       }
     }
+    counters.webhookOutcomes = sanitizeWebhookOutcomes(persisted.webhookOutcomes);
     log.info("metrics_hydrated", { totalRequests: counters.totalRequests, totalWebhooks: counters.totalWebhooks });
   }
 })();
@@ -84,7 +90,8 @@ function serializeCounters() {
     webhooksSkippedHumanHandled: counters.webhooksSkippedHumanHandled,
     agentTakeoversSkipped: counters.agentTakeoversSkipped,
     latencies: counters.latencies,
-    byChannel: counters.byChannel
+    byChannel: counters.byChannel,
+    webhookOutcomes: counters.webhookOutcomes
   };
 }
 
@@ -111,6 +118,34 @@ function recordChannelOutcome(channel, decision) {
   counters.byChannel[ch].requests++;
   if (decision === "safe_answer") counters.byChannel[ch].answered++;
   else if (decision === "escalate_no_answer") counters.byChannel[ch].escalated++;
+}
+
+// Dopušteni razlozi — nepoznati se ne broje (zaštita od typo ključeva).
+const WEBHOOK_OUTCOMES = [
+  "answered", "agent_takeover", "ticket_with_agent", "spam_blocked", "injection_blocked",
+  "intent_escalation", "attachment", "no_answer", "validation_failed", "error"
+];
+const WEBHOOK_CHANNELS = ["email", "facebook", "web", "ostalo"];
+
+function sanitizeWebhookOutcomes(raw) {
+  const out = {};
+  if (!raw || typeof raw !== "object") return out;
+  for (const ch of WEBHOOK_CHANNELS) {
+    if (!raw[ch] || typeof raw[ch] !== "object") continue;
+    out[ch] = {};
+    for (const reason of WEBHOOK_OUTCOMES) {
+      const n = Number(raw[ch][reason]);
+      if (Number.isFinite(n) && n > 0) out[ch][reason] = n;
+    }
+  }
+  return out;
+}
+
+function recordWebhookOutcome(channel, reason) {
+  const ch = WEBHOOK_CHANNELS.includes(channel) ? channel : "ostalo";
+  if (!WEBHOOK_OUTCOMES.includes(reason)) return;
+  counters.webhookOutcomes[ch] = counters.webhookOutcomes[ch] || {};
+  counters.webhookOutcomes[ch][reason] = (counters.webhookOutcomes[ch][reason] || 0) + 1;
 }
 
 function recordLatency(ms) {
@@ -145,9 +180,13 @@ async function reset() {
   counters.agentTakeoversSkipped = 0;
   counters.latencies = [];
   counters.byChannel = emptyByChannel();
+  counters.webhookOutcomes = {};
   tokenBudget.resetUsage();
   responseCache.clear();
   await supabaseMetrics.save(serializeCounters());
 }
 
-module.exports = { increment, recordDecision, recordChannelOutcome, recordLatency, getMetrics, reset };
+module.exports = {
+  increment, recordDecision, recordChannelOutcome, recordWebhookOutcome, recordLatency, getMetrics, reset,
+  WEBHOOK_OUTCOMES
+};

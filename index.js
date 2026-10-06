@@ -43,6 +43,7 @@ const runtimeStore = require("./services/runtimeStore");
 const responseCacheService = require("./services/responseCacheService");
 const tokenBudget = require("./services/tokenBudgetService");
 const { normalizeForComparison } = require("./services/textUtils");
+const emailTextService = require("./services/emailTextService");
 const { buildDirectWebsiteLinks } = require("./services/siteLinkService");
 const { detectEscalationIntent } = require("./services/intentEscalationService");
 const { isLikelyEmail, buildNoAnswerEscalation, resolveAnonymousEscalation } = require("./services/escalationFlowService");
@@ -211,6 +212,18 @@ function isWebhookDuplicate(ticketId, message, timestamp = null) {
  *     `attachments` array. The bot only escalates on attachments authored by the
  *     customer (not on its own/agent replies).
  */
+/**
+ * Kanal za brojač ishoda webhooka (web|email|facebook|ostalo). Stvarni
+ * via.channel ticketa ima prednost; channelType iz payloada je samo rezerva
+ * jer ovisi o konfiguraciji Zendesk triggera (default bi bio "email").
+ */
+function webhookOutcomeChannel(ticketChannel, channelType) {
+  if (ticketChannel) return require("./services/analyticsStore").bucketForChannel(ticketChannel);
+  const n = aiService.normalizeChannelType(channelType || "email");
+  if (n === "web_chat") return "web";
+  return n === "unknown" ? "ostalo" : n;
+}
+
 async function detectWebhookAttachments(body = {}, ticketId) {
   // Layer 1: webhook payload heuristics (configuration-dependent, best-effort).
   const direct = body.attachments ?? body.attachment ?? body.media ?? body.files;
@@ -998,22 +1011,32 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
   // Agent-intervention guard: checks the actual latest comment author FIRST.
   // If the customer just messaged, bot proceeds (even if stale human_active tag exists).
   // If an agent commented, bot stays silent and updates tags.
+  // Isti dohvat ticketa daje i stvarni kanal (via.channel) i naslov maila.
+  let ticketChannel = null;
+  let ticketSubject = "";
   if (latestMessage) {
     const agentCheck = await zendeskService.checkForAgentIntervention(ticketId);
+    ticketChannel = agentCheck.channel || null;
+    ticketSubject = agentCheck.subject || "";
     if (agentCheck.takenOver) {
       log.info("webhook_skipped_agent_intervention", { ticketId, reason: agentCheck.reason });
       metricsService.increment("agentTakeoversSkipped");
+      metricsService.recordWebhookOutcome(webhookOutcomeChannel(ticketChannel, channelType), "agent_takeover");
       await zendeskService.updateConversationState(ticketId, "human_active", ["agent_detected"]);
       return res.status(200).json({ success: true, skipped: "agent_took_over" });
     }
   }
+  const outcomeChannel = webhookOutcomeChannel(ticketChannel, channelType);
 
   // Prevent trigger loop: skip if the latest message is our own reply.
   // (When the bot posts a comment, Zendesk fires the trigger again.)
   // containsBotSignatureName prepoznaje I novi ("Vaš Libar AI Asistent") I stari
   // ("Vaš Libar Asistent") potpis — na već otvorenim tiketima postoje botovi
   // odgovori sa starim potpisom i bez toga bi bot ušao u petlju sam sa sobom.
-  if (latestMessage && zendeskService.containsBotSignatureName(latestMessage)) {
+  // Gleda se samo tekst IZNAD citata: kupčev email odgovor na botov mail citira
+  // botov potpis, a to nije botova poruka (inače bi bot šutio na svaki nastavak).
+  const ownReplyCandidate = emailTextService.stripQuotedReply(latestMessage) || latestMessage;
+  if (latestMessage && zendeskService.containsBotSignatureName(ownReplyCandidate)) {
     log.info("webhook_skipped_own_reply", { ticketId });
     return res.status(200).json({ success: true, skipped: "own_reply" });
   }
@@ -1027,6 +1050,7 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
     if (blockedByTag) {
       log.info("webhook_skipped_human_handled", { ticketId, tags: handoff.tags });
       metricsService.increment("webhooksSkippedHumanHandled");
+      metricsService.recordWebhookOutcome(outcomeChannel, "ticket_with_agent");
       return res.status(200).json({ success: true, skipped: "human_handled" });
     }
   }
@@ -1045,6 +1069,7 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
       ticketSummary = await zendeskService.getTicketSummary(ticketId);
       const spam = await spamFilterService.evaluateIncomingMessage({ channelType: normalizedChannel, message: latestMessage, ticketSummary });
       if (spam.shouldBlock) {
+        metricsService.recordWebhookOutcome(outcomeChannel, "spam_blocked");
         await zendeskService.addInternalNote(ticketId, spamFilterService.buildSpamFilterNote(spam, normalizedChannel), ["spam_blocked"]);
         return res.status(200).json({ success: true, blocked: true, reason: spam.reason });
       }
@@ -1056,9 +1081,29 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
       const sanitized = inputSanitizerModule.check(latestMessage);
       if (!sanitized.safe) {
         log.warn("webhook_input_blocked", { ticketId, reason: sanitized.reason });
+        metricsService.recordWebhookOutcome(outcomeChannel, "injection_blocked");
         return res.status(200).json({ success: true, blocked: true, reason: "injection_detected" });
       }
-      const cleanMessage = inputSanitizerModule.clean(latestMessage);
+
+      // Email: AI obrađuje samo ono što je kupac napisao — bez citiranih
+      // prethodnih mailova, potpisa i zaglavlja kontakt forme; kratkom tijelu
+      // dodaje se naslov. Kanal se uzima s ticketa (via.channel), a payload samo
+      // kad ticket nije dohvaćen — Facebook poruke se ne diraju.
+      const isEmailTicket = ticketChannel ? ticketChannel === "email" : normalizedChannel === "email";
+      let aiInput = latestMessage;
+      if (isEmailTicket) {
+        const prepared = emailTextService.prepareEmailText(latestMessage, { subject: ticketSubject });
+        aiInput = prepared.text;
+        if (prepared.changed) {
+          log.info("webhook_email_cleaned", { ticketId, ...prepared.parts, before: latestMessage.length, after: aiInput.length });
+        }
+      }
+      const cleanMessage = inputSanitizerModule.clean(aiInput);
+      // Povijest razgovora: kod emaila svaki komentar nosi citat cijelog
+      // prethodnog niza — u sažetak i pojmove za pretragu ide samo novi tekst.
+      const historyText = (body) => (isEmailTicket
+        ? (emailTextService.stripQuotedReply(body) || String(body || ""))
+        : String(body || ""));
 
       // Mask PII BEFORE it reaches the LLM or knowledge search (parity with the
       // web-chat path). The model only ever sees masked tokens; we unmask the
@@ -1071,6 +1116,7 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
       const normWebhookMsg = normalizeForComparison(cleanMessage);
       const webhookEscalation = detectEscalationIntent(normWebhookMsg);
       if (webhookEscalation.shouldEscalate) {
+        metricsService.recordWebhookOutcome(outcomeChannel, "intent_escalation");
         await zendeskService.addBotReplyToTicket(ticketId, webhookEscalation.message, { channelType: normalizedChannel });
         await zendeskService.updateConversationState(ticketId, "awaiting_human", ["ai_escalated", `intent_${webhookEscalation.intent}`]);
         log.info("webhook_intent_escalation", { ticketId, intent: webhookEscalation.intent });
@@ -1087,6 +1133,7 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
         log.warn("webhook_attachment_check_failed", { ticketId, message: err.message });
       }
       if (hasAttachments) {
+        metricsService.recordWebhookOutcome(outcomeChannel, "attachment");
         const attachmentReply = "Hvala na upitu i privitcima! Vaša poruka je zaprimljena i razgovor će biti preusmjeren na našeg agenta koji će se ubrzo javiti.";
         await zendeskService.addBotReplyToTicket(ticketId, attachmentReply, { channelType: normalizedChannel });
         await zendeskService.updateConversationState(ticketId, "awaiting_human", ["ai_escalated", "attachment_uploaded"]);
@@ -1111,13 +1158,13 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
           const recent = comments.slice(-6, -1); // exclude the latest (current) message
           conversationSummary = recent.map(c => {
             const role = String(c.author_id) === String(requesterId) ? "Korisnik" : "Asistent";
-            return `${role}: ${String(c.body || "").slice(0, 200)}`;
+            return `${role}: ${historyText(c.body).slice(0, 200)}`;
           }).join("\n");
         }
         // Boost knowledge search with multi-turn terms (parity with web-chat path).
         // Masked: Zendesk comment bodies are raw customer text.
         conversationTerms = maskedConversationTerms(
-          comments.map(c => ({ content: c.body }))
+          comments.map(c => ({ content: historyText(c.body) }))
         );
       } catch (err) {
         log.warn("webhook_history_fetch_failed", { ticketId, message: err.message });
@@ -1126,6 +1173,9 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
       knowledge = await knowledgeService.searchKnowledgeDetailed(maskedMsg, { conversationTerms });
       let answer = null;
       safeAnswerSent = false;
+      // Razlog za brojač ishoda ako bot ne odgovori: nema pouzdanog odgovora
+      // (baza/relevantnost) ili je odgovor pao provjeru kvalitete.
+      let failReason = "no_answer";
 
       // Use web_chat channel for LLM generation parity — the real channel is still
       // recorded in Zendesk metadata. This prevents the email prompt from producing
@@ -1155,6 +1205,7 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
           if (raceCheck.takenOver) {
             log.info("webhook_race_condition_agent", { ticketId, reason: raceCheck.reason });
             metricsService.increment("agentTakeoversSkipped");
+            metricsService.recordWebhookOutcome(outcomeChannel, "agent_takeover");
             metricsService.recordDecision("escalate_no_answer");
             metricsService.recordChannelOutcome(normalizedChannel, "escalate_no_answer");
             metricsService.recordLatency(Date.now() - webhookStart);
@@ -1169,6 +1220,7 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
           safeAnswerSent = true;
         } else {
           log.warn("webhook_output_validation_failed", { ticketId, reason: validation.reason });
+          failReason = "validation_failed";
           // Fallback to reference facts (parity with webchat path)
           const fallbackAnswer = await aiService.generateGroundedAnswer(maskedMsg, aiService.REFERENTNE_CINJENICE, generationOpts);
           if (fallbackAnswer) {
@@ -1209,6 +1261,7 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
       // Record decision and latency for admin panel parity with webchat
       const webhookDecision = safeAnswerSent ? "safe_answer" : "escalate_no_answer";
       metricsService.recordDecision(webhookDecision);
+      metricsService.recordWebhookOutcome(outcomeChannel, safeAnswerSent ? "answered" : failReason);
       metricsService.recordChannelOutcome(normalizedChannel, webhookDecision);
       metricsService.recordLatency(Date.now() - webhookStart);
     }
@@ -1226,6 +1279,7 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
     return res.status(200).json({ success: true });
   } catch (error) {
     log.error("webhook_failed", { ticketId, message: error.message });
+    metricsService.recordWebhookOutcome(outcomeChannel, "error");
     return res.status(200).json({ success: true, error: error.message });
   }
 });

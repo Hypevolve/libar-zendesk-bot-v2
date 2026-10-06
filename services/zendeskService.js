@@ -493,6 +493,10 @@ async function getTicketSummary(ticketId) {
     const requester = await getRequesterProfile(t.requester_id);
     return {
       id: t.id, status: t.status || null,
+      // Stvarni kanal ticketa (email, facebook, web…) — pouzdaniji od channelType
+      // iz webhook payloada, koji ovisi o konfiguraciji triggera.
+      channel: t.via?.channel || null,
+      subject: t.subject || t.raw_subject || "",
       tags: Array.isArray(t.tags) ? t.tags : [],
       assigneeId: t.assignee_id || null,
       requesterId: t.requester_id || null,
@@ -658,7 +662,8 @@ async function checkForAgentIntervention(ticketId) {
   try {
     const summary = await getTicketSummary(ticketId);
     const comments = await getPublicTicketComments(ticketId);
-    return detectAgentTakeover(comments, summary.requesterId);
+    // Kanal i naslov idu uz rezultat da webhook ne mora ponovno dohvaćati ticket.
+    return { ...detectAgentTakeover(comments, summary.requesterId), channel: summary.channel, subject: summary.subject };
   } catch (error) {
     log.warn("agent_intervention_check_failed", { ticketId, message: error.message });
     return { takenOver: false };

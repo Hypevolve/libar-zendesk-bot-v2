@@ -74,19 +74,28 @@
 1. Zendesk šalje webhook → POST /api/zendesk/webhook
 2. Verifikacija tokena
 3. Idempotency check
-4. Agent intervention check
-5. Spam filter (email only)
-6. Input sanitization
-7. PII maskiranje
-8. Intent escalation check
-9. Attachment check
-10. Knowledge search
-11. generateGroundedAnswer() (s channelType="web_chat")
-12. Output validation
-13. Race condition guard
-14. Unmask PII → reply
-15. Sync session + metrics + trace
+4. Agent intervention check (usput daje stvarni kanal ticketa via.channel i naslov)
+5. Own-reply check — samo na tekstu IZNAD citata (kupčev odgovor citira botov potpis)
+6. Spam filter (email only)
+7. Input sanitization (na cijeloj poruci)
+8. Email: emailTextService.prepareEmailText() — bez citata, potpisa i zaglavlja
+   kontakt forme; kratkom tijelu dodaje se naslov. Samo kad je ticket stvarno email.
+9. PII maskiranje
+10. Intent escalation check
+11. Attachment check
+12. Knowledge search
+13. generateGroundedAnswer() (s channelType="web_chat")
+14. Output validation
+15. Race condition guard
+16. Unmask PII → reply
+17. Sync session + metrics + trace
 ```
+
+Svaki izlaz iz rute bilježi se u `metricsService.recordWebhookOutcome(kanal, razlog)`
+(answered, no_answer, validation_failed, agent_takeover, ticket_with_agent,
+intent_escalation, attachment, spam_blocked, injection_blocked, error). Dashboard ih
+prikazuje u tablici "Zašto bot nije odgovorio" — bez toga se tiha predaja agentu
+(interna bilješka) ne vidi nigdje.
 
 ---
 

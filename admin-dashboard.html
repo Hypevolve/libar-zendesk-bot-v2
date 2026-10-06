@@ -407,6 +407,16 @@ body {
 .ch-q-legend { display: flex; gap: 12px; margin-top: 7px; font-size: 11.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
 .ch-q-legend span { display: inline-flex; align-items: center; gap: 3px; }
 
+/* Zašto bot nije odgovorio (ishodi webhooka po kanalu) */
+.wh-table-wrap { overflow-x: auto; margin-top: 12px; }
+.wh-table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.wh-table th, .wh-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+.wh-table th:first-child, .wh-table td:first-child { text-align: left; white-space: normal; }
+.wh-table th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); }
+.wh-table tr.wh-answered td { color: var(--green); font-weight: 600; }
+.wh-table tr.wh-total td { font-weight: 700; border-bottom: none; }
+.wh-table .wh-pct { color: var(--text-3); font-weight: 400; margin-left: 4px; }
+
 /* Ishod upita kupaca (riješio bot / pomogao / loše / samo agent) */
 .oc-track { height: 12px; margin-top: 12px; }
 .oc-legend { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; }
@@ -949,6 +959,18 @@ tbody tr:hover td { background: var(--bg); }
       </div>
     </div>
 
+    <!-- Ishod poruka na webhooku (email / Facebook) — zašto bot nije odgovorio -->
+    <div class="card" id="sec-wh-outcomes" style="margin-top: 14px;">
+      <div class="card-title" role="heading" aria-level="3">Zašto bot nije odgovorio</div>
+      <div class="card-sub">Svaka poruka kupca na emailu i Facebooku, po stvarnom kanalu ticketa · kumulativno od uvođenja brojača</div>
+      <div class="wh-table-wrap">
+        <table class="wh-table" id="wh-table">
+          <thead><tr><th scope="col">Ishod</th><th scope="col">Email</th><th scope="col">Facebook</th></tr></thead>
+          <tbody id="wh-body"><tr><td colspan="3" class="an-empty">Još nema podataka</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- KB Sync -->
     <div class="card" style="margin-bottom: 20px;" id="sec-kb">
       <div class="card-hd">
@@ -1380,6 +1402,40 @@ function renderMetrics(m) {
   $('m-cache-detail').textContent = `${cache.hits||0} hits / ${cache.misses||0} misses`;
 
   renderCost(tok);
+  renderWebhookOutcomes(m.webhookOutcomes);
+}
+
+// Redoslijed i nazivi ishoda — ključevi dolaze iz metricsService.WEBHOOK_OUTCOMES.
+const WH_OUTCOMES = [
+  ['answered', 'Bot odgovorio'],
+  ['no_answer', 'Nema pouzdanog odgovora u bazi'],
+  ['validation_failed', 'Odgovor pao provjeru kvalitete'],
+  ['agent_takeover', 'Agent već u razgovoru'],
+  ['ticket_with_agent', 'Ticket već predan agentu'],
+  ['intent_escalation', 'Osjetljiva tema (reklamacija, povrat…)'],
+  ['attachment', 'Privitak (slika, popis)'],
+  ['spam_blocked', 'Spam filter'],
+  ['injection_blocked', 'Sumnjiv sadržaj'],
+  ['error', 'Greška']
+];
+function renderWebhookOutcomes(wo) {
+  const body = $('wh-body');
+  if (!body) return;
+  // Web chat ne prolazi kroz webhook — njegov ishod je na karticama kanala iznad.
+  const chans = ['email', 'facebook'];
+  const totals = Object.fromEntries(chans.map(ch => [ch, WH_OUTCOMES.reduce((n, [k]) => n + ((wo && wo[ch] && wo[ch][k]) || 0), 0)]));
+  if (!chans.some(ch => totals[ch] > 0)) {
+    body.innerHTML = '<tr><td colspan="3" class="an-empty">Još nema podataka — brojač raste s novim porukama</td></tr>';
+    return;
+  }
+  const cell = (ch, n) => totals[ch]
+    ? `${fmtN(n)}<span class="wh-pct">${((n / totals[ch]) * 100).toFixed(0)}%</span>`
+    : '—';
+  const rows = WH_OUTCOMES
+    .filter(([k]) => chans.some(ch => wo[ch] && wo[ch][k]))
+    .map(([k, label]) => `<tr class="${k === 'answered' ? 'wh-answered' : ''}"><td>${esc(label)}</td>${chans.map(ch => `<td>${cell(ch, (wo[ch] && wo[ch][k]) || 0)}</td>`).join('')}</tr>`);
+  rows.push(`<tr class="wh-total"><td>Ukupno poruka</td>${chans.map(ch => `<td>${totals[ch] ? fmtN(totals[ch]) : '—'}</td>`).join('')}</tr>`);
+  body.innerHTML = rows.join('');
 }
 
 // ─── Kanali (Web / Email / Facebook) ──────────────────────────────
