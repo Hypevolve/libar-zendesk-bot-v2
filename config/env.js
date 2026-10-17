@@ -118,6 +118,11 @@ module.exports = {
   // Bearer token za MCP endpoint (POST /mcp). Drži odvojeno od ADMIN_TOKEN-a.
   // Ako nije postavljen, /mcp je onemogućen (503) i toolovi se nikad ne izlažu.
   MCP_TOKEN: envStr("MCP_TOKEN"),
+  // Granice MCP zahtjeva (GHSA-46jr-4wx8-v453, GHSA-f897-62hf-6gxq). Najveći legitimni
+  // poziv toola ima 2 skalarna argumenta (analyze_tickets), a najveće tijelo je
+  // initialize s podacima klijenta (par KB) — granice su s velikom rezervom iznad toga.
+  MCP_MAX_TOOL_INPUT_ELEMENTS: Math.max(1, envInt("MCP_MAX_TOOL_INPUT_ELEMENTS", 20)),
+  MCP_MAX_REQUEST_BODY_BYTES: Math.max(1024, envInt("MCP_MAX_REQUEST_BODY_BYTES", 64 * 1024)),
   RATE_LIMIT_MAX: envInt("RATE_LIMIT_MAX", 30),
   EMBED_ALLOWED_ORIGINS: envStr("EMBED_ALLOWED_ORIGINS")
     .split(",").map(s => s.trim()).filter(Boolean),

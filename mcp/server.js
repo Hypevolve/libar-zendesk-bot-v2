@@ -111,7 +111,12 @@ function topQuestions(limit) {
 function buildServer() {
   const server = new McpServer(
     { name: "libar-zendesk-bot", version: "2.0.0" },
-    { capabilities: { tools: {} } }
+    {
+      capabilities: { tools: {} },
+      // GHSA-46jr-4wx8-v453: bez granice SDK validira proizvoljno velike nizove/objekte
+      // u argumentima i proces može ostati bez memorije. Poziv preko granice dobije isError.
+      maxToolInputElements: env.MCP_MAX_TOOL_INPUT_ELEMENTS
+    }
   );
 
   // ── Read ────────────────────────────────────────────────────
@@ -355,7 +360,12 @@ async function handleMcpRequest(req, res) {
   let transport;
   try {
     server = buildServer();
-    transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+    // Tijelo čita sam transport (index.js ne parsira /mcp), pa vrijedi ova granica:
+    // veće tijelo → 413, batch > 100 poruka → 400 (GHSA-f897-62hf-6gxq).
+    transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+      maxRequestBodySize: env.MCP_MAX_REQUEST_BODY_BYTES
+    });
     res.on("close", () => {
       try { transport.close(); } catch (_) { /* best effort */ }
       try { server.close(); } catch (_) { /* best effort */ }
