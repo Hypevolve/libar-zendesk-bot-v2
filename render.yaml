@@ -31,6 +31,8 @@ services:
         sync: false
       - key: OPENROUTER_SITE_NAME
         value: Antikvarijat Libar Bot
+      - key: OPENROUTER_PRIVACY
+        value: zdr
       - key: ANALYSIS_MODEL
         value: google/gemini-3.5-flash-lite
       - key: ANALYSIS_MAX_TICKETS

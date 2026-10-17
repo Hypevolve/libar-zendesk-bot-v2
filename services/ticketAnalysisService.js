@@ -14,6 +14,7 @@ const log = require("../config/logger");
 const piiService = require("./piiService");
 const zendeskService = require("./zendeskService");
 const analyticsStore = require("./analyticsStore");
+const { withPrivacy } = require("./openRouterPrivacy");
 
 const ANALYSIS_MODEL = env.ANALYSIS_MODEL || "google/gemini-3.5-flash-lite";
 const DEFAULT_MAX_TICKETS = env.ANALYSIS_MAX_TICKETS || 150;
@@ -34,7 +35,7 @@ function getLlmClient() {
 }
 
 async function defaultLlm(systemPrompt, userText) {
-  const completion = await getLlmClient().chat.completions.create({
+  const completion = await getLlmClient().chat.completions.create(withPrivacy({
     model: ANALYSIS_MODEL,
     temperature: 0,
     response_format: { type: "json_object" },
@@ -42,7 +43,7 @@ async function defaultLlm(systemPrompt, userText) {
       { role: "system", content: systemPrompt },
       { role: "user", content: userText }
     ]
-  });
+  }));
   return completion.choices?.[0]?.message?.content || "";
 }
 

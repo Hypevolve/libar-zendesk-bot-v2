@@ -15,6 +15,7 @@ const OpenAI = require("openai");
 const env = require("../config/env");
 const log = require("../config/logger");
 const tokenBudget = require("./tokenBudgetService");
+const { withPrivacy, isDataPolicyError, privacyMode } = require("./openRouterPrivacy");
 
 // ─── Client ───────────────────────────────────────────────────
 
@@ -73,6 +74,13 @@ async function runWithModelFallback(execute, { purpose = "AI request", maxAttemp
           message: error.message,
           status: error.status
         });
+        // Model nema endpoint koji zadovoljava OPENROUTER_PRIVACY (npr. nema ZDR):
+        // ništa nije poslano provideru koji zadržava podatke. Ponavljanje ne pomaže,
+        // pa odmah idemo na sljedeći model.
+        if (isDataPolicyError(error)) {
+          log.warn("model_without_private_endpoint", { purpose, model, privacy: privacyMode(), status: error.status });
+          break;
+        }
         // Auth/validation errors (400/401/403) will never succeed on retry or on
         // another model — fail fast instead of burning latency + tokens across the
         // whole fallback chain. 429/5xx stay retryable and fall through.
@@ -105,8 +113,10 @@ async function llmCall(systemPrompt, userMessage, { purpose, temperature = 0, ma
       { role: "user", content: String(userMessage || "").trim() }
     ];
 
-    const request = { model, temperature, messages };
+    let request = { model, temperature, messages };
     if (maxTokens) request.max_tokens = maxTokens;
+    // ZDR / EU prvo (openRouterPrivacy); vrijedi i za ponovljeni poziv bez JSON moda.
+    request = withPrivacy(request);
 
     let completion;
     if (jsonMode) {

@@ -14,6 +14,7 @@ require("dotenv").config();
 const https = require("https");
 const fs = require("fs");
 const path = require("path");
+const { withPrivacy } = require("../services/openRouterPrivacy");
 
 const ZENDESK_SUBDOMAIN = process.env.ZENDESK_SUBDOMAIN;
 const ZENDESK_EMAIL = process.env.ZENDESK_EMAIL;
@@ -74,12 +75,12 @@ Odgovori SAMO u JSON formatu (bez markdown, bez objašnjenja prije i poslije):
 {"otkup": [{"q": "pitanje", "points": ["točka1", "točka2"], "escalate": false}], "dostava": [...], "narudzba": [...], "povrat": [...], "kontakt": [...], "placanje": [...], "ostalo": [...]}`;
 
   return new Promise((resolve) => {
-    const body = JSON.stringify({
+    const body = JSON.stringify(withPrivacy({
       model: OPENROUTER_MODEL,
       messages: [{ role: "user", content: prompt }],
       max_tokens: 8000,
       temperature: 0.1
-    });
+    }));
 
     const req = https.request({
       hostname: "openrouter.ai",

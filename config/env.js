@@ -54,6 +54,9 @@ module.exports = {
   OPENROUTER_SITE_URL: envStr("OPENROUTER_SITE_URL"),
   OPENROUTER_SITE_NAME: envStr("OPENROUTER_SITE_NAME", "Antikvarijat Libar Bot"),
   RETIRED_MODEL_REMAPS,
+  // Privatnost poziva prema OpenRouteru (services/openRouterPrivacy.js):
+  // zdr (default) | deny | off. Nepoznata vrijednost = zdr.
+  OPENROUTER_PRIVACY: envStr("OPENROUTER_PRIVACY", "zdr"),
 
   // --- Analitika ticketa (analyze_tickets / KB rupe) ---
   ANALYSIS_MODEL: envModel("ANALYSIS_MODEL", "google/gemini-3.5-flash-lite"),

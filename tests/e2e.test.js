@@ -9,6 +9,7 @@
  */
 const http = require("http");
 const https = require("https");
+const { withPrivacy } = require("../services/openRouterPrivacy");
 
 const API = process.env.API_URL || "http://localhost:3000";
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "";
@@ -117,7 +118,9 @@ ODGOVOR BOTA: ${answer}
 ZADATAK: ${criteria}
 
 Odgovori SAMO u JSON formatu: {"correct": true/false, "reason": "kratko objašnjenje"}`;
-  const body = JSON.stringify({ model: EVAL_LLM_MODEL, messages: [{ role: "user", content: prompt }], max_tokens: 150, temperature: 0 });
+  const request = { model: EVAL_LLM_MODEL, messages: [{ role: "user", content: prompt }], max_tokens: 150, temperature: 0 };
+  // ZDR / EU prvo samo kad evaluator ide preko OpenRoutera (EVAL_LLM_URL može biti drugi API).
+  const body = JSON.stringify(/(^|\.)openrouter\.ai$/.test(new URL(EVAL_LLM_URL).hostname) ? withPrivacy(request) : request);
   return new Promise((resolve) => {
     const url = new URL(EVAL_LLM_URL);
     const req = (url.protocol === "https:" ? https : http).request({ hostname: url.hostname, port: url.port, path: url.pathname, method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${EVAL_LLM_KEY}`, "HTTP-Referer": "https://antikvarijat-libar.com", "X-Title": "Libar Bot E2E Eval" } }, (res) => {
