@@ -112,7 +112,7 @@ prikazuje u tablici "Zašto bot nije odgovorio" — bez toga se tiha predaja age
 
 **Model fallback**:
 - Primarni: `OPENROUTER_MODEL` (default: `openai/gpt-4o`)
-- Fallback: `OPENROUTER_FALLBACK_MODEL` (default: `google/gemini-2.5-flash`)
+- Fallback: `OPENROUTER_FALLBACK_MODEL` (default: `google/gemini-3.5-flash-lite`)
 - Ako oba padnu, vraća `null` (eskalacija)
 
 **Pravila u promptu** (oba buildera, `buildGroundedAnswerPrompt` i `buildSystemPrompt`):
@@ -255,7 +255,7 @@ ZENDESK_BOT_USER_ID=0          # ID korisnika kojeg bot koristi
 # --- OpenRouter / LLM ---
 OPENROUTER_API_KEY=
 OPENROUTER_MODEL=openai/gpt-4o
-OPENROUTER_FALLBACK_MODEL=google/gemini-2.5-flash
+OPENROUTER_FALLBACK_MODEL=google/gemini-3.5-flash-lite
 
 # --- Supabase ---
 SUPABASE_URL=

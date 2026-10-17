@@ -26,13 +26,13 @@ services:
       - key: OPENROUTER_MODEL
         value: openai/gpt-4o
       - key: OPENROUTER_FALLBACK_MODEL
-        value: google/gemini-2.5-flash
+        value: google/gemini-3.5-flash-lite
       - key: OPENROUTER_SITE_URL
         sync: false
       - key: OPENROUTER_SITE_NAME
         value: Antikvarijat Libar Bot
       - key: ANALYSIS_MODEL
-        value: google/gemini-2.5-flash
+        value: google/gemini-3.5-flash-lite
       - key: ANALYSIS_MAX_TICKETS
         value: "150"
       - key: ANALYSIS_BACKFILL_DAYS

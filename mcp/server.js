@@ -44,6 +44,7 @@ function enrichConversations(rows = []) {
 // Cijene po 1M tokena (USD) — zrcali admin-dashboard.html da prikaz bude isti.
 const PRICING = {
   "openai/gpt-4o":               { input: 2.50, output: 10.00 },
+  "google/gemini-3.5-flash-lite": { input: 0.30, output: 2.50 },
   "google/gemini-2.5-flash":     { input: 0.30, output: 2.50 },
   "openai/gpt-5":                { input: 1.25, output: 10.00 },
   "openai/gpt-4.1-mini":         { input: 0.40, output: 1.60 },

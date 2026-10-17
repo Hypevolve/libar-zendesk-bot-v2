@@ -1550,6 +1550,11 @@ const PORT = env.PORT;
 const server = app.listen(PORT, () => {
   log.info("server_started", { port: PORT });
 
+  // Ugašeni model ostao zadan (npr. u Render dashboardu) → koristi se zamjena; jedno upozorenje.
+  if (env.RETIRED_MODEL_REMAPS.length) {
+    log.warn("retired_models_remapped", { remaps: env.RETIRED_MODEL_REMAPS });
+  }
+
   // Restore persisted sessions
   for (const s of runtimeState.sessions || []) {
     if (s.sessionId && s.ticketId) chatSessions.set(s.sessionId, s);

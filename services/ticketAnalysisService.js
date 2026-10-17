@@ -15,7 +15,7 @@ const piiService = require("./piiService");
 const zendeskService = require("./zendeskService");
 const analyticsStore = require("./analyticsStore");
 
-const ANALYSIS_MODEL = env.ANALYSIS_MODEL || "google/gemini-2.5-flash";
+const ANALYSIS_MODEL = env.ANALYSIS_MODEL || "google/gemini-3.5-flash-lite";
 const DEFAULT_MAX_TICKETS = env.ANALYSIS_MAX_TICKETS || 150;
 const BACKFILL_DAYS = env.ANALYSIS_BACKFILL_DAYS || 90;
 const CONCURRENCY = env.ANALYSIS_CONCURRENCY || 1;
