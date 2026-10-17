@@ -4,9 +4,21 @@
  * Services import from this module instead of reading process.env directly.
  */
 require("dotenv").config();
+const { remapRetiredModel } = require("./retiredModels");
 
 function envStr(key, fallback = "") {
   return String(process.env[key] ?? fallback).trim();
+}
+
+// Ugašeni modeli koji su ipak zadani (npr. ostali postavljeni u Render dashboardu).
+// Mapiraju se na zamjenu iz retiredModels.js; index.js to jednom zapiše u log pri startu.
+const RETIRED_MODEL_REMAPS = [];
+
+function envModel(key, fallback) {
+  const configured = envStr(key, fallback);
+  const model = remapRetiredModel(configured);
+  if (model !== configured) RETIRED_MODEL_REMAPS.push({ key, from: configured, to: model });
+  return model;
 }
 
 function envInt(key, fallback) {
@@ -37,13 +49,17 @@ module.exports = {
 
   // --- OpenRouter / LLM ---
   OPENROUTER_API_KEY: envStr("OPENROUTER_API_KEY"),
-  OPENROUTER_MODEL: envStr("OPENROUTER_MODEL", "openai/gpt-4o"),
-  OPENROUTER_FALLBACK_MODEL: envStr("OPENROUTER_FALLBACK_MODEL", "google/gemini-2.5-flash"),
+  OPENROUTER_MODEL: envModel("OPENROUTER_MODEL", "openai/gpt-4o"),
+  OPENROUTER_FALLBACK_MODEL: envModel("OPENROUTER_FALLBACK_MODEL", "google/gemini-3.5-flash-lite"),
   OPENROUTER_SITE_URL: envStr("OPENROUTER_SITE_URL"),
   OPENROUTER_SITE_NAME: envStr("OPENROUTER_SITE_NAME", "Antikvarijat Libar Bot"),
+  RETIRED_MODEL_REMAPS,
+  // Privatnost poziva prema OpenRouteru (services/openRouterPrivacy.js):
+  // zdr (default) | deny | off. Nepoznata vrijednost = zdr.
+  OPENROUTER_PRIVACY: envStr("OPENROUTER_PRIVACY", "zdr"),
 
   // --- Analitika ticketa (analyze_tickets / KB rupe) ---
-  ANALYSIS_MODEL: envStr("ANALYSIS_MODEL", "google/gemini-2.5-flash"),
+  ANALYSIS_MODEL: envModel("ANALYSIS_MODEL", "google/gemini-3.5-flash-lite"),
   ANALYSIS_MAX_TICKETS: envInt("ANALYSIS_MAX_TICKETS", 150),
   ANALYSIS_BACKFILL_DAYS: envInt("ANALYSIS_BACKFILL_DAYS", 90),
   // 1 = sekvencijalno (dosadašnje ponašanje); >1 ubrzava backfill povijesti.
@@ -105,6 +121,11 @@ module.exports = {
   // Bearer token za MCP endpoint (POST /mcp). Drži odvojeno od ADMIN_TOKEN-a.
   // Ako nije postavljen, /mcp je onemogućen (503) i toolovi se nikad ne izlažu.
   MCP_TOKEN: envStr("MCP_TOKEN"),
+  // Granice MCP zahtjeva (GHSA-46jr-4wx8-v453, GHSA-f897-62hf-6gxq). Najveći legitimni
+  // poziv toola ima 2 skalarna argumenta (analyze_tickets), a najveće tijelo je
+  // initialize s podacima klijenta (par KB) — granice su s velikom rezervom iznad toga.
+  MCP_MAX_TOOL_INPUT_ELEMENTS: Math.max(1, envInt("MCP_MAX_TOOL_INPUT_ELEMENTS", 20)),
+  MCP_MAX_REQUEST_BODY_BYTES: Math.max(1024, envInt("MCP_MAX_REQUEST_BODY_BYTES", 64 * 1024)),
   RATE_LIMIT_MAX: envInt("RATE_LIMIT_MAX", 30),
   EMBED_ALLOWED_ORIGINS: envStr("EMBED_ALLOWED_ORIGINS")
     .split(",").map(s => s.trim()).filter(Boolean),

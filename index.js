@@ -43,6 +43,7 @@ const runtimeStore = require("./services/runtimeStore");
 const responseCacheService = require("./services/responseCacheService");
 const tokenBudget = require("./services/tokenBudgetService");
 const { normalizeForComparison } = require("./services/textUtils");
+const { tokensMatch, takeQueryToken } = require("./services/tokenSecurity");
 const emailTextService = require("./services/emailTextService");
 const { buildDirectWebsiteLinks } = require("./services/siteLinkService");
 const { detectEscalationIntent } = require("./services/intentEscalationService");
@@ -52,6 +53,16 @@ const textbookListService = require("./services/textbookListService");
 // ─── Express Setup ────────────────────────────────────────────
 
 const app = express();
+
+// ─── MCP Server (Model Context Protocol) ──────────────────────
+// Read/control/report toolovi za Claude (app + Claude Code). Aditivno: svaki
+// tool zove postojeći servis. Onemogućeno (503) ako MCP_TOKEN nije postavljen.
+// Registrira se PRIJE body parsera: tijelo čita MCP transport tek nakon auth-a,
+// s granicom MCP_MAX_REQUEST_BODY_BYTES (express.json bi ga pročitao do 1 MB
+// i prije provjere tokena, a transport tada ne provjerava veličinu).
+const mcpServer = require("./mcp/server");
+app.all("/mcp", mcpServer.mcpAuth, mcpServer.handleMcpRequest);
+
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.set("trust proxy", true);
@@ -1350,9 +1361,12 @@ app.get("/health", async (req, res) => {
 
 // ─── Admin Endpoints ──────────────────────────────────────────
 
+// x-admin-token ili ?token= (query ostaje podržan). Usporedba u konstantnom
+// vremenu; ?token= se odmah miče iz URL-a da ne završi u logovima.
 function requireAdmin(req, res, next) {
-  const token = req.headers["x-admin-token"] || req.query.token;
-  if (!env.ADMIN_TOKEN || token !== env.ADMIN_TOKEN) {
+  const queryToken = takeQueryToken(req);
+  const token = req.headers["x-admin-token"] || queryToken;
+  if (!tokensMatch(token, env.ADMIN_TOKEN)) {
     return res.status(401).json({ success: false, error: "Admin token required." });
   }
   next();
@@ -1480,11 +1494,7 @@ app.get("/admin/analytics/top-questions", requireAdmin, async (req, res) => {
   }
 });
 
-// ─── MCP Server (Model Context Protocol) ──────────────────────
-// Read/control/report toolovi za Claude (app + Claude Code). Aditivno: svaki
-// tool zove postojeći servis. Onemogućeno (503) ako MCP_TOKEN nije postavljen.
-const mcpServer = require("./mcp/server");
-app.all("/mcp", mcpServer.mcpAuth, mcpServer.handleMcpRequest);
+// MCP endpoint (/mcp) je registriran na vrhu, prije body parsera.
 
 // Admin Dashboard HTML UI (public — auth handled by JS API calls)
 app.get("/admin/dashboard", (req, res) => {
@@ -1549,6 +1559,11 @@ const PORT = env.PORT;
 
 const server = app.listen(PORT, () => {
   log.info("server_started", { port: PORT });
+
+  // Ugašeni model ostao zadan (npr. u Render dashboardu) → koristi se zamjena; jedno upozorenje.
+  if (env.RETIRED_MODEL_REMAPS.length) {
+    log.warn("retired_models_remapped", { remaps: env.RETIRED_MODEL_REMAPS });
+  }
 
   // Restore persisted sessions
   for (const s of runtimeState.sessions || []) {

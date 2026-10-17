@@ -14,6 +14,7 @@ const { z } = require("zod");
 
 const env = require("../config/env");
 const log = require("../config/logger");
+const { tokensMatch, takeQueryToken } = require("../services/tokenSecurity");
 
 const metricsService = require("../services/metricsService");
 const tracingService = require("../services/tracingService");
@@ -44,6 +45,7 @@ function enrichConversations(rows = []) {
 // Cijene po 1M tokena (USD) — zrcali admin-dashboard.html da prikaz bude isti.
 const PRICING = {
   "openai/gpt-4o":               { input: 2.50, output: 10.00 },
+  "google/gemini-3.5-flash-lite": { input: 0.30, output: 2.50 },
   "google/gemini-2.5-flash":     { input: 0.30, output: 2.50 },
   "openai/gpt-5":                { input: 1.25, output: 10.00 },
   "openai/gpt-4.1-mini":         { input: 0.40, output: 1.60 },
@@ -110,7 +112,12 @@ function topQuestions(limit) {
 function buildServer() {
   const server = new McpServer(
     { name: "libar-zendesk-bot", version: "2.0.0" },
-    { capabilities: { tools: {} } }
+    {
+      capabilities: { tools: {} },
+      // GHSA-46jr-4wx8-v453: bez granice SDK validira proizvoljno velike nizove/objekte
+      // u argumentima i proces može ostati bez memorije. Poziv preko granice dobije isError.
+      maxToolInputElements: env.MCP_MAX_TOOL_INPUT_ELEMENTS
+    }
   );
 
   // ── Read ────────────────────────────────────────────────────
@@ -323,15 +330,19 @@ function notConfigured() {
 /**
  * Express middleware — Bearer auth for the MCP endpoint. Disabled (503) when no
  * MCP_TOKEN is configured, so forgetting to set it never exposes the tools.
+ * Token: Authorization: Bearer, x-mcp-token ili ?token= (klijentska integracija
+ * koristi query). Usporedba je u konstantnom vremenu; ?token= se odmah miče iz
+ * URL-a da ga transport ni logovi ne vide.
  */
 function mcpAuth(req, res, next) {
+  const queryToken = takeQueryToken(req);
   if (!env.MCP_TOKEN) {
     return res.status(503).json({ error: "MCP disabled: MCP_TOKEN not configured." });
   }
   const header = req.headers["authorization"] || "";
   const bearer = header.startsWith("Bearer ") ? header.slice(7).trim() : null;
-  const token = bearer || req.headers["x-mcp-token"] || req.query.token;
-  if (!token || token !== env.MCP_TOKEN) {
+  const token = bearer || req.headers["x-mcp-token"] || queryToken;
+  if (!tokensMatch(token, env.MCP_TOKEN)) {
     return res.status(401).json({ error: "Unauthorized: valid MCP token required." });
   }
   next();
@@ -354,7 +365,12 @@ async function handleMcpRequest(req, res) {
   let transport;
   try {
     server = buildServer();
-    transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+    // Tijelo čita sam transport (index.js ne parsira /mcp), pa vrijedi ova granica:
+    // veće tijelo → 413, batch > 100 poruka → 400 (GHSA-f897-62hf-6gxq).
+    transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+      maxRequestBodySize: env.MCP_MAX_REQUEST_BODY_BYTES
+    });
     res.on("close", () => {
       try { transport.close(); } catch (_) { /* best effort */ }
       try { server.close(); } catch (_) { /* best effort */ }

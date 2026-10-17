@@ -112,8 +112,16 @@ prikazuje u tablici "Zašto bot nije odgovorio" — bez toga se tiha predaja age
 
 **Model fallback**:
 - Primarni: `OPENROUTER_MODEL` (default: `openai/gpt-4o`)
-- Fallback: `OPENROUTER_FALLBACK_MODEL` (default: `google/gemini-2.5-flash`)
+- Fallback: `OPENROUTER_FALLBACK_MODEL` (default: `google/gemini-3.5-flash-lite`)
 - Ako oba padnu, vraća `null` (eskalacija)
+- Ugašeni modeli iz env-a mapiraju se na zamjenu (`config/retiredModels.js`), uz upozorenje pri startu
+
+**Privatnost** (`services/openRouterPrivacy.js`): svaki chat completion poziv nosi
+`provider` s `zdr: true` i `data_collection: "deny"`, a model s EU ZDR endpointom
+(`google-vertex/eu` za gemini-3.5-flash-lite) dobije ga prvog u `order` (fallback na
+ostale ZDR endpointe dopušten). `OPENROUTER_PRIVACY` = `zdr` (default) | `deny` | `off`.
+Model bez ZDR endpointa ne dobiva podatke; prelazi se na sljedeći model. Embeddingi
+(`embeddingService`) još ne šalju ove postavke (nije provjereno uživo).
 
 **Pravila u promptu** (oba buildera, `buildGroundedAnswerPrompt` i `buildSystemPrompt`):
 - `REFERENTNE_CINJENICE` — hardkodirane činjenice (dostava, radno vrijeme, kontakt, otkup...) koje se ubacuju u svaki poziv. Kontakt (email/telefon) živi ovdje, **ne** u KB dokumentima.
@@ -255,7 +263,8 @@ ZENDESK_BOT_USER_ID=0          # ID korisnika kojeg bot koristi
 # --- OpenRouter / LLM ---
 OPENROUTER_API_KEY=
 OPENROUTER_MODEL=openai/gpt-4o
-OPENROUTER_FALLBACK_MODEL=google/gemini-2.5-flash
+OPENROUTER_FALLBACK_MODEL=google/gemini-3.5-flash-lite
+OPENROUTER_PRIVACY=zdr
 
 # --- Supabase ---
 SUPABASE_URL=

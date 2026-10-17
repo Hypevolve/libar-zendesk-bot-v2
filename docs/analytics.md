@@ -30,7 +30,7 @@ Za svaki ticket sprema se: `topic`, `intent`, `handled_by` (bot/human/mixed),
    Supabase SQL editoru (kreira `ticket_analysis` i `analysis_sync_state`).
 2. Provjeri env: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (već postoje za metrike),
    `ZENDESK_*`, `OPENROUTER_API_KEY`.
-3. Opcionalno podesi: `ANALYSIS_MODEL` (default `google/gemini-2.5-flash`),
+3. Opcionalno podesi: `ANALYSIS_MODEL` (default `google/gemini-3.5-flash-lite`),
    `ANALYSIS_MAX_TICKETS` (default 150), `ANALYSIS_BACKFILL_DAYS` (default 90).
 
 ## Pokretanje analize
@@ -128,5 +128,5 @@ preko `channelBuckets()`. **Napomena:** bot-kreirani webchat ticketi znaju imati
 
 ## Trošak
 
-Analiza koristi jeftiniji model (`ANALYSIS_MODEL`, default gemini-2.5-flash), jedan
+Analiza koristi jeftiniji model (`ANALYSIS_MODEL`, default gemini-3.5-flash-lite), jedan
 LLM poziv po ticketu. Backfill ide u serijama (`maxTickets`) pa kontroliraš trošak.

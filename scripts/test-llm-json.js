@@ -1,5 +1,6 @@
 require("dotenv").config();
 const https = require("https");
+const { withPrivacy } = require("../services/openRouterPrivacy");
 
 const queries = [
   {text: "Koliko kosta dostava?", group: "dostava"},
@@ -21,12 +22,12 @@ ${queries.map((q, i) => `${i + 1}. ${q.text.slice(0, 180)}`).join("\n")}
 Odgovori SAMO u JSON formatu (bez markdown, bez objasnjenja prije i poslije):
 {"otkup": [{"q": "pitanje", "points": ["tocka1", "tocka2"], "escalate": false}], "dostava": [...], "narudzba": [...], "povrat": [...], "kontakt": [...], "placanje": [...], "ostalo": [...]}`;
 
-const body = JSON.stringify({
+const body = JSON.stringify(withPrivacy({
   model: process.env.OPENROUTER_MODEL,
   messages: [{ role: "user", content: prompt }],
   max_tokens: 3000,
   temperature: 0.1
-});
+}));
 
 const req = https.request({
   hostname: "openrouter.ai",

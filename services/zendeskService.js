@@ -8,6 +8,7 @@ const axios = require("axios");
 const env = require("../config/env");
 const log = require("../config/logger");
 const { normalizeForSearch, stripHtml, tokenize, truncateText } = require("./textUtils");
+const { tokensMatch } = require("./tokenSecurity");
 
 // ─── Client ───────────────────────────────────────────────────
 
@@ -594,9 +595,10 @@ async function listTicketsSince(sinceISO, { maxTickets = 150, client = zendeskCl
   }
 }
 
+// Usporedba u konstantnom vremenu (tokenSecurity.tokensMatch).
 function verifyWebhookToken(token = "") {
   if (!env.ZENDESK_WEBHOOK_TOKEN) return false;
-  return String(token).trim() === env.ZENDESK_WEBHOOK_TOKEN;
+  return tokensMatch(String(token ?? "").trim(), env.ZENDESK_WEBHOOK_TOKEN);
 }
 
 async function testZendeskTicketAccess(ticketId) {

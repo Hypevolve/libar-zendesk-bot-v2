@@ -31,9 +31,19 @@ Svaki tool samo delegira na postojeći servis - nema duplikata logike.
 ## Sigurnost
 
 - Auth: `Authorization: Bearer <MCP_TOKEN>` (ili header `x-mcp-token`).
+  `?token=` u URL-u radi i dalje (koristi ga postojeća integracija), ali ga ne
+  preporučujemo: URL s tokenom može završiti u logovima platforme i proxyja. Aplikacija
+  ga odmah nakon čitanja miče iz URL-a i iz svojih logova; usporedba tokena je u
+  konstantnom vremenu.
 - `MCP_TOKEN` je **odvojen** od `ADMIN_TOKEN`. Ako nije postavljen, `/mcp` vraća 503
   i toolovi se nikad ne izlažu.
 - Kontrolne akcije (`set_bot_state`, `sync_vector`) se logiraju.
+- Granice zahtjeva (GHSA-46jr-4wx8-v453, GHSA-f897-62hf-6gxq): najviše
+  `MCP_MAX_TOOL_INPUT_ELEMENTS` (default 20) elemenata nizova i ključeva objekata u
+  argumentima jednog poziva toola (preko toga `isError`), tijelo do
+  `MCP_MAX_REQUEST_BODY_BYTES` (default 64 KB, preko toga 413), batch do 100 poruka.
+  Najveći legitimni poziv ima 2 argumenta. `/mcp` se registrira prije `express.json()`
+  pa tijelo čita MCP transport tek nakon provjere tokena.
 
 ## Postavljanje (Render)
 
