@@ -14,6 +14,7 @@ const { z } = require("zod");
 
 const env = require("../config/env");
 const log = require("../config/logger");
+const { tokensMatch, takeQueryToken } = require("../services/tokenSecurity");
 
 const metricsService = require("../services/metricsService");
 const tracingService = require("../services/tracingService");
@@ -329,15 +330,19 @@ function notConfigured() {
 /**
  * Express middleware — Bearer auth for the MCP endpoint. Disabled (503) when no
  * MCP_TOKEN is configured, so forgetting to set it never exposes the tools.
+ * Token: Authorization: Bearer, x-mcp-token ili ?token= (klijentska integracija
+ * koristi query). Usporedba je u konstantnom vremenu; ?token= se odmah miče iz
+ * URL-a da ga transport ni logovi ne vide.
  */
 function mcpAuth(req, res, next) {
+  const queryToken = takeQueryToken(req);
   if (!env.MCP_TOKEN) {
     return res.status(503).json({ error: "MCP disabled: MCP_TOKEN not configured." });
   }
   const header = req.headers["authorization"] || "";
   const bearer = header.startsWith("Bearer ") ? header.slice(7).trim() : null;
-  const token = bearer || req.headers["x-mcp-token"] || req.query.token;
-  if (!token || token !== env.MCP_TOKEN) {
+  const token = bearer || req.headers["x-mcp-token"] || queryToken;
+  if (!tokensMatch(token, env.MCP_TOKEN)) {
     return res.status(401).json({ error: "Unauthorized: valid MCP token required." });
   }
   next();

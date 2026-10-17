@@ -6,6 +6,7 @@
  * Provides admin API for inspection and stats.
  */
 const env = require("../config/env");
+const { redactTokens } = require("./tokenSecurity");
 
 const MAX_BUFFER = env.MAX_TRACE_BUFFER;
 const ENABLED = env.TRACE_LOG_ENABLED;
@@ -59,7 +60,7 @@ function createTrace({
   }
 
   if (!env.IS_TEST) {
-    console.info(JSON.stringify({ level: "trace", event: "ai_trace", ...entry }));
+    console.info(redactTokens(JSON.stringify({ level: "trace", event: "ai_trace", ...entry })));
   }
 }
 

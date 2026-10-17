@@ -43,6 +43,7 @@ const runtimeStore = require("./services/runtimeStore");
 const responseCacheService = require("./services/responseCacheService");
 const tokenBudget = require("./services/tokenBudgetService");
 const { normalizeForComparison } = require("./services/textUtils");
+const { tokensMatch, takeQueryToken } = require("./services/tokenSecurity");
 const emailTextService = require("./services/emailTextService");
 const { buildDirectWebsiteLinks } = require("./services/siteLinkService");
 const { detectEscalationIntent } = require("./services/intentEscalationService");
@@ -1360,9 +1361,12 @@ app.get("/health", async (req, res) => {
 
 // ─── Admin Endpoints ──────────────────────────────────────────
 
+// x-admin-token ili ?token= (query ostaje podržan). Usporedba u konstantnom
+// vremenu; ?token= se odmah miče iz URL-a da ne završi u logovima.
 function requireAdmin(req, res, next) {
-  const token = req.headers["x-admin-token"] || req.query.token;
-  if (!env.ADMIN_TOKEN || token !== env.ADMIN_TOKEN) {
+  const queryToken = takeQueryToken(req);
+  const token = req.headers["x-admin-token"] || queryToken;
+  if (!tokensMatch(token, env.ADMIN_TOKEN)) {
     return res.status(401).json({ success: false, error: "Admin token required." });
   }
   next();
