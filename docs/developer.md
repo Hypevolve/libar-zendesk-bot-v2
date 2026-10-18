@@ -121,7 +121,11 @@ prikazuje u tablici "Zašto bot nije odgovorio" — bez toga se tiha predaja age
 (`google-vertex/eu` za gemini-3.5-flash-lite) dobije ga prvog u `order` (fallback na
 ostale ZDR endpointe dopušten). `OPENROUTER_PRIVACY` = `zdr` (default) | `deny` | `off`.
 Model bez ZDR endpointa ne dobiva podatke; prelazi se na sljedeći model. Embeddingi
-(`embeddingService`) još ne šalju ove postavke (nije provjereno uživo).
+(`embeddingService`, upiti kupaca i baza znanja) šalju iste postavke: za
+`openai/text-embedding-3-small` ZDR endpoint postoji samo na Azureu, ne u EU
+(provjereno uživo 18.10.2026.), pa nema `order`. Embedding model nema zamjenu
+(vektori u bazi su iz njega): bez ZDR endpointa pretraga baze znanja ne radi i u
+logu je `embedding_private_endpoint_unavailable`.
 
 **Pravila u promptu** (oba buildera, `buildGroundedAnswerPrompt` i `buildSystemPrompt`):
 - `REFERENTNE_CINJENICE` — hardkodirane činjenice (dostava, radno vrijeme, kontakt, otkup...) koje se ubacuju u svaki poziv. Kontakt (email/telefon) živi ovdje, **ne** u KB dokumentima.

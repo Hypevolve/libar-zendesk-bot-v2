@@ -1,6 +1,6 @@
 /**
  * Što OpenRouter smije raditi s porukama kupaca (Kontra standard: ZDR, EU prvo).
- * Ide kao `provider` u svaki chat completion poziv prema OpenRouteru.
+ * Ide kao `provider` u svaki chat completion i embeddings poziv prema OpenRouteru.
  *
  *   OPENROUTER_PRIVACY=zdr   (default) samo endpointi bez zadržavanja podataka
  *                            (zero data retention) i bez prikupljanja podataka
@@ -14,12 +14,12 @@
  *   openai/gpt-4o                 1 ZDR endpoint (azure), nema EU regije
  *   google/gemini-3.5-flash-lite  google-vertex/eu (+ global, us)
  *   openai/gpt-4o-mini            azure/swedencentral (+ azure)
+ *   openai/text-embedding-3-small samo azure, nema EU (provjereno uživo 18.10.2026.)
  *
  * Model bez ZDR endpointa u modu zdr ne dobiva odgovor (OpenRouter ga odbije), pa
  * podaci ne odlaze provideru koji ih zadržava; aiService tada prelazi na sljedeći model.
- *
- * Embeddingi (embeddingService) ovo namjerno NE koriste dok se uživo ne provjeri da
- * OpenRouterov embeddings endpoint prihvaća provider postavke.
+ * Embeddingi (embeddingService) nemaju zamjenski model, jer su svi vektori u bazi iz
+ * istog modela: bez ZDR endpointa za embedding model ne radi pretraga baze znanja.
  */
 const env = require("../config/env");
 
