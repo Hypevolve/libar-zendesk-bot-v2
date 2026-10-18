@@ -502,7 +502,10 @@ async function main() {
   // Verify server is up
   const health = await request("GET", "/health");
   if (!health.body?.success) { console.error("Server not available at", API); process.exit(1); }
-  console.log("Health:", health.body.status, "| Zendesk:", health.body.checks.zendesk ? "OK" : "FAIL", "\n");
+  // Javni /health vraća samo status; provjere ovisnosti su na /admin/health.
+  const detail = ADMIN_TOKEN ? await request("GET", "/admin/health", null, { "x-admin-token": ADMIN_TOKEN }) : null;
+  const zendesk = detail?.body?.checks ? (detail.body.checks.zendesk ? "OK" : "FAIL") : "? (bez ADMIN_TOKEN)";
+  console.log("Health:", health.body.status, "| Zendesk:", zendesk, "\n");
 
   for (const s of SCENARIOS) {
     if (s.type === "multiTurn") {

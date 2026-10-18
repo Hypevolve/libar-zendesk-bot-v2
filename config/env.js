@@ -130,6 +130,10 @@ module.exports = {
   EMBED_ALLOWED_ORIGINS: envStr("EMBED_ALLOWED_ORIGINS")
     .split(",").map(s => s.trim()).filter(Boolean),
 
+  // --- Render (postavlja ih Render sam) ---
+  // Commit koji je deployan; jedini podatak o verziji koji javni /health vraća.
+  RENDER_GIT_COMMIT: envStr("RENDER_GIT_COMMIT"),
+
   // --- Kill switch ---
   // When false, the bot stops generating AI answers and politely escalates every
   // conversation to a human. Set BOT_ENABLED=false in the environment for a hard

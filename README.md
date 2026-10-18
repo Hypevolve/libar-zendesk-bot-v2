@@ -257,7 +257,8 @@ Bot **automatski eskalira** (šalje ljudskom agentu) u sljedećim slučajevima:
 - **Dozvoljeni kanali** — webchat, email, facebook, unknown
 
 ### Pristup i origin (poznato ograničenje)
-- Admin API zaštićen `ADMIN_TOKEN`-om
+- Admin API zaštićen `ADMIN_TOKEN`-om; javni `/health` vraća samo `status`, `version`,
+  `commit` i `uptime`, a provjere ovisnosti i greške su na `/admin/health`
 - ⚠️ **Origin/CORS provjera trenutno NIJE aktivna.** Varijabla `EMBED_ALLOWED_ORIGINS`
   postoji u konfiguraciji, ali se još ne primjenjuje — `/api/chat/*` endpointi nemaju
   origin-allowlist provjeru. Zahtjevi se ne oslanjaju na cookieje (sessionId ide u
@@ -338,7 +339,8 @@ curl -X POST http://localhost:3000/api/zendesk/webhook \
 
 **Health check:**
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:3000/health                                     # status, version, commit, uptime
+curl -H "x-admin-token: $ADMIN_TOKEN" http://localhost:3000/admin/health  # + provjere ovisnosti i greške
 ```
 
 ---

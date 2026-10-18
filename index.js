@@ -7,7 +7,8 @@
  *  POST /api/chat/message  — continue webchat session
  *  POST /api/chat/restore  — restore existing session from Zendesk
  *  POST /api/zendesk/webhook — Zendesk webhook receiver
- *  GET  /health             — health check
+ *  GET  /health             — health check (javno: status, verzija, commit, uptime)
+ *  GET  /admin/health       — puni health s provjerama ovisnosti
  *  GET  /admin/traces       — recent AI traces
  *  GET  /admin/metrics      — runtime metrics
  *  POST /admin/sync/vector  — trigger vector knowledge sync
@@ -49,6 +50,7 @@ const { buildDirectWebsiteLinks } = require("./services/siteLinkService");
 const { detectEscalationIntent } = require("./services/intentEscalationService");
 const { isLikelyEmail, buildNoAnswerEscalation, resolveAnonymousEscalation } = require("./services/escalationFlowService");
 const textbookListService = require("./services/textbookListService");
+const { version: APP_VERSION } = require("./package.json");
 
 // ─── Express Setup ────────────────────────────────────────────
 
@@ -1320,8 +1322,10 @@ app.get("/api/popis-udzbenika.json", (req, res) => {
 });
 
 // ─── GET /health ──────────────────────────────────────────────
+// Javno (Render healthCheckPath): samo status, verzija, commit i uptime. Ništa iz
+// konfiguracije, nijedan URL servisa ni dio ključa; detalji su na /admin/health.
 
-app.get("/health", async (req, res) => {
+async function checkDependencies() {
   const checks = { zendesk: false, vector: false, embedding: false };
   const details = {};
 
@@ -1349,12 +1353,15 @@ app.get("/health", async (req, res) => {
   // Return 200 for ok/degraded so Render doesn't restart the app on temporary dependency issues.
   // Only return 503 if the app itself is completely down.
   const code = status === "down" ? 503 : 200;
+  return { status, code, checks, details };
+}
 
+app.get("/health", async (req, res) => {
+  const { status, code } = await checkDependencies();
   res.status(code).json({
     success: status !== "down", status,
-    checks, details,
-    vectorConfig: vectorKnowledgeService.getVectorConfigSummary?.() || {},
-    activeSessions: chatSessions.size,
+    version: APP_VERSION,
+    commit: env.RENDER_GIT_COMMIT || null,
     uptime: Math.floor(process.uptime())
   });
 });
@@ -1371,6 +1378,20 @@ function requireAdmin(req, res, next) {
   }
   next();
 }
+
+// Puni health (provjere ovisnosti, greške, sesije, RAG postavke) samo uz admin token.
+app.get("/admin/health", requireAdmin, async (req, res) => {
+  const { status, code, checks, details } = await checkDependencies();
+  res.status(code).json({
+    success: status !== "down", status,
+    version: APP_VERSION,
+    commit: env.RENDER_GIT_COMMIT || null,
+    checks, details,
+    vectorConfig: vectorKnowledgeService.getVectorConfigSummary?.() || {},
+    activeSessions: chatSessions.size,
+    uptime: Math.floor(process.uptime())
+  });
+});
 
 app.get("/admin/traces", requireAdmin, (req, res) => {
   const limit = Math.min(Number(req.query.limit) || 50, 200);
@@ -1552,6 +1573,18 @@ async function runAnalysisSync() {
 // ─── Static files (embed.js, index.html, etc.) ──────────────
 
 app.use(express.static("public"));
+
+// ─── Greške ───────────────────────────────────────────────────
+// Expressov zadani handler izvan NODE_ENV=production u odgovor piše stack trace
+// (putanje na serveru). Neispravan JSON, prevelik privitak i sl. dobivaju kratku
+// JSON grešku; detalji idu samo u log.
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  const raw = Number(err?.status || err?.statusCode) || (err?.name === "MulterError" ? 400 : 500);
+  const code = raw >= 400 && raw < 600 ? raw : 500;
+  if (code >= 500) log.error("request_failed", { path: req.path, message: err?.message });
+  return res.status(code).json({ success: false, error: code >= 500 ? "Internal error." : "Bad request." });
+});
 
 // ─── Server Startup ───────────────────────────────────────────
 

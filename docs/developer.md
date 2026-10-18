@@ -231,13 +231,14 @@ Cache temeljen na hashu (query + context):
 | `POST` | `/api/chat/message` | Slanje poruke |
 | `POST` | `/api/chat/restore` | Obnova sesije |
 | `POST` | `/api/zendesk/webhook` | Zendesk webhook |
-| `GET` | `/health` | Health check |
+| `GET` | `/health` | Health check (javno: samo `status`, `version`, `commit`, `uptime`) |
 
 ### Admin endpointi
 
 | Metoda | Ruta | Opis |
 |--------|------|------|
 | `GET` | `/admin/dashboard` | HTML admin panel |
+| `GET` | `/admin/health` | Puni health: provjere ovisnosti, greške, sesije, RAG postavke |
 | `GET` | `/admin/metrics` | Runtime metrike (JSON) |
 | `GET` | `/admin/traces` | AI traceovi (JSON) |
 | `GET` | `/admin/bot-state` | Bot status |
