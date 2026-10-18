@@ -7,7 +7,8 @@
  *  POST /api/chat/message  — continue webchat session
  *  POST /api/chat/restore  — restore existing session from Zendesk
  *  POST /api/zendesk/webhook — Zendesk webhook receiver
- *  GET  /health             — health check
+ *  GET  /health             — health check (javno: status, verzija, commit, uptime)
+ *  GET  /admin/health       — puni health s provjerama ovisnosti
  *  GET  /admin/traces       — recent AI traces
  *  GET  /admin/metrics      — runtime metrics
  *  POST /admin/sync/vector  — trigger vector knowledge sync
@@ -49,6 +50,8 @@ const { buildDirectWebsiteLinks } = require("./services/siteLinkService");
 const { detectEscalationIntent } = require("./services/intentEscalationService");
 const { isLikelyEmail, buildNoAnswerEscalation, resolveAnonymousEscalation } = require("./services/escalationFlowService");
 const textbookListService = require("./services/textbookListService");
+const embedOriginPolicy = require("./services/embedOriginPolicy");
+const { version: APP_VERSION } = require("./package.json");
 
 // ─── Express Setup ────────────────────────────────────────────
 
@@ -62,6 +65,10 @@ const app = express();
 // i prije provjere tokena, a transport tada ne provjerava veličinu).
 const mcpServer = require("./mcp/server");
 app.all("/mcp", mcpServer.mcpAuth, mcpServer.handleMcpRequest);
+
+// Web chat iz preglednika: botova domena (živi widget je iframe s nje) i originy iz
+// EMBED_ALLOWED_ORIGINS; tuđi Origin → 403 prije čitanja tijela (embedOriginPolicy).
+app.use("/api/chat", embedOriginPolicy.chatOriginGuard);
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
@@ -1297,7 +1304,9 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
 
 // ─── GET / (Web Chat Widget) ────────────────────────────────
 
-app.get("/", (req, res) => {
+// Stranica widgeta: s EMBED_ALLOWED_ORIGINS ide CSP frame-ancestors (embedOriginPolicy).
+// /index.html ide istom rutom, inače bi ga express.static poslao bez zaglavlja.
+app.get(["/", "/index.html"], embedOriginPolicy.widgetFrameGuard, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
@@ -1320,8 +1329,10 @@ app.get("/api/popis-udzbenika.json", (req, res) => {
 });
 
 // ─── GET /health ──────────────────────────────────────────────
+// Javno (Render healthCheckPath): samo status, verzija, commit i uptime. Ništa iz
+// konfiguracije, nijedan URL servisa ni dio ključa; detalji su na /admin/health.
 
-app.get("/health", async (req, res) => {
+async function checkDependencies() {
   const checks = { zendesk: false, vector: false, embedding: false };
   const details = {};
 
@@ -1349,12 +1360,15 @@ app.get("/health", async (req, res) => {
   // Return 200 for ok/degraded so Render doesn't restart the app on temporary dependency issues.
   // Only return 503 if the app itself is completely down.
   const code = status === "down" ? 503 : 200;
+  return { status, code, checks, details };
+}
 
+app.get("/health", async (req, res) => {
+  const { status, code } = await checkDependencies();
   res.status(code).json({
     success: status !== "down", status,
-    checks, details,
-    vectorConfig: vectorKnowledgeService.getVectorConfigSummary?.() || {},
-    activeSessions: chatSessions.size,
+    version: APP_VERSION,
+    commit: env.RENDER_GIT_COMMIT || null,
     uptime: Math.floor(process.uptime())
   });
 });
@@ -1371,6 +1385,20 @@ function requireAdmin(req, res, next) {
   }
   next();
 }
+
+// Puni health (provjere ovisnosti, greške, sesije, RAG postavke) samo uz admin token.
+app.get("/admin/health", requireAdmin, async (req, res) => {
+  const { status, code, checks, details } = await checkDependencies();
+  res.status(code).json({
+    success: status !== "down", status,
+    version: APP_VERSION,
+    commit: env.RENDER_GIT_COMMIT || null,
+    checks, details,
+    vectorConfig: vectorKnowledgeService.getVectorConfigSummary?.() || {},
+    activeSessions: chatSessions.size,
+    uptime: Math.floor(process.uptime())
+  });
+});
 
 app.get("/admin/traces", requireAdmin, (req, res) => {
   const limit = Math.min(Number(req.query.limit) || 50, 200);
@@ -1553,6 +1581,18 @@ async function runAnalysisSync() {
 
 app.use(express.static("public"));
 
+// ─── Greške ───────────────────────────────────────────────────
+// Expressov zadani handler izvan NODE_ENV=production u odgovor piše stack trace
+// (putanje na serveru). Neispravan JSON, prevelik privitak i sl. dobivaju kratku
+// JSON grešku; detalji idu samo u log.
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  const raw = Number(err?.status || err?.statusCode) || (err?.name === "MulterError" ? 400 : 500);
+  const code = raw >= 400 && raw < 600 ? raw : 500;
+  if (code >= 500) log.error("request_failed", { path: req.path, message: err?.message });
+  return res.status(code).json({ success: false, error: code >= 500 ? "Internal error." : "Bad request." });
+});
+
 // ─── Server Startup ───────────────────────────────────────────
 
 const PORT = env.PORT;
@@ -1564,6 +1604,11 @@ const server = app.listen(PORT, () => {
   if (env.RETIRED_MODEL_REMAPS.length) {
     log.warn("retired_models_remapped", { remaps: env.RETIRED_MODEL_REMAPS });
   }
+
+  // Tipfeler u EMBED_ALLOWED_ORIGINS (npr. bez https://) inače bi tiho izbacio stranicu s popisa.
+  const badOrigins = embedOriginPolicy.invalidEntries();
+  if (badOrigins.length) log.warn("embed_allowed_origins_invalid", { entries: badOrigins });
+  log.info("embed_origin_policy", { allowedOrigins: [...embedOriginPolicy.allowedOrigins()] });
 
   // Restore persisted sessions
   for (const s of runtimeState.sessions || []) {

@@ -256,13 +256,24 @@ Bot **automatski eskalira** (šalje ljudskom agentu) u sljedećim slučajevima:
 - **Maksimalna duljina** — 1500 znakova
 - **Dozvoljeni kanali** — webchat, email, facebook, unknown
 
-### Pristup i origin (poznato ograničenje)
-- Admin API zaštićen `ADMIN_TOKEN`-om
-- ⚠️ **Origin/CORS provjera trenutno NIJE aktivna.** Varijabla `EMBED_ALLOWED_ORIGINS`
-  postoji u konfiguraciji, ali se još ne primjenjuje — `/api/chat/*` endpointi nemaju
-  origin-allowlist provjeru. Zahtjevi se ne oslanjaju na cookieje (sessionId ide u
-  tijelu), pa ih browserovo same-origin pravilo ne štiti automatski. Jedina aktivna
-  zaštita javnih chat endpointa je **rate-limiter po IP-u** ([middleware/rateLimiter.js](middleware/rateLimiter.js)).
+### Pristup i origin
+- Admin API zaštićen `ADMIN_TOKEN`-om; javni `/health` vraća samo `status`, `version`,
+  `commit` i `uptime`, a provjere ovisnosti i greške su na `/admin/health`
+- **Origin provjera** ([services/embedOriginPolicy.js](services/embedOriginPolicy.js)).
+  Widget je iframe s botove domene (`embed.js`), pa `/api/chat/*` zove botova domena
+  sama sebe. Pravilo za `/api/chat/*`:
+  - botova domena prolazi uvijek (i kad `EMBED_ALLOWED_ORIGINS` nije postavljen)
+  - origin iz `EMBED_ALLOWED_ORIGINS` prolazi i dobiva CORS zaglavlja
+  - svaki drugi `Origin` (i `null`) dobiva **403** bez CORS zaglavlja
+  - zahtjev **bez** `Origin` zaglavlja prolazi: preglednik ga šalje na svaki POST, pa
+    ga nemaju samo curl, skripte i e2e testovi, a oni ga ionako mogu lažirati.
+    Origin provjera brani od tuđih web stranica u pregledniku posjetitelja; nije autentikacija
+- Stranica widgeta (`/`, `/index.html`): s `EMBED_ALLOWED_ORIGINS` šalje
+  `Content-Security-Policy: frame-ancestors 'self' <popis>`, pa ga preglednik ne
+  prikazuje u iframeu drugih stranica. Bez popisa nema zaglavlja (widget radi
+  svugdje), a stranica koja ga ugrađuje zapiše se u log (`widget_embed_unlisted`)
+- Produkcija: `EMBED_ALLOWED_ORIGINS=https://antikvarijat-libar.com,https://www.antikvarijat-libar.com`
+- Uz to javne chat endpointe štiti **rate-limiter po IP-u** ([middleware/rateLimiter.js](middleware/rateLimiter.js)).
 
 ---
 
@@ -338,7 +349,8 @@ curl -X POST http://localhost:3000/api/zendesk/webhook \
 
 **Health check:**
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:3000/health                                     # status, version, commit, uptime
+curl -H "x-admin-token: $ADMIN_TOKEN" http://localhost:3000/admin/health  # + provjere ovisnosti i greške
 ```
 
 ---

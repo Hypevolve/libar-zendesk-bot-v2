@@ -4,7 +4,7 @@
 
 ## Sažetak
 
-Bot je **arhitektonski zreo i produkcijski spreman** s jakim multi-layer defense modelom. Od izvornih **5 kritičnih** problema **svih 5 je riješeno**; od **8 preporuka 6 je riješeno**, a ostaju **#7** (svjesno — vidi napomenu, NIJE čista ušteda), **#8b** (origin/CORS provjera — svjesno odgođeno) i **#9** (retry, niski prioritet). Web chat putanja je potpuna; webhook (Facebook/email) putanja je nakon zadnjih fixeva na paritetu.
+Bot je **arhitektonski zreo i produkcijski spreman** s jakim multi-layer defense modelom. Od izvornih **5 kritičnih** problema **svih 5 je riješeno**; od **8 preporuka 6 je riješeno**, a ostaju **#7** (svjesno — vidi napomenu, NIJE čista ušteda) i **#9** (retry, niski prioritet); **#8b** (origin/CORS provjera) riješen je 18.10.2026. Web chat putanja je potpuna; webhook (Facebook/email) putanja je nakon zadnjih fixeva na paritetu.
 
 ---
 
@@ -60,9 +60,9 @@ Prvotna analiza tvrdila je da je ovo "samo trošak". Detaljnija provjera pokazuj
 
 To je **namjerno i nosivo**: prompt kaže "tvoj JEDINI izvor istine je kontekst ispod" ([aiService.js:215](../services/aiService.js#L215)) i da odbije ako odgovor nije podržan *KONTEKSTOM*. Stavljanje činjenica u KONTEKST slot je ono što fallbacku dopušta da uopće odgovori (npr. "koliko košta dostava?" kad pretraga promaši). Uklanjanje "duplikata" riskira češća odbijanja na fallback putanji. **Odluka: ne dirati bez A/B testa na živom botu.** Ušteda (~300-400 tok) javlja se samo na fallback pozivima, ne na svakom.
 
-### 8b. Origin/CORS provjera nije aktivna (dokumentirano, ne implementirano)
+### 8b. Origin/CORS provjera — RIJEŠENO 18.10.2026. (S15b)
 
-`EMBED_ALLOWED_ORIGINS` postoji u [config/env.js](../config/env.js) ali se **nigdje ne primjenjuje** — `/api/chat/*` endpointi nemaju origin-allowlist provjeru, niti postoji `cors` middleware. Budući da sessionId ide u tijelu zahtjeva (ne cookie), browserovo same-origin pravilo ne štiti endpointe. Jedina aktivna zaštita je rate-limiter po IP-u.
+`EMBED_ALLOWED_ORIGINS` se primjenjuje u [services/embedOriginPolicy.js](../services/embedOriginPolicy.js): `/api/chat/*` prihvaća botovu domenu (živi widget je iframe s nje) i originy s popisa, ostalo dobiva 403; zahtjev bez `Origin` zaglavlja prolazi. Stranica widgeta s popisom šalje CSP `frame-ancestors`. Pravilo i razlozi: README, „Pristup i origin". Testovi: [tests/embedOrigin.test.js](../tests/embedOrigin.test.js).
 
 
 ### 9. Nema eksplicitnog retryja na grounded-answer timeout

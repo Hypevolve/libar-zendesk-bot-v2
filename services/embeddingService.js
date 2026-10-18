@@ -7,6 +7,7 @@
 const OpenAI = require("openai");
 const env = require("../config/env");
 const log = require("../config/logger");
+const { withPrivacy, isDataPolicyError, privacyMode } = require("./openRouterPrivacy");
 
 function looksLikeOpenRouterKey(v) { return String(v || "").startsWith("sk-or-"); }
 
@@ -62,18 +63,38 @@ function normalizeEmbeddingInput(v = "") {
   return String(v || "").replace(/\s+/g, " ").trim().slice(0, 8000);
 }
 
+/**
+ * Tijelo jednog embeddings poziva. Prema OpenRouteru ide s istim postavkama
+ * privatnosti kao chat (openRouterPrivacy, OPENROUTER_PRIVACY): u embeddinge idu
+ * kupčeva pitanja i baza znanja. Izravni OpenAI API `provider` ne poznaje.
+ */
+function buildEmbeddingRequest(batch, provider = PROVIDER) {
+  const request = { model: MODEL, input: batch };
+  if (/(^|\/)text-embedding-3/.test(MODEL) && DIMS > 0) {
+    request.dimensions = DIMS;
+  }
+  return provider === "openrouter" ? withPrivacy(request) : request;
+}
+
 async function embedTexts(texts = []) {
   const normalised = texts.map(normalizeEmbeddingInput).filter(Boolean);
   const embeddings = [];
 
   for (let i = 0; i < normalised.length; i += BATCH) {
     const batch = normalised.slice(i, i + BATCH);
-    const request = { model: MODEL, input: batch };
-    if (/(^|\/)text-embedding-3/.test(MODEL) && DIMS > 0) {
-      request.dimensions = DIMS;
-    }
+    const request = buildEmbeddingRequest(batch);
 
-    const response = await getClient().embeddings.create(request);
+    let response;
+    try {
+      response = await getClient().embeddings.create(request);
+    } catch (error) {
+      // Embedding model se ne može zamijeniti drugim (vektori u bazi su iz ovog),
+      // pa nema fallbacka: zabilježi jasno zašto, i pusti grešku dalje.
+      if (isDataPolicyError(error)) {
+        log.error("embedding_private_endpoint_unavailable", { model: MODEL, privacy: privacyMode(), message: error.message });
+      }
+      throw error;
+    }
     const rows = Array.isArray(response?.data) ? response.data : [];
     rows.sort((a, b) => (a.index || 0) - (b.index || 0));
     embeddings.push(...rows.map((r) => r.embedding));
@@ -101,4 +122,4 @@ function ping() {
   return { ok: isConfigured(), provider: PROVIDER, model: MODEL };
 }
 
-module.exports = { embedText, embedTexts, getEmbeddingConfigSummary, isConfigured, normalizeEmbeddingInput, ping };
+module.exports = { embedText, embedTexts, buildEmbeddingRequest, getEmbeddingConfigSummary, isConfigured, normalizeEmbeddingInput, ping };

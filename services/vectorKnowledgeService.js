@@ -29,13 +29,12 @@ const INSERT_BATCH = 100;
 function isSupabaseConfigured() { return Boolean(SUPABASE_URL && SUPABASE_KEY); }
 function isConfigured() { return isSupabaseConfigured() && embeddingService.isConfigured(); }
 
+// Bez URL-a i bez ijednog znaka ključa (S15: išlo je na javni /health); samo je li postavljeno.
 function getVectorConfigSummary() {
-  const k = SUPABASE_KEY;
   return {
     enabled: isConfigured(),
     supabaseConfigured: isSupabaseConfigured(),
-    supabaseUrl: SUPABASE_URL,
-    serviceRoleKeyPreview: k ? `${k.slice(0, 4)}***${k.slice(-4)}` : "(empty)",
+    serviceRoleKeyConfigured: Boolean(SUPABASE_KEY),
     embeddings: embeddingService.getEmbeddingConfigSummary(),
     matchCount: MATCH_COUNT, minScore: MIN_SCORE,
     contextItems: CONTEXT_ITEMS, chunkMaxChars: CHUNK_MAX, chunkOverlapChars: CHUNK_OVERLAP
