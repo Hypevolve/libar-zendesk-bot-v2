@@ -50,6 +50,7 @@ const { buildDirectWebsiteLinks } = require("./services/siteLinkService");
 const { detectEscalationIntent } = require("./services/intentEscalationService");
 const { isLikelyEmail, buildNoAnswerEscalation, resolveAnonymousEscalation } = require("./services/escalationFlowService");
 const textbookListService = require("./services/textbookListService");
+const embedOriginPolicy = require("./services/embedOriginPolicy");
 const { version: APP_VERSION } = require("./package.json");
 
 // ─── Express Setup ────────────────────────────────────────────
@@ -64,6 +65,10 @@ const app = express();
 // i prije provjere tokena, a transport tada ne provjerava veličinu).
 const mcpServer = require("./mcp/server");
 app.all("/mcp", mcpServer.mcpAuth, mcpServer.handleMcpRequest);
+
+// Web chat iz preglednika: botova domena (živi widget je iframe s nje) i originy iz
+// EMBED_ALLOWED_ORIGINS; tuđi Origin → 403 prije čitanja tijela (embedOriginPolicy).
+app.use("/api/chat", embedOriginPolicy.chatOriginGuard);
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
@@ -1299,7 +1304,9 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
 
 // ─── GET / (Web Chat Widget) ────────────────────────────────
 
-app.get("/", (req, res) => {
+// Stranica widgeta: s EMBED_ALLOWED_ORIGINS ide CSP frame-ancestors (embedOriginPolicy).
+// /index.html ide istom rutom, inače bi ga express.static poslao bez zaglavlja.
+app.get(["/", "/index.html"], embedOriginPolicy.widgetFrameGuard, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
@@ -1597,6 +1604,11 @@ const server = app.listen(PORT, () => {
   if (env.RETIRED_MODEL_REMAPS.length) {
     log.warn("retired_models_remapped", { remaps: env.RETIRED_MODEL_REMAPS });
   }
+
+  // Tipfeler u EMBED_ALLOWED_ORIGINS (npr. bez https://) inače bi tiho izbacio stranicu s popisa.
+  const badOrigins = embedOriginPolicy.invalidEntries();
+  if (badOrigins.length) log.warn("embed_allowed_origins_invalid", { entries: badOrigins });
+  log.info("embed_origin_policy", { allowedOrigins: [...embedOriginPolicy.allowedOrigins()] });
 
   // Restore persisted sessions
   for (const s of runtimeState.sessions || []) {

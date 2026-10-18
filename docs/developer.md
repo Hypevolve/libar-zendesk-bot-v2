@@ -233,6 +233,8 @@ Cache temeljen na hashu (query + context):
 | `POST` | `/api/zendesk/webhook` | Zendesk webhook |
 | `GET` | `/health` | Health check (javno: samo `status`, `version`, `commit`, `uptime`) |
 
+`/api/chat/*` prihvaća samo botovu domenu i `EMBED_ALLOWED_ORIGINS` (vidi README, „Pristup i origin").
+
 ### Admin endpointi
 
 | Metoda | Ruta | Opis |
@@ -285,7 +287,7 @@ OPENROUTER_EMBEDDING_MODEL=openai/text-embedding-3-small
 # --- Sigurnost ---
 ADMIN_TOKEN=                   # za admin panel
 ZENDESK_WEBHOOK_TOKEN=         # za webhook verifikaciju
-EMBED_ALLOWED_ORIGINS=         # popis dozvoljenih origin domena (još se NE primjenjuje — v. README "Pristup i origin")
+EMBED_ALLOWED_ORIGINS=         # stranice koje smiju ugraditi widget / zvati /api/chat/* (v. README "Pristup i origin")
 
 # --- Troškovi ---
 TOKEN_BUDGET_MAX_TOKENS=500000

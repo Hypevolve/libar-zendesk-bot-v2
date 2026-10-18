@@ -127,10 +127,14 @@ module.exports = {
   MCP_MAX_TOOL_INPUT_ELEMENTS: Math.max(1, envInt("MCP_MAX_TOOL_INPUT_ELEMENTS", 20)),
   MCP_MAX_REQUEST_BODY_BYTES: Math.max(1024, envInt("MCP_MAX_REQUEST_BODY_BYTES", 64 * 1024)),
   RATE_LIMIT_MAX: envInt("RATE_LIMIT_MAX", 30),
+  // Web stranice koje smiju ugraditi chat widget i zvati /api/chat/* iz preglednika
+  // (services/embedOriginPolicy.js). Botova vlastita domena smije uvijek.
   EMBED_ALLOWED_ORIGINS: envStr("EMBED_ALLOWED_ORIGINS")
     .split(",").map(s => s.trim()).filter(Boolean),
 
   // --- Render (postavlja ih Render sam) ---
+  // Javni URL servisa; botova domena za provjeru origina i kad proxy promijeni Host.
+  RENDER_EXTERNAL_URL: envStr("RENDER_EXTERNAL_URL"),
   // Commit koji je deployan; jedini podatak o verziji koji javni /health vraća.
   RENDER_GIT_COMMIT: envStr("RENDER_GIT_COMMIT"),
 
