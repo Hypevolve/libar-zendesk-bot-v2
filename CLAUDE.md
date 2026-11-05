@@ -42,6 +42,18 @@ Treba `.env` (vidi [.env.example](.env.example)). Deploy ide na **Render** preko
 - Testovi su native `node --test` (nema Jest); novi servis → novi `tests/<ime>.test.js`.
 - Tajne nikad ne idu u repo. `.env` je gitignoran; primjeri u `.env.example`.
 
+## Javni kod
+**Pravilo (Kontra):** developerski komentari i source mape nikad ne idu u javni kod. Javni kod je sve što dobije preglednik posjetitelja: JS, CSS, HTML (i inline `<script>`/`<style>` i HTML komentari) i sve što `embed.js` učita na tuđem webu. Komentari ostaju u izvornim datotekama; iz onoga što se servira se brišu.
+
+Kako repo to provodi:
+- [services/publicAssets.js](services/publicAssets.js) pri startu servera (prije `listen`) minificira sve iz `public/` i `admin-dashboard.html` (esbuild, `legalComments: "none"`, bez source mapa; HTML komentari van, inline skripte i stilovi kroz esbuild) i servira ih iz memorije. `express.static` se više ne koristi, pa se sirovi izvor ne može poslati.
+- Rute `/` i `/index.html` (s `widgetFrameGuard` zaglavljima) i `/admin/dashboard` šalju minificiranu verziju.
+- Ako minifikacija padne (sintaksna greška, nepoznat `type` skripte, `<!--` u JS stringu), server se ne pokrene; na Renderu deploy padne i ostaje prethodna verzija. Nema zamjene sirovim izvorom.
+- [tests/publicAssets.test.js](tests/publicAssets.test.js) dohvaća `/embed.js`, `/`, `/index.html`, `/admin/dashboard` i svaku datoteku iz `public/` i provjerava acornom da nema nijednog komentara, `<!--` ni `sourceMappingURL`.
+- Nova javna datoteka ide u `public/` (ili kao imenovana stranica u `build()` u index.js), nikad kroz `express.static`/`sendFile` izravno. Inline JS u HTML-u ne smije sadržavati HTML komentare u stringovima.
+- Izmjena u `public/` ili `admin-dashboard.html` vidi se tek nakon restarta servera (`npm run dev` ne prati HTML).
+- Repo je javan na GitHubu, pa su izvori s komentarima ionako vidljivi tamo; pravilo pokriva ono što se servira posjetiteljima.
+
 ## Radne smjernice za ovaj projekt
 - **Klijent je zadovoljan botom.** Ne radi špekulativna "poboljšanja" — popravljaj samo prijavljene probleme i ono što je eksplicitno traženo. (vidi memory: conservative-changes)
 - Promjene na PII, spam filteru, escalation logici i prompt-injection zaštiti su osjetljive — uz njih uvijek pokreni relevantne testove.
