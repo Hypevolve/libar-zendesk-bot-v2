@@ -53,13 +53,6 @@ const textbookListService = require("./services/textbookListService");
 const embedOriginPolicy = require("./services/embedOriginPolicy");
 const { version: APP_VERSION } = require("./package.json");
 
-// Javni kod (public/, admin dashboard) ide pregledniku minificiran, bez komentara
-// i source mapa. Gradi se jednom, prije listena; greška ovdje zaustavlja start.
-const publicAssets = require("./services/publicAssets").build({
-  publicDir: path.join(__dirname, "public"),
-  pages: { "admin-dashboard": path.join(__dirname, "admin-dashboard.html") }
-});
-
 // ─── Express Setup ────────────────────────────────────────────
 
 const app = express();
@@ -1312,9 +1305,9 @@ app.post("/api/zendesk/webhook", webhookRateLimiter, async (req, res) => {
 // ─── GET / (Web Chat Widget) ────────────────────────────────
 
 // Stranica widgeta: s EMBED_ALLOWED_ORIGINS ide CSP frame-ancestors (embedOriginPolicy).
-// /index.html ide istom rutom, inače bi ga statički middleware (publicAssets) poslao bez zaglavlja.
+// /index.html ide istom rutom, inače bi ga express.static poslao bez zaglavlja.
 app.get(["/", "/index.html"], embedOriginPolicy.widgetFrameGuard, (req, res) => {
-  publicAssets.sendFile(res, "/index.html");
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // ─── GET /api/popis-udzbenika.json ────────────────────────────
@@ -1532,9 +1525,15 @@ app.get("/admin/analytics/top-questions", requireAdmin, async (req, res) => {
 // MCP endpoint (/mcp) je registriran na vrhu, prije body parsera.
 
 // Admin Dashboard HTML UI (public — auth handled by JS API calls)
-// Minificiran pri startu (publicAssets), bez komentara.
 app.get("/admin/dashboard", (req, res) => {
-  publicAssets.sendPage(res, "admin-dashboard");
+  const dashboardPath = path.join(__dirname, "admin-dashboard.html");
+  try {
+    const html = fs.readFileSync(dashboardPath, "utf8");
+    res.setHeader("Content-Type", "text/html");
+    res.send(html);
+  } catch (error) {
+    res.status(500).json({ success: false, error: "Dashboard file not found." });
+  }
 });
 
 // ─── Vector Knowledge Auto-Sync ───────────────────────────────
@@ -1579,10 +1578,8 @@ async function runAnalysisSync() {
 }
 
 // ─── Static files (embed.js, index.html, etc.) ──────────────
-// Umjesto express.static("public"): iste datoteke, ali minificirane i bez
-// komentara (services/publicAssets.js). Sirovi izvori se ne serviraju.
 
-app.use(publicAssets.middleware);
+app.use(express.static("public"));
 
 // ─── Greške ───────────────────────────────────────────────────
 // Expressov zadani handler izvan NODE_ENV=production u odgovor piše stack trace
